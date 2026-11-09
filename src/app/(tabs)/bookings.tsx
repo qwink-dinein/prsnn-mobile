@@ -8,7 +8,8 @@ import { EmptyState, ErrorState, Loading, Segmented } from '@/components/ui/layo
 import { Text } from '@/components/ui/Text';
 import { BookingCard } from '@/components/bookings';
 import { RequestCard } from '@/components/fellow/RequestCard';
-import { startsAt, tabOf, type BookingTab } from '@/domain/booking';
+import { awaitingAnswer, isMineAsCompanion, startsAt, tabOf, type BookingTab } from '@/domain/booking';
+import type { Booking } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -27,10 +28,12 @@ export default function BookingsTab() {
 
   const list = useMemo(() => {
     const now = new Date();
-    const rows = (q.data ?? []).filter((b) => tabOf(b, now) === tab);
+    // Companions: offers that ended without them (declined, expired, taken) sit under "Cancelled".
+    const tabFor = (b: Booking) => (isCompanion && b.flow === 'prepaid' && !isMineAsCompanion(b) && !awaitingAnswer(b, now) ? 'cancelled' : tabOf(b, now));
+    const rows = (q.data ?? []).filter((b) => tabFor(b) === tab);
     // Upcoming: soonest first. Past/cancelled: most recent first.
     return rows.sort((a, b) => (tab === 'upcoming' ? 1 : -1) * (startsAt(a).getTime() - startsAt(b).getTime()));
-  }, [q.data, tab]);
+  }, [q.data, tab, isCompanion]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

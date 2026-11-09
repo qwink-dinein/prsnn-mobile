@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header, Card, IconButton, Loading, ErrorState, EmptyState } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
+import { Brand } from '@/components/ui/Brand';
 import { RequestCard } from '@/components/fellow/RequestCard';
-import { earningsFor, formatINR, parseDateKey } from '@/domain/booking';
+import { earningsFor, formatINR, isMineAsCompanion, parseDateKey } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 
@@ -19,7 +20,7 @@ export default function Earnings() {
     () =>
       (q.data ?? []).filter((b) => {
         const d = parseDateKey(b.scheduledDate);
-        return b.paymentStatus === 'paid' && d.getFullYear() === cursor.y && d.getMonth() === cursor.m;
+        return isMineAsCompanion(b) && b.paymentStatus === 'paid' && d.getFullYear() === cursor.y && d.getMonth() === cursor.m;
       }),
     [q.data, cursor],
   );
@@ -92,7 +93,7 @@ export default function Earnings() {
         <EmptyState icon="wallet" title="No paid sessions this month" />
       )}
       <Text variant="footnote" muted style={{ marginTop: space.lg }}>
-        Payouts go to your bank account as set up with the prsnn team. Questions? Contact support.
+        Payouts go to your bank account as set up with the <Brand /> team. Questions? Contact support.
       </Text>
     </Screen>
   );

@@ -35,8 +35,13 @@ function Discover() {
   const notes = useQuery({ queryKey: qk.notifications, queryFn: svc.notifications });
   const unread = (notes.data ?? []).filter((n) => !n.isRead).length;
   const cardW = Math.min((width - GUTTER * 2 - space.md) / 2, 200);
-  const popular = useMemo(() => (q.data ?? []).slice(0, 10), [q.data]);
-  const city = q.data?.find((c) => c.city)?.city ?? 'Hyderabad';
+  const city = user?.city ?? q.data?.find((c) => c.city)?.city ?? 'Hyderabad';
+  // Your city first, then everyone else you can see.
+  const popular = useMemo(() => {
+    const list = q.data ?? [];
+    const here = list.filter((c) => (c.city ?? '').toLowerCase() === city.toLowerCase());
+    return [...here, ...list.filter((c) => !here.includes(c))].slice(0, 10);
+  }, [q.data, city]);
 
   return (
     <Screen padded={false} refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.moss} />}>

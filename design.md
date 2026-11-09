@@ -34,8 +34,16 @@ Online/verified dot: `#3FB950` with a paper ring.
 
 ## Wordmark
 
-`prsnn` in Lora SemiBold, then a **clay** full stop: `prsnn.` (component:
-`<Logo/>`). The app icon is a cream "p" and a clay "." on moss.
+**“person.”** in Lora SemiBold *Italic*, then a **clay** full stop. Use `<Wordmark/>` for the
+large mark, and `<Brand/>` inside running text (“ID verified by *person.*”). System alerts
+can't show italics, so they use plain “person.”. The app icon is a cream italic “p” and a
+clay “.” on moss. The store and app name stays “prsnn”.
+
+## Locked profiles
+
+A locked person's photo is replaced by `assets/images/locked.jpg`, a static blurred
+silhouette in the moss palette, with a cream lock badge (`<LockedPhoto/>`, and
+`<Avatar locked/>`). It is never a blurred copy of the real photo.
 
 ## Shape and depth
 
@@ -71,9 +79,12 @@ Online/verified dot: `#3FB950` with a paper ring.
 | 7 | Search & filters | `/search` (tab) | Location, sort, activity chips |
 | 8 | Companion profile | `/companion/[id]` | |
 | 9 | Select date & time | `/book/[id]` | Only days and times the companion offers |
-| 10 | Booking summary | `/book/review` | Sends the request |
-| 11 | Payment | `/pay/[bookingId]` | Razorpay Checkout |
-| 12 | Booking confirmed | `/confirmed?kind=request\|paid` | |
+| 10 | Booking summary | `/book/review` | Checkout: price, “no booking fee”, how matching works, cancellation and refund terms, consent tick |
+| 11 | Payment | `/pay/[bookingId]` | Test checkout while `PAYMENT_MODE=simulated`, Razorpay otherwise |
+| 12 | Booking confirmed | `/confirmed?kind=paid` | “Payment received” → live timeline → “Booking confirmed!” |
+| — | Booking details | `/booking/[id]` | Status timeline, payment state, cancel with refund preview, Report a problem |
+| — | Report a problem | `/report/[id]` | Dispute on a paid booking |
+| — | Privacy & preferences | `/privacy` | Gender, show me, photo lock (re-consent), city and area |
 | 13 | Chat | `/chat/[bookingId]` | |
 | 14 | My bookings | `/bookings` (tab) | Upcoming / Past / Cancelled |
 | 15 | Profile | `/profile` (tab) | |

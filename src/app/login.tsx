@@ -5,6 +5,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header } from '@/components/ui/layout';
 import { Enter, EASE_OUT_CSS, useShake } from '@/components/ui/motion';
+import { BRAND_WORD } from '@/components/ui/Brand';
+import { fonts } from '@/theme/fonts';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/forms';
@@ -143,15 +145,18 @@ export default function Login() {
 }
 
 /**
- * The "prsnn." wordmark with its clay full stop settling in after the word:
- * the one deliberate flourish on a screen people see rarely.
+ * The italic "person." wordmark with its clay full stop settling in after the
+ * word: the one deliberate flourish on a screen people see rarely.
  */
 function Wordmark() {
   const reduced = useReducedMotion();
   return (
-    <View style={styles.wordmark} accessible accessibilityRole="header" accessibilityLabel="prsnn">
-      <Text style={styles.wordmarkText}>prsnn</Text>
+    <View style={styles.wordmark} accessible accessibilityRole="header" accessibilityLabel={BRAND_WORD}>
+      <Text style={styles.wordmarkText} maxFontSizeMultiplier={1.3}>
+        {BRAND_WORD}
+      </Text>
       <Animated.Text
+        maxFontSizeMultiplier={1.3}
         style={[
           styles.wordmarkText,
           {
@@ -178,7 +183,7 @@ const DOT_FADE = { from: { opacity: 0 }, to: { opacity: 1 } };
 
 const styles = StyleSheet.create({
   wordmark: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' },
-  wordmarkText: { fontFamily: 'Lora-SemiBold', fontSize: 44, lineHeight: 53, letterSpacing: -1.3, color: colors.ink },
+  wordmarkText: { fontFamily: fonts.brand, fontSize: 46, lineHeight: 58, letterSpacing: -0.9, color: colors.ink },
   head: { alignItems: 'center', marginTop: space.lg, marginBottom: space.xxxl },
   divider: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginVertical: space.xs },
   line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.lineStrong, borderRadius: radius.pill },

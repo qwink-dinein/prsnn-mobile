@@ -6,6 +6,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
 import { ErrorState, IconButton, Loading, Pill } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
+import { Brand } from '@/components/ui/Brand';
+import { LockedPhoto } from '@/components/LockedPhoto';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { HeartButton, firstName, placeOf } from '@/components/companions';
@@ -41,7 +43,9 @@ export default function CompanionProfile() {
     <View style={styles.safe}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 + insets.bottom }} showsVerticalScrollIndicator={false}>
         <View style={{ height: photoH, backgroundColor: colors.mossSoft }}>
-          {c.profilePhoto ? (
+          {c.locked ? (
+            <LockedPhoto style={StyleSheet.absoluteFill} size="lg" />
+          ) : c.profilePhoto ? (
             <Image source={{ uri: c.profilePhoto }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessibilityLabel={`Photo of ${c.fullName}`} />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.fallback]}>
@@ -61,6 +65,14 @@ export default function CompanionProfile() {
             </Text>
             <Icon name="badgeCheck" size={22} color={colors.moss} />
           </View>
+          {c.locked ? (
+            <View style={styles.lockNote}>
+              <Icon name="lock" size={16} color={colors.moss} />
+              <Text variant="footnote" color={colors.gray600} style={{ flex: 1 }}>
+                {firstName(c.fullName)} keeps their photo private. It unlocks once your booking is confirmed and paid.
+              </Text>
+            </View>
+          ) : null}
           {placeOf(c) ? (
             <View style={styles.meta}>
               <Icon name="mapPin" size={16} color={colors.gray500} />
@@ -72,7 +84,7 @@ export default function CompanionProfile() {
           <View style={styles.meta}>
             <Icon name="shieldCheck" size={16} color={colors.moss} />
             <Text variant="footnote" color={colors.moss}>
-              ID verified by prsnn · public places only
+              ID verified by <Brand /> · public places only
             </Text>
           </View>
 
@@ -148,6 +160,7 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.lg, alignItems: 'center' },
   tagCard: { alignItems: 'center', gap: 4, minWidth: 68, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   h: { marginTop: space.xl, marginBottom: space.xs },
+  lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, marginVertical: space.xs },
   infoCard: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: space.lg, gap: space.sm, borderWidth: 1, borderColor: colors.line },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: GUTTER, paddingTop: space.md, backgroundColor: colors.paper, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
 });

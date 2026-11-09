@@ -125,12 +125,15 @@
         <option value="/search">Search &amp; filters</option>
         <option value="/companion/c1">Companion profile (Ayesha)</option>
         <option value="/book/c1">Select date &amp; time</option>
+        <option value="/booking/p1">Booking: Paid — awaiting companion</option>
+        <option value="/booking/p2">Booking: no companion → refunded</option>
         <option value="/pay/b2">Payment (test checkout)</option>
         <option value="/chat/b1">Chat with Ayesha</option>
         <option value="/bookings">My bookings · or requests</option>
         <option value="/messages">Messages</option>
         <option value="/notifications">Notifications</option>
         <option value="/profile">Profile</option>
+        <option value="/privacy">Privacy &amp; preferences (gender, lock, city)</option>
         <option value="/fellow/apply">Become a companion</option>
         <option value="/fellow/onboarding">Companion onboarding</option>
         <option value="/fellow/verification">Verification status</option>
@@ -146,7 +149,9 @@
     </section>
 
     <p class="note"><b>Member or companion:</b> the role you pick on "I'm here as a…" decides which side you see. Choose "Become a companion" for the dashboard, Accept/Decline requests and Earnings. Use <b>Log out &amp; reset</b> to switch.</p>
-    <p class="note"><b>Payments</b> are a test checkout: no money moves, and you can simulate a failed payment. Rohan's booking under Bookings is ready to pay.</p>
+    <p class="note"><b>Pay first:</b> book anyone, review the price and terms, tick to agree and pay (test checkout, no money moves). The booking shows “Paid — awaiting companion” and confirms itself after ~10 seconds in this demo.</p>
+    <p class="note"><b>Privacy:</b> a new number goes through “About you” — choose I am, Show me (e.g. Women) and Open/Locked. Locked profiles show a blurred placeholder with a lock.</p>
+    <p class="note"><b>Companion side:</b> Karan’s paid offer under Requests has a countdown with Accept / Decline.</p>
     <p class="note">All people are fictional sample data. Open this link on your phone to use the app full screen.</p>
   </aside>
 
@@ -163,7 +168,7 @@
               <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="#0E110D" opacity=".45"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#0E110D"/><rect x="23.5" y="4" width="2" height="4" rx="1" fill="#0E110D" opacity=".45"/></svg>
             </span>
           </div>
-          <iframe id="app" src="app.html?v=2" title="prsnn app"></iframe>
+          <iframe id="app" src="app.html?v=3" title="prsnn app"></iframe>
           <div class="home" id="home" aria-hidden="true"><i></i></div>
         </div>
       </div>
@@ -173,7 +178,7 @@
 </div>
 
 <script>
-  const APP = 'app.html?v=2';
+  const APP = 'app.html?v=3';
   const DEVICES = [
     { id: 'se', name: 'iPhone SE', w: 375, h: 667, top: 20, bottom: 0, radius: 18, island: null },
     { id: 'i15', name: 'iPhone 15', w: 393, h: 852, top: 54, bottom: 34, radius: 50, island: 'pill' },

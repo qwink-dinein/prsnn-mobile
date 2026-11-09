@@ -8,6 +8,10 @@ import { Screen, Header, Chip } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
+import { Brand } from '@/components/ui/Brand';
+import { IdentityForm, identityComplete, type IdentityValue } from '@/components/IdentityForm';
+import { AreaPicker, CityPicker } from '@/components/PlacePicker';
+import { stateOf } from '@/domain/places';
 import { TextField } from '@/components/ui/forms';
 import { AvailabilityEditor, emptyAvailability, type AvailabilityValue } from '@/components/fellow/AvailabilityEditor';
 import { CATEGORIES } from '@/domain/booking';
@@ -17,7 +21,7 @@ import { pickImage } from '@/lib/pickImage';
 import { useSession } from '@/state/session';
 
 const STEPS: { title: string; sub: string; icon: IconName }[] = [
-  { title: 'Basic information', sub: 'Name, area, about you', icon: 'user' },
+  { title: 'Basic information', sub: 'Name, gender, city, privacy, about you', icon: 'user' },
   { title: 'Identity verification', sub: 'Government ID, front and back', icon: 'idCard' },
   { title: 'Photos', sub: 'A clear photo of your face', icon: 'camera' },
   { title: 'Rates & availability', sub: 'Your price, days and hours', icon: 'clock' },
@@ -32,7 +36,8 @@ export default function CompanionOnboarding() {
   const updateUser = useSession((s) => s.updateUser);
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
-  const [basic, setBasic] = useState({ fullName: user?.fullName ?? '', city: 'Hyderabad', area: '', description: '' });
+  const [basic, setBasic] = useState({ fullName: user?.fullName ?? '', city: user?.city ?? '', state: stateOf(user?.city) ?? '', area: '', description: '' });
+  const [identity, setIdentity] = useState<IdentityValue>({ gender: user?.gender, seeGender: user?.seeGender, visibility: user?.profileVisibility, consent: !!user?.profileVisibility });
   const [tags, setTags] = useState<string[]>([]);
   const [idFront, setIdFront] = useState<UploadFile | null>(null);
   const [idBack, setIdBack] = useState<UploadFile | null>(null);
@@ -48,6 +53,8 @@ export default function CompanionOnboarding() {
   const validate = (s: number): string | null => {
     if (s === 0) {
       if (basic.fullName.trim().length < 2) return 'Please enter your full name.';
+      if (!identityComplete(identity, false)) return 'Choose your gender and how your photo is shown, then tick the box to agree.';
+      if (!basic.city) return 'Choose your city.';
       if (!basic.area.trim()) return 'Add the area you’re based in.';
       if (basic.description.trim().length < 30) return 'Write at least a couple of sentences about yourself (30+ characters).';
       if (!tags.length) return 'Pick at least one thing you enjoy doing.';
@@ -72,8 +79,11 @@ export default function CompanionOnboarding() {
       await svc.onboardCompanion({
         fullName: basic.fullName.trim(),
         phoneNumber: user?.phone?.replace(/^91/, '') ?? '',
-        city: basic.city.trim(),
+        city: basic.city,
+        state: basic.state,
         area: basic.area.trim(),
+        gender: identity.gender,
+        profileVisibility: identity.visibility,
         description: basic.description.trim(),
         pricePerHour: Number(price),
         startTime: avail.startTime,
@@ -85,7 +95,7 @@ export default function CompanionOnboarding() {
         idProofBack: idBack,
         backupPhoto: selfie,
       });
-      await updateUser({ role: 'companion', verification_status: 'pending', is_verified: false, fullName: basic.fullName.trim(), profilePhoto: photo?.uri });
+      await updateUser({ role: 'companion', verification_status: 'pending', is_verified: false, fullName: basic.fullName.trim(), profilePhoto: photo?.uri, gender: identity.gender, profileVisibility: identity.visibility, city: basic.city });
       qc.invalidateQueries({ queryKey: qk.profileCheck });
       router.replace('/fellow/verification');
     } catch (e) {
@@ -114,8 +124,9 @@ export default function CompanionOnboarding() {
       {step === 0 ? (
         <View style={styles.form}>
           <TextField label="Full name" value={basic.fullName} onChangeText={(v) => setBasic({ ...basic, fullName: v })} autoCapitalize="words" textContentType="name" />
-          <TextField label="City" value={basic.city} onChangeText={(v) => setBasic({ ...basic, city: v })} />
-          <TextField label="Area" value={basic.area} onChangeText={(v) => setBasic({ ...basic, area: v })} placeholder="e.g. Jubilee Hills" />
+          <IdentityForm value={identity} onChange={setIdentity} showSee={false} role="companion" />
+          <CityPicker value={basic.city ? { city: basic.city, state: basic.state } : null} onChange={(pl) => setBasic({ ...basic, city: pl.city, state: pl.state, area: '' })} hint="Members in this city can find you." />
+          <AreaPicker city={basic.city} value={basic.area} onChange={(a) => setBasic({ ...basic, area: a })} />
           <TextField label="About you" value={basic.description} onChangeText={(v) => setBasic({ ...basic, description: v })} multiline maxLength={600} placeholder="What do you enjoy? What kind of company are you?" hint={`${basic.description.trim().length}/600`} />
           <Text variant="subhead">What do you enjoy?</Text>
           <View style={styles.wrap}>
@@ -127,7 +138,7 @@ export default function CompanionOnboarding() {
       ) : step === 1 ? (
         <View style={styles.form}>
           <Text variant="callout" muted>
-            Aadhaar, PAN, driving licence or passport. Only the prsnn verification team sees these, never other members.
+            Aadhaar, PAN, driving licence or passport. Only the <Brand /> verification team sees these, never other members.
           </Text>
           <Upload label="Front of ID" file={idFront} onPick={setIdFront} />
           <Upload label="Back of ID" file={idBack} onPick={setIdBack} />
@@ -148,6 +159,7 @@ export default function CompanionOnboarding() {
       ) : (
         <View style={styles.form}>
           <Review label="Name" value={`${basic.fullName} · ${basic.area}, ${basic.city}`} />
+          <Review label="Photo" value={identity.visibility === 'locked' ? 'Locked — blurred placeholder until a booking is confirmed' : 'Open — everyone can see it'} />
           <Review label="Enjoys" value={tags.join(', ')} />
           <Review label="Rate" value={`₹${price} per hour`} />
           <Review
@@ -159,7 +171,7 @@ export default function CompanionOnboarding() {
           />
           <Review label="Documents" value={`ID front ✓  ID back ✓  Photo ✓${selfie ? '  Selfie ✓' : ''}`} />
           <Text variant="footnote" muted>
-            By submitting you agree to the prsnn Code of Conduct and Fellow Training Manual. We review applications within 24–48 hours.
+            By submitting you agree to the <Brand /> Code of Conduct and Fellow Training Manual. We review applications within 24–48 hours.
           </Text>
         </View>
       )}

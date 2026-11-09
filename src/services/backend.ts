@@ -1,5 +1,5 @@
 import { api, toForm, type UploadFile } from '@/lib/api';
-import type { AppNotification, Booking, Companion, Duration, Profile, ProfileCheck, SessionUser, BookingStatus } from '@/domain/types';
+import type { AppNotification, Booking, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus } from '@/domain/types';
 
 /** The list endpoint returns a mapped shape, search/get return raw User docs. Normalise both. */
 export function normaliseCompanion(raw: Record<string, any>): Companion {
@@ -12,6 +12,9 @@ export function normaliseCompanion(raw: Record<string, any>): Companion {
     pricePerHour: raw.pricePerHour ?? raw.price_per_hour,
     city: raw.city,
     area: raw.area,
+    state: raw.state,
+    gender: raw.gender,
+    locked: !!raw.locked,
     tags: Array.isArray(raw.tags) ? raw.tags : [],
     availability: raw.availability,
     startTime: raw.startTime ?? raw.start_time,
@@ -45,6 +48,9 @@ export interface CompanionForm {
   endTime: string;
   tags: string[];
   days: Record<string, boolean>;
+  state?: string;
+  gender?: string;
+  profileVisibility?: string;
   profilePhoto: UploadFile | null;
   idProofFront: UploadFile | null;
   idProofBack: UploadFile | null;
@@ -75,6 +81,14 @@ export const backend = {
   setBookingStatus: (id: string, status: Exclude<BookingStatus, 'pending'>) => api.put<{ booking: Booking }>(`/bookings/${id}/status`, { status }),
   cancelBooking: (id: string) => api.post<{ booking: Booking }>(`/bookings/${id}/cancel`),
 
+  // ── Prepaid booking (pay first, then companion offers) ──
+  policy: () => api.get<Policy>('/bookings/prepaid/policy'),
+  createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string }) =>
+    api.post<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('/bookings/prepaid', b),
+  acceptOffer: (id: string) => api.post<{ message: string; booking: Booking }>(`/bookings/${id}/offer/accept`),
+  declineOffer: (id: string) => api.post<{ message: string }>(`/bookings/${id}/offer/decline`),
+  openDispute: (id: string, reason: string) => api.post<{ message: string; booking: Booking }>(`/bookings/${id}/dispute`, { reason }),
+
   // ── Payments (Razorpay) ──
   createPaymentIntent: (bookingId: string) => api.post<PaymentIntent>('/payments/create-intent', { bookingId }),
   verifyPayment: (p: { bookingId: string; razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }) =>
@@ -104,11 +118,18 @@ export const backend = {
           startTime: f.startTime,
           endTime: f.endTime,
           tags: f.tags,
+          state: f.state,
+          gender: f.gender,
+          profileVisibility: f.profileVisibility,
+          visibilityConsent: f.profileVisibility ? true : undefined,
           ...Object.fromEntries(Object.entries(f.days).map(([d, on]) => [`${d}_availability`, on])),
         },
         { profilePhoto: f.profilePhoto, idProofFront: f.idProofFront, idProofBack: f.idProofBack, backupPhoto: f.backupPhoto },
       ),
     ),
+  /** Gender, who to see, profile lock (consent required when changing it), city/state/area. */
+  updateIdentity: (f: { gender?: string; seeGender?: string; profileVisibility?: string; visibilityConsent?: boolean; city?: string; state?: string; area?: string }) =>
+    api.put<{ message: string }>('/profile/update', toForm(f)),
   updateProfile: (fields: Record<string, unknown>, photo?: UploadFile | null) => api.put<{ message: string }>('/profile/update', toForm(fields, { profilePhoto: photo })),
   deleteAccount: () => api.del<{ message: string }>('/profile'),
 };

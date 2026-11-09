@@ -1,4 +1,5 @@
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { useConfirm } from '@/components/ui/confirm';
 import { router } from 'expo-router';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Avatar, ListRow, Pill } from '@/components/ui/layout';
@@ -8,6 +9,7 @@ import { LINKS } from '@/lib/config';
 import { displayPhone } from '@/lib/flow';
 import { queryClient } from '@/lib/queryClient';
 import { useSession } from '@/state/session';
+import { seeLabel } from '@/domain/privacy';
 
 /** Screen 15 · Profile (grouped settings list, no hamburger menu). */
 export default function ProfileTab() {
@@ -16,20 +18,15 @@ export default function ProfileTab() {
   const signOut = useSession((s) => s.signOut);
   const isCompanion = user?.role === 'companion';
   const verified = user?.is_verified;
+  const privacyValue = [user?.profileVisibility === 'locked' ? 'Photo locked' : user?.profileVisibility === 'open' ? 'Photo open' : null, user?.seeGender ? `Showing ${seeLabel(user.seeGender).toLowerCase()}` : null].filter(Boolean).join(' · ') || undefined;
 
-  const logout = () =>
-    Alert.alert('Log out?', 'You can log back in with your number and OTP or your PIN.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          queryClient.clear();
-          router.replace('/welcome');
-        },
-      },
-    ]);
+  const confirm = useConfirm();
+  const logout = async () => {
+    if (!(await confirm({ title: 'Log out?', message: 'You can log back in with your number and OTP or your PIN.', confirmLabel: 'Log out', destructive: true }))) return;
+    await signOut();
+    queryClient.clear();
+    router.replace('/welcome');
+  };
 
   return (
     <Screen>
@@ -74,6 +71,7 @@ export default function ProfileTab() {
 
       <View style={styles.group}>
         <ListRow icon="user" label="Personal information" onPress={() => router.push('/edit-profile')} />
+        <ListRow icon="lock" label="Privacy & preferences" value={privacyValue} onPress={() => router.push('/privacy')} />
         <ListRow icon="heart" label="Saved companions" value={savedCount ? `${savedCount} saved` : undefined} onPress={() => router.push('/saved')} />
         <ListRow icon="bell" label="Notifications" onPress={() => router.push('/notifications')} />
         <ListRow icon="lock" label={user?.hasPin ? 'Change PIN' : 'Set a PIN'} onPress={() => router.push({ pathname: '/pin', params: { mode: 'set' } })} last />

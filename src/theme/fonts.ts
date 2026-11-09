@@ -7,6 +7,7 @@
 export const fontAssets = {
   'Lora-Medium': require('@expo-google-fonts/lora/500Medium/Lora_500Medium.ttf'),
   'Lora-SemiBold': require('@expo-google-fonts/lora/600SemiBold/Lora_600SemiBold.ttf'),
+  'Lora-SemiBoldItalic': require('@expo-google-fonts/lora/600SemiBold_Italic/Lora_600SemiBold_Italic.ttf'),
   'DMSans-Regular': require('@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.ttf'),
   'DMSans-Medium': require('@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf'),
   'DMSans-SemiBold': require('@expo-google-fonts/dm-sans/600SemiBold/DMSans_600SemiBold.ttf'),
@@ -16,6 +17,7 @@ export const fontAssets = {
 export const fonts = {
   display: 'Lora-SemiBold',
   displayMedium: 'Lora-Medium',
+  brand: 'Lora-SemiBoldItalic',
   body: 'DMSans-Regular',
   medium: 'DMSans-Medium',
   semibold: 'DMSans-SemiBold',

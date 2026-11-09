@@ -6,7 +6,7 @@ import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header, Chip, Loading, ErrorState, IconButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { DURATIONS, durationLabel, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf, toMinutes, DEFAULT_END } from '@/domain/booking';
+import { MIN_LEAD_MINUTES, DURATIONS, durationLabel, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf, toMinutes, DEFAULT_END } from '@/domain/booking';
 import type { Duration } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -32,7 +32,8 @@ export default function SelectDateTime() {
   const weeks = monthGrid(cursor.y, cursor.m);
   const last = new Date(today);
   last.setDate(last.getDate() + BOOK_AHEAD_DAYS);
-  const slots = c && date ? timeSlots(c, date) : [];
+  // Prepaid bookings need ~90 minutes to offer up to three companions before the start.
+  const slots = c && date ? timeSlots(c, date, new Date(), 30, MIN_LEAD_MINUTES) : [];
   const monthLabel = new Date(cursor.y, cursor.m, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   const canPrev = cursor.y > today.getFullYear() || cursor.m > today.getMonth();
   const canNext = new Date(cursor.y, cursor.m + 1, 1) <= last;

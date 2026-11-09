@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { RequestCard } from './RequestCard';
-import { earningsFor, formatINR } from '@/domain/booking';
+import { awaitingAnswer, earningsFor, formatINR } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { useSession } from '@/state/session';
 
@@ -19,7 +19,7 @@ export function CompanionDashboard() {
   const check = useQuery({ queryKey: qk.profileCheck, queryFn: svc.checkProfile });
   const now = new Date();
   const month = useMemo(() => earningsFor(q.data ?? [], now.getFullYear(), now.getMonth()), [q.data]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pending = (q.data ?? []).filter((b) => b.status === 'pending');
+  const pending = (q.data ?? []).filter((b) => awaitingAnswer(b));
   const status = check.data?.status ?? user?.verification_status;
   const live = status === 'verified';
 
@@ -64,7 +64,7 @@ export function CompanionDashboard() {
       </Text>
 
       {pending.length ? (
-        <Section title="New requests" action="See all" onAction={() => router.push('/bookings')}>
+        <Section title="Waiting for your answer" action="See all" onAction={() => router.push('/bookings')}>
           <View style={{ gap: space.md }}>
             {pending.slice(0, 2).map((b) => (
               <RequestCard key={b._id} b={b} />

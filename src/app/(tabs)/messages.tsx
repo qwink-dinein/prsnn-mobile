@@ -8,7 +8,7 @@ import { Avatar, EmptyState, ErrorState, Loading } from '@/components/ui/layout'
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { whenOf } from '@/components/bookings';
-import { canChat, personOf, startsAt } from '@/domain/booking';
+import { canChat, isMineAsCompanion, personOf, startsAt } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -18,7 +18,7 @@ export default function MessagesTab() {
   const isCompanion = useSession((s) => s.user?.role === 'companion');
   const q = useQuery({ queryKey: isCompanion ? qk.incoming : qk.myBookings, queryFn: isCompanion ? svc.incomingBookings : svc.myBookings });
   const threads = useMemo(
-    () => (q.data ?? []).filter((b) => canChat(b, isCompanion)).sort((a, b) => startsAt(b).getTime() - startsAt(a).getTime()),
+    () => (q.data ?? []).filter((b) => canChat(b, isCompanion) && (!isCompanion || isMineAsCompanion(b))).sort((a, b) => startsAt(b).getTime() - startsAt(a).getTime()),
     [q.data, isCompanion],
   );
 

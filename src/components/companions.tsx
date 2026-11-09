@@ -8,6 +8,7 @@ import { useSession } from '@/state/session';
 import { Text } from './ui/Text';
 import { Icon } from './ui/Icon';
 import { Avatar } from './ui/layout';
+import { LockedPhoto } from './LockedPhoto';
 
 export const firstName = (name?: string) => (name ?? '').trim().split(/\s+/)[0] || 'Companion';
 export const placeOf = (c: Pick<Companion, 'area' | 'city'>) => [c.area, c.city].filter(Boolean).join(', ');
@@ -30,6 +31,7 @@ export function HeartButton({ id, size = 20, onDark }: { id: string; size?: numb
 }
 
 function Photo({ c, style }: { c: Companion; style: object }) {
+  if (c.locked) return <LockedPhoto style={style} />;
   if (c.profilePhoto) return <Image source={{ uri: c.profilePhoto }} style={style} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />;
   return (
     <View style={[style, styles.photoFallback]}>
@@ -77,7 +79,7 @@ export function CompanionRow({ c }: { c: Companion }) {
       onPress={() => router.push(`/companion/${c.id}`)}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}
     >
-      <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online />
+      <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="headline" numberOfLines={1}>
           {c.fullName ?? 'Companion'}

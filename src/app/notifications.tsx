@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { useConfirm } from '@/components/ui/confirm';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
@@ -12,18 +13,29 @@ import { errorMessage } from '@/lib/api';
 import { ago } from '@/domain/time';
 
 type Filter = 'all' | 'bookings' | 'payments';
-const ICON: Record<NotificationType, IconName> = { booking_request: 'calendar', booking_accepted: 'check', payment_completed: 'rupee', other: 'sparkle' };
-const inFilter = (n: AppNotification, f: Filter) => f === 'all' || (f === 'bookings' ? n.type.startsWith('booking') : n.type === 'payment_completed');
+const ICON: Record<NotificationType, IconName> = {
+  booking_request: 'calendar',
+  booking_offer: 'calendar',
+  booking_accepted: 'check',
+  booking_confirmed: 'check',
+  booking_cancelled: 'close',
+  payment_completed: 'rupee',
+  refund: 'rupee',
+  dispute: 'flag',
+  other: 'sparkle',
+};
+const inFilter = (n: AppNotification, f: Filter) => f === 'all' || (f === 'bookings' ? n.type.startsWith('booking') || n.type === 'dispute' : n.type === 'payment_completed' || n.type === 'refund');
 
 /** Screen 16 · Notifications. */
 export default function Notifications() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [filter, setFilter] = useState<Filter>('all');
   const q = useQuery({ queryKey: qk.notifications, queryFn: svc.notifications });
   const clear = useMutation({
     mutationFn: svc.clearNotifications,
     onSuccess: () => qc.setQueryData(qk.notifications, []),
-    onError: (e) => Alert.alert('Could not clear', errorMessage(e)),
+    onError: (e) => confirm({ title: 'Could not clear', message: errorMessage(e) }),
   });
   const list = useMemo(() => (q.data ?? []).filter((n) => inFilter(n, filter)), [q.data, filter]);
 
@@ -38,12 +50,9 @@ export default function Notifications() {
               color={colors.moss}
               accessibilityRole="button"
               style={{ padding: space.md }}
-              onPress={() =>
-                Alert.alert('Clear all notifications?', undefined, [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Clear all', style: 'destructive', onPress: () => clear.mutate() },
-                ])
-              }
+              onPress={async () => {
+                if (await confirm({ title: 'Clear all notifications?', confirmLabel: 'Clear all', destructive: true })) clear.mutate();
+              }}
             >
               Clear
             </Text>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
+import { useConfirm } from '@/components/ui/confirm';
 import { router } from 'expo-router';
 import { colors, space } from '@/theme/tokens';
 import { Screen, Header, Card } from '@/components/ui/layout';
@@ -17,27 +18,21 @@ export default function DeleteAccount() {
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const run = () =>
-    Alert.alert('Delete your account?', 'This can’t be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setBusy(true);
-          try {
-            await svc.deleteAccount();
-            await signOut();
-            queryClient.clear();
-            router.replace('/welcome');
-          } catch (e) {
-            Alert.alert('Could not delete account', errorMessage(e));
-          } finally {
-            setBusy(false);
-          }
-        },
-      },
-    ]);
+  const ask = useConfirm();
+  const run = async () => {
+    if (!(await ask({ title: 'Delete your account?', message: 'This can’t be undone.', confirmLabel: 'Delete', destructive: true }))) return;
+    setBusy(true);
+    try {
+      await svc.deleteAccount();
+      await signOut();
+      queryClient.clear();
+      router.replace('/welcome');
+    } catch (e) {
+      await ask({ title: 'Could not delete account', message: errorMessage(e) });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Screen footer={<Button label="Delete my account" variant="danger" disabled={confirm.trim().toUpperCase() !== 'DELETE'} loading={busy} onPress={run} />}>

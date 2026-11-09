@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
@@ -13,6 +13,10 @@ import { CATEGORIES, type CategoryKey } from '@/domain/booking';
 import { filterCompanions, SORTS, type Sort } from '@/domain/search';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
+import { CitySheet } from '@/components/PlacePicker';
+import { areasFor } from '@/data/india-areas';
+import { seeLabel } from '@/domain/privacy';
+import { useSession } from '@/state/session';
 
 /** Screen 7 · Search & filters (filters run on the device over the verified list). */
 export default function SearchTab() {
@@ -23,6 +27,10 @@ export default function SearchTab() {
   const [area, setArea] = useState<string | 'all'>('all');
   const [sort, setSort] = useState<Sort>('recommended');
   const [panel, setPanel] = useState<'none' | 'area' | 'sort'>('none');
+  const user = useSession((s) => s.user);
+  // Default to the member's own city; "All cities" clears it.
+  const [city, setCity] = useState<string | null>(user?.city ?? null);
+  const [cityOpen, setCityOpen] = useState(false);
 
   // A category tapped on Home arrives as a route param; adopt it whenever it changes (tab stays mounted).
   const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
@@ -31,8 +39,12 @@ export default function SearchTab() {
     if (params.category && CATEGORIES.some((c) => c.key === params.category)) setCategory(params.category as CategoryKey);
   }
 
-  const areas = useMemo(() => Array.from(new Set((q.data ?? []).map((c) => c.area).filter(Boolean) as string[])).sort(), [q.data]);
-  const results = useMemo(() => filterCompanions(q.data ?? [], text, category, area, sort), [q.data, text, category, area, sort]);
+  // Areas: the city's known list plus any area a companion there uses.
+  const areas = useMemo(() => {
+    const fromData = (q.data ?? []).filter((c) => !city || (c.city ?? '').toLowerCase() === city.toLowerCase()).map((c) => c.area).filter(Boolean) as string[];
+    return Array.from(new Set([...fromData, ...areasFor(city)])).sort();
+  }, [q.data, city]);
+  const results = useMemo(() => filterCompanions(q.data ?? [], text, category, area, sort, city), [q.data, text, category, area, sort, city]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -56,9 +68,21 @@ export default function SearchTab() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
-        <Chip label={area === 'all' ? 'Location' : area} icon="mapPin" selected={area !== 'all' || panel === 'area'} onPress={() => setPanel(panel === 'area' ? 'none' : 'area')} />
+        <Chip label={city ?? 'All cities'} icon="mapPin" selected={!!city} onPress={() => setCityOpen(true)} />
+        <Chip label={area === 'all' ? 'Area' : area} selected={area !== 'all' || panel === 'area'} onPress={() => setPanel(panel === 'area' ? 'none' : 'area')} />
         <Chip label={SORTS.find((s) => s.key === sort)!.label} icon="sliders" selected={sort !== 'recommended' || panel === 'sort'} onPress={() => setPanel(panel === 'sort' ? 'none' : 'sort')} />
+        <Chip label={`Showing ${seeLabel(user?.seeGender).toLowerCase()}`} icon="users" selected={!!user?.seeGender && user.seeGender !== 'everyone'} onPress={() => router.push('/privacy')} />
       </ScrollView>
+      <CitySheet
+        visible={cityOpen}
+        allowAll
+        onClose={() => setCityOpen(false)}
+        onPick={(p) => {
+          setCity(p?.city ?? null);
+          setArea('all');
+          setCityOpen(false);
+        }}
+      />
 
       {panel !== 'none' ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
@@ -103,6 +127,7 @@ export default function SearchTab() {
                 setText('');
                 setCategory('all');
                 setArea('all');
+                setCity(null);
                 setSort('recommended');
               }}
             />

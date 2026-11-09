@@ -89,14 +89,14 @@ export function availableDayNames(availability: Availability | undefined): strin
  * companion's start and end (inclusive); we offer every 30 minutes and drop
  * slots already in the past when the chosen day is today.
  */
-export function timeSlots(c: Pick<Companion, 'startTime' | 'endTime'>, day: Date, now: Date = new Date(), step = 30): string[] {
+export function timeSlots(c: Pick<Companion, 'startTime' | 'endTime'>, day: Date, now: Date = new Date(), step = 30, leadMinutes = 30): string[] {
   const start = toMinutes(c.startTime || DEFAULT_START);
   const end = toMinutes(c.endTime || DEFAULT_END);
   const isToday = toDateKey(day) === toDateKey(now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const out: string[] = [];
   for (let t = start; t <= end; t += step) {
-    if (isToday && t <= nowMin + 30) continue; // leave the companion at least 30 minutes
+    if (isToday && t < nowMin + leadMinutes) continue; // leave time to confirm a companion
     out.push(fromMinutes(t));
   }
   return out;
@@ -114,8 +114,11 @@ export function monthGrid(year: number, month: number): (Date | null)[][] {
   return weeks;
 }
 
-export const personOf = (p: PersonRef | string | undefined): PersonRef | null => (p && typeof p === 'object' ? p : null);
-export const idOf = (p: PersonRef | string | undefined): string => (p && typeof p === 'object' ? p._id : (p ?? ''));
+export const personOf = (p: PersonRef | string | null | undefined): PersonRef | null => (p && typeof p === 'object' ? p : null);
+export const idOf = (p: PersonRef | string | null | undefined): string => (p && typeof p === 'object' ? p._id : (p ?? ''));
+
+/** The companion to show on a customer's booking: the assigned one, else the one they chose. */
+export const companionOf = (b: Pick<Booking, 'companionId' | 'preferredCompanionId'>): PersonRef | null => personOf(b.companionId) ?? personOf(b.preferredCompanionId);
 
 /** When the session starts, as a local Date. */
 export function startsAt(b: Pick<Booking, 'scheduledDate' | 'startTime'>): Date {
@@ -125,13 +128,36 @@ export function startsAt(b: Pick<Booking, 'scheduledDate' | 'startTime'>): Date 
   return d;
 }
 
-export type Stage = 'awaiting' | 'pay' | 'confirmed' | 'completed' | 'declined' | 'cancelled';
+export type Stage =
+  | 'awaiting' // request flow: waiting for the companion to accept
+  | 'pay' // request flow: accepted, customer must pay
+  | 'paying' // prepaid: booking created, payment not finished
+  | 'finding' // prepaid: paid, offering to companions
+  | 'confirmed'
+  | 'completed'
+  | 'declined'
+  | 'unfulfilled' // prepaid: nobody accepted in time → refunded
+  | 'cancelled';
 
 /**
- * Where a booking stands, from the requester's point of view.
- * Backend flow: request (pending) → companion accepts → requester pays → chat.
+ * Where a booking stands for the customer.
+ * Website flow: request → accept → pay. App (prepaid): pay → companion offers → confirmed.
  */
-export function stageOf(b: Pick<Booking, 'status' | 'paymentStatus'>): Stage {
+export function stageOf(b: Pick<Booking, 'status' | 'paymentStatus'> & Partial<Pick<Booking, 'flow' | 'allocation'>>): Stage {
+  if (b.flow === 'prepaid') {
+    switch (b.allocation?.state) {
+      case 'awaiting_payment':
+        return 'paying';
+      case 'offering':
+        return 'finding';
+      case 'failed':
+        return 'unfulfilled';
+      case 'cancelled':
+        return 'cancelled';
+      default:
+        return b.status === 'completed' ? 'completed' : b.status === 'cancelled' ? 'cancelled' : 'confirmed';
+    }
+  }
   switch (b.status) {
     case 'pending':
       return 'awaiting';
@@ -146,10 +172,46 @@ export function stageOf(b: Pick<Booking, 'status' | 'paymentStatus'>): Stage {
   }
 }
 
+/** Plain-language payment state, kept separate from the booking state. */
+export function paymentLabel(b: Pick<Booking, 'paymentStatus'> & Partial<Pick<Booking, 'refund' | 'amountPaid' | 'paymentMode'>>): string {
+  const test = b.paymentMode === 'simulated' ? ' (test)' : '';
+  const r = b.refund;
+  if (r && r.status !== 'none') {
+    const amt = formatINR(r.amount);
+    if (r.status === 'processed') return `Refunded ${amt}${test}`;
+    if (r.status === 'failed') return `Refund of ${amt} is being retried`;
+    return `Refund of ${amt} in progress`;
+  }
+  if (b.paymentStatus === 'paid') return `Paid ${formatINR(b.amountPaid ?? 0)}${test}`;
+  if (b.paymentStatus === 'refunded') return 'Refunded';
+  if (b.paymentStatus === 'failed') return 'Payment failed';
+  return 'Not paid';
+}
+
+/**
+ * What the customer gets back if they cancel now (prsnn refund policy):
+ * before the session starts → everything paid; after it starts → nothing automatic.
+ */
+export function refundIfCancelledNow(b: Booking, now: Date = new Date()): { amount: number; reason: string } {
+  if (b.paymentStatus !== 'paid') return { amount: 0, reason: 'Nothing has been charged.' };
+  if (startsAt(b).getTime() > now.getTime()) return { amount: b.amountPaid ?? 0, reason: 'Cancelling before the session starts: full refund.' };
+  return { amount: 0, reason: 'The session has started: no automatic refund. Use “Report a problem” if something went wrong.' };
+}
+
+/** Minutes left on a deadline (rounded up), or 0. */
+export function minutesLeft(iso: string | null | undefined, now: Date = new Date()): number {
+  if (!iso) return 0;
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - now.getTime()) / 60000));
+}
+
+/** Earliest session the prepaid flow accepts (allocation needs 90 minutes). */
+export const MIN_LEAD_MINUTES = 90;
+
 export type BookingTab = 'upcoming' | 'past' | 'cancelled';
 
 export function tabOf(b: Booking, now: Date = new Date()): BookingTab {
   if (b.status === 'cancelled' || b.status === 'rejected') return 'cancelled';
+  if (b.flow === 'prepaid' && ['failed', 'cancelled'].includes(b.allocation?.state ?? '')) return 'cancelled';
   if (b.status === 'completed') return 'past';
   const end = startsAt(b);
   end.setMinutes(end.getMinutes() + Number(b.duration || 60));
@@ -171,8 +233,17 @@ export interface EarningsSummary {
 }
 
 /** Companion earnings for one month from incoming bookings (paid ones only). */
+/** A companion's own booking: website requests to them, or prepaid offers they accepted. */
+export const isMineAsCompanion = (b: Booking) => b.flow !== 'prepaid' || b.myOffer?.status === 'accepted';
+
+/** Waiting for the companion's answer: a live prepaid offer or a pending website request. */
+export function awaitingAnswer(b: Booking, now: Date = new Date()): boolean {
+  if (b.flow === 'prepaid') return b.myOffer?.status === 'offered' && new Date(b.myOffer.expiresAt).getTime() > now.getTime();
+  return b.status === 'pending';
+}
+
 export function earningsFor(bookings: Booking[], year: number, month: number): EarningsSummary {
-  const inMonth = bookings.filter((b) => {
+  const inMonth = bookings.filter(isMineAsCompanion).filter((b) => {
     const d = parseDateKey(b.scheduledDate);
     return d.getFullYear() === year && d.getMonth() === month;
   });
@@ -192,7 +263,7 @@ export function earningsFor(bookings: Booking[], year: number, month: number): E
     total,
     sessions: paid.length,
     average: paid.length ? Math.round(total / paid.length) : 0,
-    pending: inMonth.filter((b) => b.status === 'pending').length,
+    pending: bookings.filter((b) => awaitingAnswer(b)).length,
     weeks,
   };
 }

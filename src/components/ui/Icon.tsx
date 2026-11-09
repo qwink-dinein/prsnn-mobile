@@ -60,6 +60,7 @@ const PATHS = {
   backspace: 'M9 5h11v14H9l-6-7 6-7zm3 4 5 6m0-6-5 6',
   doc: 'M6 3h8l4 4v14H6V3zm8 0v4h4M9 12h6m-6 4h6',
   flag: 'M5 21V4m0 0h11l-2 4 2 4H5',
+  eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

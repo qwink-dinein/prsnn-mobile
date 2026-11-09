@@ -15,6 +15,10 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ WhatsApp Utility notices: booking request → companion, accepted → member (pay), paid → companion (WHATSAPP_TEMPLATES.md)
 - ✅ Simulated payments (`PAYMENT_MODE=simulated`) with a test checkout in the app, including a failure path
 - ✅ Forgot PIN → code on WhatsApp → choose a new PIN
+- ✅ Easier PIN keypad (76pt keys, no dropped taps, hardware keyboard) and login motion
+- ✅ **Prepaid booking**: pay first → chosen companion (15 min) → up to 2 backups → atomic assignment → auto refund; idempotency, webhook, cancel policy, disputes
+- ✅ Italic “person.” brand everywhere; gender + “show me” filter (server-side); profile lock with consent and a static blurred placeholder
+- ✅ All Indian cities (ODbL dataset) + metro area lists in onboarding, companion registration and Search
 
 ## Before the first real build
 
@@ -27,6 +31,16 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 🔑 **Apple Developer** account for iOS builds and TestFlight.
 - ⏳ Add `https://prsnn.com` deep links (`/companions/:id`) as intentFilters / associatedDomains.
 
+## Prepaid follow-ups
+
+- ⏳ Run the allocation tests against a real MongoDB on the testing service (this session couldn't download MongoDB). The concurrency guarantees rely on MongoDB conditional updates.
+- ⏳ Razorpay Dashboard → Webhooks → add `/api/payments/webhook` (payment.captured, refund.processed) and set `RAZORPAY_WEBHOOK_SECRET` when Razorpay goes live.
+- ⏳ Push notifications for offers: 15 minutes is short without them (WhatsApp `booking_request` covers it meanwhile).
+- 💡 When a companion cancels a confirmed booking before the start, offer it to backups instead of refunding straight away (needs a product decision).
+- 💡 Admin view of open disputes and refunds (today: emailed to SUPPORT_EMAIL).
+- 💡 Product decision: a backup with a lower rate currently earns the price the customer paid.
+- 💡 Older companions without a gender appear only to members who chose “Everyone” until they set one (the app asks on next login).
+
 ## P1 (launch quality)
 
 - ⏳ Push notifications (expo-notifications plus a `pushToken` on User; the backend sends on booking_request, booking_accepted, payment_completed and new messages)
@@ -38,7 +52,6 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 ## P2 (product)
 
-- 💡 Pay-at-request (mock-up order) with auto-refund on decline. Needs backend order and refund flow.
 - 💡 Ratings and reviews after `completed` (new Review model). The mock-ups show "4.8 ★".
 - 💡 Saved companions synced to the server
 - 💡 Age on profiles (mock-up "Ayesha, 24"). Needs a date of birth at onboarding plus an 18+ check.
@@ -50,7 +63,7 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 ## Known backend issues found while reading the code
 
-- `searchCompanions` builds a `RegExp` from user input (ReDoS / regex injection). Escape it. The app doesn't call this endpoint.
+- ✅ `searchCompanions` now escapes user input before building a RegExp.
 - `updateProfile` lets a user change `email` and `username` with no uniqueness check or re-verification.
 - `cancel_session` socket event broadcasts without checking the booking status or that the sender is a participant (it only needs to be in the room).
 - One existing test (`booking.test.js` "403 if the requester is not verified") fails because the check was removed on purpose. Update or delete the test.

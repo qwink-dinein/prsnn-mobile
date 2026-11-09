@@ -5,12 +5,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { colors, space } from '@/theme/tokens';
 import { Screen, Header, Card, Loading, ErrorState } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
+import { Brand } from '@/components/ui/Brand';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { RazorpaySheet, openWebCheckout, type CheckoutOptions, type RazorpaySuccess } from '@/components/RazorpaySheet';
 import { SimulatedCheckout } from '@/components/SimulatedCheckout';
 import { totalOf, whenOf } from '@/components/bookings';
-import { formatINR, personOf } from '@/domain/booking';
+import { formatINR, companionOf, minutesLeft } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -37,7 +38,7 @@ export default function Pay() {
   if (q.isLoading) return <Loading />;
   if (q.isError || !q.data) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
   const b = q.data;
-  const person = personOf(b.companionId);
+  const person = companionOf(b);
 
   const done = async (r: RazorpaySuccess) => {
     setCheckout(null);
@@ -105,7 +106,7 @@ export default function Pay() {
           <View style={styles.secure}>
             <Icon name="shieldCheck" size={14} color={colors.gray500} />
             <Text variant="caption" muted>
-              Secure checkout · verified by prsnn
+              Secure checkout · verified by <Brand />
             </Text>
           </View>
         </View>
@@ -155,6 +156,15 @@ export default function Pay() {
         })}
       </Card>
 
+      {b.flow === 'prepaid' && b.allocation?.state === 'awaiting_payment' && b.allocation.paymentDeadline ? (
+        <Text variant="footnote" muted style={{ marginTop: space.lg }}>
+          Finish paying within {minutesLeft(b.allocation.paymentDeadline)} min, or this booking lapses (nothing is charged). After payment we confirm your companion; if nobody can make it, you’re refunded in full.
+        </Text>
+      ) : b.flow === 'prepaid' && b.allocation?.state && b.allocation.state !== 'awaiting_payment' && b.paymentStatus !== 'paid' ? (
+        <Text variant="footnote" color={colors.danger} style={{ marginTop: space.lg }}>
+          This booking can no longer be paid. Please book again.
+        </Text>
+      ) : null}
       {error ? (
         <Text variant="footnote" color={colors.danger} style={{ marginTop: space.lg }} accessibilityLiveRegion="polite">
           {error}

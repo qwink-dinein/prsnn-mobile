@@ -172,3 +172,38 @@ is the opt-in Meta expects.
 
 WhatsApp goes to the verified login number. For older web accounts without
 one, it goes to the number on their profile.
+
+---
+
+## Prepaid booking messages (added 2026-11-09)
+
+With the prepaid flow, the **companion offer** reuses `prsnn_booking_request` (template 2:
+“…new booking request… open the app to accept or decline”). Two more Utility templates
+are needed. `prsnn_booking_accepted` and `prsnn_payment_received` stay for website bookings.
+
+### 5 · `prsnn_booking_confirmed` (Utility → member) · env `WAPLIFY_TPL_BOOKING_CONFIRMED`
+
+```
+Hello {{1}}, your booking on {{2}} is confirmed with {{3}}.
+
+Date: {{4}}
+Time: {{5}}
+Booking reference: {{6}}
+
+You can now chat with your companion in the app. Please remember to meet only in public places.
+```
+Samples: {{1}} Karan · {{2}} prsnn · {{3}} Ayesha · {{4}} Sun, 15 Nov · {{5}} 4:00 PM · {{6}} ABC9F1
+
+### 6 · `prsnn_booking_unfulfilled` (Utility → member) · env `WAPLIFY_TPL_BOOKING_UNFULFILLED`
+
+```
+Hello {{1}}, we could not find an available companion for your booking on {{2}}.
+
+Date: {{3}}
+Time: {{4}}
+Refund amount: ₹{{5}}
+Booking reference: {{6}}
+
+Your full refund has been started to your original payment method. You can book again in the app anytime.
+```
+Samples: {{1}} Karan · {{2}} prsnn · {{3}} Sun, 15 Nov · {{4}} 4:00 PM · {{5}} 1,200 · {{6}} ABC9F1

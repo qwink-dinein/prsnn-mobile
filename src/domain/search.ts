@@ -8,9 +8,10 @@ export const SORTS: { key: Sort; label: string }[] = [
   { key: 'priceHigh', label: 'Price: high to low' },
 ];
 
-export function filterCompanions(list: Companion[], text: string, category: CategoryKey | 'all', area: string | 'all', sort: Sort): Companion[] {
+export function filterCompanions(list: Companion[], text: string, category: CategoryKey | 'all', area: string | 'all', sort: Sort, city?: string | null): Companion[] {
   const t = text.trim().toLowerCase();
   const out = list.filter((c) => {
+    if (city && (c.city ?? '').toLowerCase() !== city.toLowerCase()) return false;
     if (category !== 'all' && !matchesCategory(c.tags, category)) return false;
     if (area !== 'all' && c.area !== area) return false;
     if (!t) return true;

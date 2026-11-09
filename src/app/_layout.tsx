@@ -11,6 +11,7 @@ import { fontAssets } from '@/theme/fonts';
 import { colors } from '@/theme/tokens';
 import { useSession } from '@/state/session';
 import { setUnauthorizedHandler } from '@/lib/api';
+import { ConfirmProvider } from '@/components/ui/confirm';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.mist }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
+          <ConfirmProvider>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist }, animation: 'default' }}>
             <Stack.Screen name="index" options={{ animation: 'fade' }} />
@@ -50,6 +52,7 @@ export default function RootLayout() {
             <Stack.Screen name="pay/[bookingId]" options={{ presentation: 'card' }} />
             <Stack.Screen name="confirmed" options={{ gestureEnabled: false, animation: 'fade' }} />
           </Stack>
+          </ConfirmProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

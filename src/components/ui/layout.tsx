@@ -7,6 +7,8 @@ import { colors, GUTTER, HIT, radius, shadow, space } from '@/theme/tokens';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 import { Button } from './Button';
+import { Wordmark } from './Brand';
+import { LockedPhoto } from '../LockedPhoto';
 
 /** Every screen: mist background, safe areas, optional scroll and a footer pinned above the home indicator. */
 export function Screen({
@@ -138,7 +140,15 @@ export function Pill({ label, tone = 'neutral' }: { label: string; tone?: 'neutr
   );
 }
 
-export function Avatar({ uri, name, size = 48, online }: { uri?: string | null; name?: string; size?: number; online?: boolean }) {
+export function Avatar({ uri, name, size = 48, online, locked }: { uri?: string | null; name?: string; size?: number; online?: boolean; locked?: boolean }) {
+  if (locked) {
+    return (
+      <View style={{ width: size, height: size }}>
+        <LockedPhoto style={{ width: size, height: size, borderRadius: size / 2 }} size={size > 70 ? 'md' : 'sm'} />
+        {online ? <View style={[styles.dot, { right: size * 0.02, bottom: size * 0.02 }]} accessibilityLabel="Verified" /> : null}
+      </View>
+    );
+  }
   const initials = (name ?? '?')
     .split(' ')
     .map((p) => p[0])
@@ -239,13 +249,9 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
   return <EmptyState icon="info" title="Something went wrong" body={message ?? 'Check your connection and try again.'} action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
 }
 
-/** "prsnn." wordmark with the clay full stop, as in the mock-ups. */
+/** The italic "person." wordmark with the clay full stop (see Brand.tsx). */
 export function Logo({ size = 28, color = colors.ink }: { size?: number; color?: string }) {
-  return (
-    <Text accessibilityRole="header" accessibilityLabel="prsnn" style={{ fontFamily: 'Lora-SemiBold', fontSize: size, lineHeight: size * 1.2, color, letterSpacing: -size * 0.03 }}>
-      prsnn<Text style={{ fontFamily: 'Lora-SemiBold', fontSize: size, color: colors.clay }}>.</Text>
-    </Text>
-  );
+  return <Wordmark size={size} color={color} />;
 }
 
 /** Segmented control (Upcoming / Past / Cancelled). */
