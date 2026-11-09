@@ -23,7 +23,8 @@ Rules Meta checks for Utility templates: no promotional words or offers, a
 variable can't be the very first or last thing in the body, and every
 variable needs a sample value. The wording below follows those rules. The
 variables match `src/utils/whatsappNotify.js` in the backend, so **keep the
-numbering exactly as shown**.
+numbering exactly as shown**. No name is fixed in the text: people, brand,
+dates and amounts are all variables.
 
 ---
 
@@ -56,28 +57,31 @@ create this template there. It is approved quickly.
 
 ## 2 · `prsnn_booking_request` (Utility → companion)
 
+Every name is a variable, including the brand. No footer and no buttons
+(footers can't hold variables, and a website button hardcodes the brand).
+
 **Body**
 ```
-Hi {{1}}, you have a new booking request on prsnn.
+Hello {{1}}, you have received a new booking request on {{2}}.
 
-From: {{2}}
-When: {{3}}, {{4}}
-Duration: {{5}}
-Booking ref: {{6}}
+Requested by: {{3}}
+Date: {{4}}
+Time: {{5}}
+Duration: {{6}}
+Booking reference: {{7}}
 
-Please open the prsnn app to accept or decline this request.
+Please open the app to accept or decline this request at the earliest.
 ```
-**Footer:** `prsnn · Good company, on your terms`
-**Button (optional):** Visit website → `Open prsnn` → `https://prsnn.com`
 
-| Var | Meaning | Sample |
+| Var | Meaning | Sample to enter in Waplify |
 |---|---|---|
 | {{1}} | companion's first name | Ayesha |
-| {{2}} | member's first name | Karan |
-| {{3}} | date | Sun, 15 Nov |
-| {{4}} | start time | 4:00 PM |
-| {{5}} | duration | 2 hours |
-| {{6}} | booking reference | ABC9F1 |
+| {{2}} | brand (`WAPLIFY_BRAND_NAME`, default "prsnn") | prsnn |
+| {{3}} | member's first name | Karan |
+| {{4}} | date | Sun, 15 Nov |
+| {{5}} | start time | 4:00 PM |
+| {{6}} | duration | 2 hours |
+| {{7}} | booking reference | ABC9F1 |
 
 ---
 
@@ -85,25 +89,25 @@ Please open the prsnn app to accept or decline this request.
 
 **Body**
 ```
-Hi {{1}}, {{2}} has accepted your booking request on prsnn.
+Hello {{1}}, your booking request on {{2}} has been accepted by {{3}}.
 
-When: {{3}}, {{4}}
-Amount due: ₹{{5}}
-Booking ref: {{6}}
+Date: {{4}}
+Time: {{5}}
+Amount payable: ₹{{6}}
+Booking reference: {{7}}
 
-Please complete the payment in the prsnn app to confirm your booking. Chat with your companion opens once the payment is done.
+Please complete the payment in the app to confirm your booking. Chat will be enabled once the payment is received.
 ```
-**Footer:** `prsnn · Good company, on your terms`
-**Button (optional):** Visit website → `Pay in app` → `https://prsnn.com`
 
 | Var | Meaning | Sample |
 |---|---|---|
 | {{1}} | member's first name | Karan |
-| {{2}} | companion's first name | Ayesha |
-| {{3}} | date | Sun, 15 Nov |
-| {{4}} | start time | 4:00 PM |
-| {{5}} | amount (no ₹, Indian commas) | 1,200 |
-| {{6}} | booking reference | ABC9F1 |
+| {{2}} | brand | prsnn |
+| {{3}} | companion's first name | Ayesha |
+| {{4}} | date | Sun, 15 Nov |
+| {{5}} | start time | 4:00 PM |
+| {{6}} | amount (no ₹, Indian commas) | 1,200 |
+| {{7}} | booking reference | ABC9F1 |
 
 ---
 
@@ -111,23 +115,31 @@ Please complete the payment in the prsnn app to confirm your booking. Chat with 
 
 **Body**
 ```
-Hi {{1}}, {{2}} has completed the payment of ₹{{3}} for your booking on prsnn.
+Hello {{1}}, the payment of ₹{{2}} from {{3}} has been received for your booking on {{4}}.
 
-When: {{4}}, {{5}}
-Booking ref: {{6}}
+Date: {{5}}
+Time: {{6}}
+Booking reference: {{7}}
 
-Your booking is confirmed and chat is now open in the prsnn app. Please meet only in public places.
+Your booking is now confirmed and chat is enabled in the app. Please remember to meet only in public places.
 ```
-**Footer:** `prsnn · Good company, on your terms`
 
 | Var | Meaning | Sample |
 |---|---|---|
 | {{1}} | companion's first name | Ayesha |
-| {{2}} | member's first name | Karan |
-| {{3}} | amount | 1,200 |
-| {{4}} | date | Sun, 15 Nov |
-| {{5}} | start time | 4:00 PM |
-| {{6}} | booking reference | ABC9F1 |
+| {{2}} | amount | 1,200 |
+| {{3}} | member's first name | Karan |
+| {{4}} | brand | prsnn |
+| {{5}} | date | Sun, 15 Nov |
+| {{6}} | start time | 4:00 PM |
+| {{7}} | booking reference | ABC9F1 |
+
+### If Meta still rejects one
+
+- **"Too many variables for the length"**: delete the `Duration` line from #2 and tell me. I'll drop that variable in the code.
+- **Category changed to Marketing**: re-submit as Utility, with "Transactional booking update" as the use case.
+- Never put a variable as the first or last word, or two variables side by side. These bodies avoid both.
+- Waplify's sample-value fields must be filled exactly in order {{1}}…{{7}}.
 
 ---
 
@@ -146,6 +158,7 @@ Your booking is confirmed and chat is now open in the prsnn app. Please meet onl
 WAPLIFY_API_KEY=wapl_...
 WAPLIFY_TEMPLATE_NAME=prsnn_login_code
 WAPLIFY_CODE_KEYS=1
+WAPLIFY_BRAND_NAME=prsnn
 WAPLIFY_TPL_BOOKING_REQUEST=prsnn_booking_request
 WAPLIFY_TPL_BOOKING_ACCEPTED=prsnn_booking_accepted
 WAPLIFY_TPL_PAYMENT_RECEIVED=prsnn_payment_received
