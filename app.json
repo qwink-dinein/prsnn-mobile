@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "prsnn",
+    "slug": "prsnn",
+    "scheme": "prsnn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F3F1EB",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F3F1EB"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.prsnn.app",
+      "config": { "usesNonExemptEncryption": false },
+      "infoPlist": {
+        "NSCameraUsageDescription": "prsnn uses the camera so you can take your profile photo and ID photos for verification.",
+        "NSPhotoLibraryUsageDescription": "prsnn uses your photos so you can choose a profile photo and upload ID documents for verification."
+      }
+    },
+    "android": {
+      "package": "com.prsnn.app",
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2F4A34"
+      },
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icon.png",
+      "themeColor": "#2F4A34",
+      "backgroundColor": "#F3F1EB"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "prsnn uses your photos so you can choose a profile photo and upload ID documents for verification.",
+          "cameraPermission": "prsnn uses the camera so you can take your profile photo and ID photos for verification."
+        }
+      ]
+    ],
+    "experiments": { "typedRoutes": false }
+  }
+}
