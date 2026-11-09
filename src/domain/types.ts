@@ -224,6 +224,10 @@ export interface AdminUser {
   backupPhotoUrl?: string;
   idProofFrontUrl?: string;
   idProofBackUrl?: string;
+  /** Storage paths of the ID documents (private bucket; the app signs links). */
+  idFrontPath?: string;
+  idBackPath?: string;
+  selfiePath?: string;
   description?: string;
   tags: string[];
   packages?: number[];

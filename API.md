@@ -1,47 +1,46 @@
-# prsnn API used by the app
+# prsnn API (Supabase)
 
-Base: `EXPO_PUBLIC_API_URL` (default `https://prssn-backend.onrender.com/api`).
-Auth: `Authorization: Bearer <JWT>` (7-day expiry). Errors are JSON
-`{ message }`, and the app shows `message` as is.
-Client: `src/services/backend.ts`. Types: `src/domain/types.ts`.
+Project `prsnn` · ref `mhovyhapzhxcmcuelbol` · Mumbai (`ap-south-1`).
+SQL and edge functions: `qwink-dinein/prsnn-backend/supabase` (migrations are the source of truth).
+Client: `src/services/backend.ts` via `src/lib/supabase.ts`. Types: `src/domain/types.ts`.
 
-**New** marks endpoints added for the app on backend branches
-`claude/quirky-ramanujan-k68143` and `claude/adoring-euler-w8jj3h` (admin, settings, push).
+Every call is `supabase.rpc(name, args)` to a **security-definer** function that checks
+`auth.uid()` and the caller's current role, or a table read behind row-level security. Errors
+come back as `{ message }`; the app shows it as is. Logged-out visitors can call only
+`list_companions`, `get_companion` and `booking_policy`, and read `settings`.
 
 ## Auth
 
-| Method & path | Body | Returns | Notes |
-|---|---|---|---|
-| POST `/auth/phone/send-otp` **New** | `{ phone, channel?: 'whatsapp'\|'sms' }` | `{ message, channel, expiresIn }` | 8/15 min per IP; 30 s resend cooldown |
-| POST `/auth/phone/verify-otp` **New** | `{ phone, otp, role?: 'user'\|'companion' }` | `{ token, user, isNewUser }` | Creates the account on first verify; 5 tries per code |
-| POST `/auth/pin/set` **New** 🔒 | `{ pin }` | `{ message }` | 4 digits, weak PINs refused |
-| POST `/auth/pin/login` **New** | `{ phone, pin }` | `{ token, user }` | Locks for 15 min after 5 wrong tries |
-| POST `/auth/login` | `{ email, password }` (email or username) | `{ token, user }` or 403 `{ emailVerificationRequired, email }` | Web accounts |
-| POST `/auth/verify-email` | `{ email, otp }` | `{ token, user }` | |
+| Step | Call | Notes |
+|---|---|---|
+| Send code | `auth.signInWithOtp({ phone: '+91…', options: { channel: 'sms', data: { role, otp_channel } } })` | Supabase makes the code; the **Send SMS hook** (`functions/send-sms`) delivers it on WhatsApp (Waplify), SMS (MSG91) as backup. `role: 'companion'` only matters on first sign-up |
+| Verify | `auth.verifyOtp({ phone, token, type: 'sms' })` | Creates the account on first verify (trigger → `profiles`; members `verified`, companions `not_submitted`) |
+| After every login | `rpc('sync_my_role')` → session user | Applies the superadmin phone list (`private.superadmin_phones`), refuses suspended accounts |
+| PIN | on the device only (`src/lib/pin.ts`) | Salted SHA-256 in Keychain/Keystore unlocks the stored session; 5 wrong → OTP again |
 
-`phone` is any Indian mobile format; the server normalises it to `91XXXXXXXXXX`.
+Session user: `{ id, role, phone, fullName, is_verified, verification_status, profilePhoto, gender, seeGender, profileVisibility, city, suspended }`.
 
-`user` = `{ id, email?, username, role, is_verified, verification_status, fullName, profilePhoto, phone?, hasPin? }`
+## Profiles
 
-## Companions (public, viewer-aware)
+| RPC | Body | |
+|---|---|---|
+| `me()` / `my_profile()` | | session shape / full own row |
+| `update_my_profile(p)` | `fullName, city, state, area, description, gender, seeGender, profileVisibility (+ visibilityConsent: true), tags, packages (1–12), availability {monday…}, startTime, endTime, photoPath` | whitelisted; times inside the day window |
+| `submit_companion_application(p)` | above + `photoPath, idFrontPath, idBackPath, selfiePath?` | → `pending`; staff accounts refused |
+| `save_push_token(token)` | Expo token or null | a token moving to another account is removed from the old one |
+| `delete_my_account()` | | refused while a paid booking is open; keeps a `deleted_accounts` row |
 
-| GET `/companions?limit=100&city=` | verified companions, filtered for the viewer (send the JWT if logged in) |
-| GET `/companions/:id` | one companion (404 if not verified or outside the viewer's gender preference) |
-| GET `/companions/search/:q` | name, bio, tags, area, city (input escaped) |
+**Storage.** `avatars/<uid>/…` (public) and `verification/<uid>/…` (private: owner + staff, signed links).
+You can only write your own folder. JPG/PNG/WebP/HEIC, 8 MB.
 
-**Gender filter (server-enforced).** A logged-in viewer sees only companions whose `gender`
-matches their `seeGender` (`woman`/`man`/`nonbinary`), or everyone if `seeGender` is
-`everyone`. Logged-out viewers may pass `?see=`; otherwise they see everyone.
+## Companions (privacy applied on the server)
 
-**Profile lock.** A companion with `profileVisibility: 'locked'` comes back with
-`locked: true`, `profilePhoto: null` and first name only. A viewer with a confirmed, paid booking
-with them gets the full profile. The same rule hides a member's photo from companions
-until a booking between them is confirmed and paid. The app shows a static blurred placeholder
-(`assets/images/locked.jpg`), never a blurred copy of the real photo.
+| RPC | |
+|---|---|
+| `list_companions(see?)` | verified, not suspended, filtered by the viewer's “show me”; locked profiles → first name, no photo, `locked: true` until a confirmed, paid booking together |
+| `get_companion(cid)` | same rules; “Companion not found.” otherwise |
 
-## Prepaid bookings 🔒 (app) **New**
-
-Website bookings keep the request → accept → pay flow below. The app pays first:
+## Prepaid bookings
 
 ```mermaid
 stateDiagram-v2
@@ -56,15 +55,6 @@ stateDiagram-v2
   assigned --> [*]: completed
 ```
 
-| Method & path | Who | Body / result |
-|---|---|---|
-| GET `/bookings/prepaid/policy` | anyone | fees, matching rules, cancellation and refund terms (shown before payment) |
-| POST `/bookings/prepaid` | member | `{ companionId, scheduledDate, startTime, duration: '60'…'720' (whole hours the companion offers), idempotencyKey, acceptTerms: true, message?, city?, area? }` → `{ booking, quote: { amount, fees: 0, hours, effectiveHourly }, policy }`. 400 if the session starts before 07:00 or ends after 22:00. Same key again → same booking (`replayed: true`) |
-| POST `/bookings/:id/offer/accept` | companion | 200 confirmed · 409 expired, taken or time clash |
-| POST `/bookings/:id/offer/decline` | companion | next companion is offered straight away |
-| POST `/bookings/:id/cancel` | either party | prepaid: returns `{ refund: { amount, retained, reason } }` per the table below |
-| POST `/bookings/:id/dispute` | either party, paid bookings | `{ reason }` (≥10 chars) → emailed to `SUPPORT_EMAIL`; never blocked by payment |
-
 Rules: the session must be ≥90 min away. Payment is applied once (atomic `markPaid`).
 There is one live offer at a time; acceptance is a single conditional update on a live,
 unexpired offer, so only one companion can win. Each offer window =
@@ -76,7 +66,7 @@ any difference that could arise on reassignment is retained by the platform
 (`platformShare` = amount − `companionShare`), never added to the payout or charged to the customer. The customer never sees which other companions were offered (only
 `offerSummary: { tried, liveUntil }`). A companion sees only `myOffer`. Booking state
 (`status` + `allocation.state`) and payment state (`paymentStatus` + `refund`) are separate
-fields. A background sweep every 30 s expires offers, moves to the next companion and fails
+fields. The 30 s sweeper (`private.tick`) expires offers, moves to the next companion and fails
 bookings past their deadline.
 
 ### Prices and refunds
@@ -97,64 +87,42 @@ These are the **defaults**. A superadmin can change the package prices, the 80/2
 cancellation fee and cutoff, the offer windows, the day window and the headline packages in
 the app (Admin → Prices); see §Settings. Changes apply to new bookings only.
 
-Tunable in backend env: `PAYMENT_TIMEOUT_MINUTES=30`, `MAX_COMPANION_OFFERS=3`, `SUPPORT_EMAIL`
-(`OFFER_MIN_MINUTES` / `OFFER_MAX_MINUTES` now only seed the defaults).
+Server config (`private.config`, SQL editor): `payment_mode`, `max_offers` (3), `support_email`. Payment window 30 min.
 
-## Bookings 🔒 (website request flow, unchanged)
 
-| Method & path | Who | Body |
+| RPC | Who | |
 |---|---|---|
-| POST `/bookings/request` | member | `{ companionId, scheduledDate: 'YYYY-MM-DD', startTime: 'HH:MM', duration: '60'…'720' (whole hours), message? }` |
-| GET `/bookings/my-requests` | member | |
-| GET `/bookings/incoming-requests` | companion | |
-| GET `/bookings/:id` | either party | |
-| PUT `/bookings/:id/status` | companion | `{ status: accepted\|rejected\|completed\|cancelled }` |
-| POST `/bookings/:id/cancel` | either party | |
-| GET `/bookings/:id/messages?limit&before` | either party (member must have paid) | |
+| `booking_policy()` | anyone | fees, matching and refund terms from the prices in force |
+| `create_prepaid_booking(p)` | member | `{ companionId, scheduledDate, startTime, duration: '60'…'720', idempotencyKey, acceptTerms: true, message?, city?, area? }` → `{ booking, quote, policy, replayed? }` |
+| `payment_mode()` / `simulate_payment(bid, outcome)` | member | `simulated` until Razorpay is wired (`private.config`) |
+| `accept_offer(bid)` / `decline_offer(bid)` | companion | atomic; clash with another confirmed booking refused |
+| `cancel_booking(bid)` | either party | policy below |
+| `complete_booking(bid)` | companion | after the session has started |
+| `open_dispute(bid, reason)` | either party | paid bookings |
+| `my_bookings()` / `incoming_bookings()` / `get_booking(bid)` | | customer sees `offerSummary`, companion only `myOffer` |
 
-The server checks that the companion offers that weekday, that the start
-time falls inside `startTime`–`endTime` and the session runs between 07:00 and 22:00.
-The price is the fixed package price.
+Chat: table `messages` (Realtime). Only the two people on a confirmed, paid booking can read or
+write; staff can read it only when a dispute exists. Phone numbers are masked on insert.
 
-## Payments 🔒
+`private.tick()` runs every 30 s (`pg_cron`): lapses unpaid bookings, expires offers → next
+companion, fails bookings past the deadline (full refund), completes sessions 2 h after they end.
 
-| POST `/payments/create-intent` | `{ bookingId }` → `{ mode, orderId, amount (paise), currency, keyId? }` | booking must be `accepted`, unpaid; `mode` is `simulated` or `razorpay` |
-| POST `/payments/simulate` **New** | `{ bookingId, outcome?: 'success'\|'failure' }` | only when the server runs `PAYMENT_MODE=simulated`; same ownership/state rules; marks paid with `paymentMode: 'simulated'` |
-| POST `/payments/verify-payment` | `{ bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature }` | checks signature, order ↔ booking, captured, amount ≥ due |
-| POST `/payments/webhook` **New** | Razorpay → server, raw body signed with `RAZORPAY_WEBHOOK_SECRET` | `payment.captured` marks paid (amount checked); `refund.processed` marks refunds done. The source of truth if the app closes mid-payment |
+## Notifications and push
 
-**Simulated payments.** Until Razorpay is switched on, set `PAYMENT_MODE=simulated` on the
-backend (testing service only: the website needs real Razorpay orders). The app reads `mode`
-from create-intent and shows a test checkout clearly marked "no money will be taken". Switching
-the backend to `razorpay` turns on real checkout with no app update.
+Table `notifications` (own rows; mark read; delete). Every new row is delivered by
+`functions/notify` (cron, 30 s): Expo push to the person's device, and WhatsApp templates for
+`booking_offer` (→ `WAPLIFY_TPL_BOOKING_REQUEST`), `booking_confirmed` and unfulfilled refunds.
 
-**WhatsApp booking updates** (best effort, after the in-app notification): booking request →
-companion, accepted → member (pay prompt), paid → companion. See WHATSAPP_TEMPLATES.md.
+## Settings
 
-## Notifications 🔒
+`settings` row `pricing` (public read): `{ packagePrices {1…12}, platformShare, cancellationFee,
+cancellationCutoffMinutes, offerMinMinutes, offerMaxMinutes, dayStart, dayEnd, headlineHours }`.
+Change with `admin_save_pricing(p, reprice_unpaid)` (superadmin; prices must rise with hours and
+fall per hour). New bookings only; `reprice_unpaid` also moves bookings still awaiting payment.
 
-| GET `/notifications` | newest first |
-| DELETE `/notifications/clear` | |
+## Admin (ADMIN_SPEC.md)
 
-## Profile 🔒
-
-| GET `/profile` | own profile (private fields stripped) |
-| GET `/profile/check` | `{ hasProfile, status, is_verified, role }` |
-| PUT `/profile/update` (multipart) | `fullName, city, state, area, phoneNumber, description, packages (array of whole hours 1–12), startTime, endTime (07:00–22:00), <day>_availability, tags, profilePhoto`, plus `gender`, `seeGender`, `profileVisibility` (needs `visibilityConsent: true`; the consent time is stored) |
-| POST `/profile/onboard-companion` (multipart) | all companion fields + `profilePhoto, idProofFront, idProofBack, backupPhoto?` → status `pending` |
-| DELETE `/profile` **New** | delete own account (members and companions) |
-| PUT `/profile/push-token` **New** | `{ token: 'ExponentPushToken[…]' \| null }` — this device's Expo push token (null on sign-out). One per account; a token moving to another account is removed from the old one |
-
-## Settings **New**
-
-| Method & path | Who | Body / result |
-|---|---|---|
-| GET `/settings/pricing` | anyone | `{ packagePrices: { 1: 399 … 12: 3599 }, platformShare: 0.2, cancellationFee: 0.15, cancellationCutoffMinutes: 15, offerMinMinutes: 15, offerMaxMinutes: 300, dayStart: '07:00', dayEnd: '22:00', headlineHours: [1,2,4,6,12] }` · `Cache-Control: max-age=60`. The app applies it at start and every 5 min; it falls back to its bundled defaults |
-| PUT `/admin/settings/pricing` | superadmin | any subset of the fields above, plus `repriceUnpaid?: boolean` → `{ message, pricing, repriced }`. 400 unless every longer package costs more in total and less per hour, shares are fractions (`platformShare` ≤ 0.5), `offerMax ≥ offerMin`, `dayEnd` ≥ `dayStart` + 1 h. Stored in `Settings { key: 'pricing' }`; each server instance reloads it within 60 s. `repriceUnpaid` moves prepaid bookings still `awaiting_payment` to the new prices; paid bookings never change |
-
-## Admin 🔒 **New** (ADMIN_SPEC.md)
-
-Roles: **superadmin** = phones in backend env `SUPERADMIN_PHONES` (comma-separated, 10 digits;
+Roles: **superadmin** = phones in `private.superadmin_phones` (10 digits, added in the SQL editor;
 promoted on OTP/PIN login, demoted at the next login once removed). **subadmin** = added by a
 superadmin by phone. The website's `admin` role has sub-admin rights. Staff routes re-read the
 account on every call, so a removed or suspended admin loses access at once. Sub-admins get
@@ -162,67 +130,17 @@ account on every call, so a removed or suspended admin loses access at once. Sub
 before, after, at }` (changed fields only). Suspended accounts can't log in (403) and are hidden
 from listings, search and offers.
 
-All paths below are under `/admin/app` unless shown in full.
+| RPC | Who |
+|---|---|
+| `admin_overview()` (money for superadmin), `admin_verifications()`, `admin_decide_verification(uid, decision, note)` | staff |
+| `admin_users(q, role_filter)`, `admin_user(uid)`, `admin_update_user(uid, p)`, `admin_suspend_user(uid, on_off, reason)`, `admin_delete_user(uid)` | staff (staff targets: superadmin only) |
+| `admin_bookings(tab)`, `admin_booking(bid)`, `admin_booking_messages(bid)` (disputes only, logged), `admin_update_booking(bid, p)`, `admin_cancel_booking(bid, reason, refund_amount)`, `admin_reassign_booking(bid, cid)` | staff; a sub-admin cancel flags the refund for a superadmin |
+| `admin_disputes(st)`, `admin_reply_dispute(bid, msg, to_whom)`, `admin_close_dispute(bid, resolution)` | staff |
+| `admin_refund`, `admin_retry_refund`, `admin_mark_paid`, `admin_override_fee`, `admin_delete_booking` | 💰 superadmin |
+| `admin_admins()`, `admin_add_admin(phone)` (invites a number that has no account yet), `admin_remove_admin(uid)` | 💰 superadmin |
+| `admin_save_pricing`, `admin_audience()`, `admin_activity(before_at)`, table `broadcasts` | 💰 superadmin |
+| `functions/broadcast` `{ audience, title, body }` | 💰 superadmin (checked inside) |
 
-| Method & path | Who | Body / result |
-|---|---|---|
-| GET `/overview` | staff | `{ pendingVerifications, liveBookings, openDisputes, refundsToReview, failedRefunds, members, companions, bookingsToday, money? }` — `money { collected, refunded, companionPayouts, platformNet }` for superadmins only |
-| GET `/verifications` | staff | companions with `verificationStatus: 'pending'`, oldest first (with ID document URLs) |
-| POST `/verifications/:id` | staff | `{ decision: 'verified' \| 'rejected', note? }` — notifies the companion |
-| GET `/users?q=&role=user\|companion\|staff` | staff | up to 100; `q` matches name, username, email, city, or 4+ phone digits |
-| GET `/users/:id` | staff | `{ user, bookings }` (20 latest) |
-| PATCH `/users/:id` | staff | `fullName, city, area, state, description, gender, seeGender, profileVisibility, startTime, endTime, phoneNumber, tags, packages, availability` only. Staff targets: superadmin only |
-| POST `/users/:id/suspend` | staff | `{ suspended: boolean, reason? }` |
-| DELETE `/users/:id` | staff | 409 while they have a paid booking still open. Keeps a `DeletedAccount` row |
-| GET `/admins` · POST `/admins { phone }` · DELETE `/admins/:id` | 💰 superadmin | list staff · make the number a sub-admin (creates the account if new) · back to member |
-| GET `/bookings?tab=live\|refunds\|done` | staff | live = pending/accepted by date; refunds = review needed → failed → pending → processed; done = completed/cancelled/rejected. People populated; `companionShare`/`platformShare` for superadmins only |
-| GET `/bookings/:id` | staff | full booking incl. offers, refund, dispute notes |
-| GET `/bookings/:id/messages` | staff | the chat — only when the booking has a dispute (403 otherwise). Logged as `booking.read_chat` |
-| PATCH `/bookings/:id` | staff | `{ scheduledDate?, startTime?, message?, city?, area?, status?: 'completed' }` — no money fields; reschedules notify both people |
-| POST `/bookings/:id/cancel` | staff | `{ reason, refundAmount? }`. Sub-admin: no money moves; a paid booking gets `refundReview.needed` for a superadmin (403 if `refundAmount` is sent). Superadmin: refunds `refundAmount` (0…amountPaid) now |
-| POST `/bookings/:id/reassign` | staff | `{ companionId }` — an active verified companion; amount paid and split unchanged |
-| POST `/bookings/:id/refund` | 💰 | `{ amount, reason }` — full or partial; one refund per booking (409 after) |
-| POST `/bookings/:id/refund/retry` | 💰 | retry a `failed` refund (up to 5 attempts) |
-| POST `/bookings/:id/mark-paid` | 💰 | records the package price as paid, `paymentMode: 'simulated'`; a prepaid booking starts offering |
-| POST `/bookings/:id/cancellation-fee` | 💰 | `{ retained }` on a cancelled, paid booking before its refund → refunds `amountPaid − retained` |
-| DELETE `/bookings/:id` | 💰 | not while paid and open or while a refund is pending; deletes its chat |
-| GET `/disputes?status=open\|resolved` | staff | bookings with that dispute status |
-| POST `/disputes/:id/reply` | staff | `{ message, to?: 'both'\|'requester'\|'companion' }` — stored in `dispute.notes`, sent as notifications |
-| POST `/disputes/:id/close` | staff | `{ resolution }` |
-| POST `/notifications` · DELETE `/notifications/:id` | 💰 | `{ userId, message }` one in-app notification · remove one |
-| GET `/broadcast/audience` | 💰 | `{ members, companions }` devices with a push token |
-| POST `/api/admin/broadcast` | 💰 | `{ audience: 'members'\|'companions', title (2–65), body (2–240) }` → Expo push API in batches of 100; stores `Broadcast { audience, title, body, recipients, sent, failed, batches }`; tokens Expo reports as `DeviceNotRegistered` are removed |
-| GET `/broadcasts` | 💰 | 50 latest |
-| GET `/activity?before=<ISO>&action=<prefix>` | 💰 | audit log, 50 per page, newest first |
+## Owner setup
 
-## Socket.io (chat)
-
-Connect to `EXPO_PUBLIC_SOCKET_URL` with `auth: { token }`.
-
-| Emit | Payload | Server replies |
-|---|---|---|
-| `join_room` | `{ bookingId }` | `previous_messages` (array) or `error` |
-| `send_message` | `{ bookingId, message }` (≤1000 chars) | `receive_message` to both sides |
-| `cancel_session` | `{ bookingId }` | `session_cancelled` to the room |
-
-Phone numbers (10+ digits) in the other person's messages arrive as `••••••••••`.
-
-## Backend environment for phone login
-
-```
-WAPLIFY_API_KEY=wapl_...          # Waplify dashboard
-WAPLIFY_TEMPLATE_NAME=...         # Meta-approved AUTHENTICATION template
-WAPLIFY_CODE_KEYS=1               # body_data keys for the code
-MSG91_AUTH_KEY= / MSG91_TEMPLATE_ID=   # optional SMS backup (DLT)
-WAPLIFY_TPL_BOOKING_REQUEST=prsnn_booking_request
-WAPLIFY_TPL_BOOKING_ACCEPTED=prsnn_booking_accepted
-WAPLIFY_TPL_PAYMENT_RECEIVED=prsnn_payment_received
-WAPLIFY_TPL_BOOKING_CONFIRMED=prsnn_booking_confirmed
-WAPLIFY_TPL_BOOKING_UNFULFILLED=prsnn_booking_unfulfilled
-PAYMENT_MODE=simulated            # or razorpay
-RAZORPAY_WEBHOOK_SECRET=          # when Razorpay is on
-SUPPORT_EMAIL=mukarramjahmm@gmail.com   # dispute reports
-OFFER_MIN_MINUTES=15 / OFFER_MAX_MINUTES=300   # defaults only; admins change them in the app
-SUPERADMIN_PHONES=                # owner's two numbers, comma-separated, on Render only
-EXPO_ACCESS_TOKEN=                # only if Expo "enhanced push security" is on
-```
+See `prsnn-backend/supabase/README.md` (phone provider, Send SMS hook, secrets, superadmin numbers, test numbers).

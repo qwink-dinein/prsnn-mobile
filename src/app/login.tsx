@@ -113,18 +113,6 @@ export default function Login() {
           </Enter>
         ) : null}
 
-        {resetting ? null : (
-        <Enter index={6} style={{ gap: space.lg }}>
-        <View style={styles.divider}>
-          <View style={styles.line} />
-          <Text variant="footnote" muted>
-            or continue with
-          </Text>
-          <View style={styles.line} />
-        </View>
-        <Button label="Email" icon="mail" variant="secondary" onPress={() => router.push('/login-email')} />
-        </Enter>
-        )}
       </View>
 
       <Enter index={7}>

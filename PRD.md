@@ -28,7 +28,7 @@ feature of the web app (`qwink-dinein/prsnn-frontend`).
    before payment.
 5. **Payment** through Razorpay (simulated until it's switched on). The server
    verifies the signature or webhook, the order, the capture and the amount.
-6. **Chat** per booking over Socket.io. It opens once the booking is confirmed
+6. **Chat** per booking over Supabase Realtime. It opens once the booking is confirmed
    and paid. Phone numbers are masked by the server.
 7. **Notifications** for booking requests, acceptances and payments.
 8. **Companion onboarding** with ID front and back, photo, bio, tags, the

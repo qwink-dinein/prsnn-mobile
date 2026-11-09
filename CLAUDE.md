@@ -1,8 +1,9 @@
 # prsnn mobile — notes for Claude
 
 React Native (Expo 58, expo-router, TypeScript) app for prsnn: book verified
-companions in Hyderabad. Backend: `qwink-dinein/prsnn-backend` (Express +
-MongoDB). Web: `qwink-dinein/prsnn-frontend` (Next.js). Read in this order
+companions in Hyderabad. Backend: Supabase project `prsnn` (Postgres
+functions + RLS, Auth phone OTP, Storage, Realtime); its SQL and edge functions live in
+`qwink-dinein/prsnn-backend/supabase`. Web: `qwink-dinein/prsnn-frontend` (Next.js). Read in this order
 when you need context: `PRD.md` → `design.md` → `Architecture.md` →
 `API.md` → `Tasks.md`.
 
@@ -23,7 +24,7 @@ Rules:
 - Business rules go in `src/domain` with a test in `__tests__/`. Prices must match the backend's `amountDueInPaise`.
 - Every data screen has loading, error and empty states. Icon-only buttons need `accessibilityLabel`.
 - Don't fake data the backend doesn't have (ratings, age, wallet). Leave it out and add it to Tasks.md.
-- Backend changes go to the backend repo with tests. Document them in `API.md`.
+- Backend changes are SQL migrations / edge functions in `prsnn-backend/supabase`, applied to the project and covered by `scripts/e2e-supabase.mjs`. Document them in `API.md`.
 - Secrets never go in the repo or in `EXPO_PUBLIC_*` (those ship inside the app).
 
 ## Commands

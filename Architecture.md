@@ -10,14 +10,14 @@ flowchart LR
     UI --> SES["state/session.ts<br/>Zustand"]
     SES --> SS[("SecureStore<br/>JWT")]
     SES --> AS[("AsyncStorage<br/>prefs, saved")]
-    UI --> CHAT["lib/chat.ts<br/>socket.io-client"]
+    UI --> CHAT["lib/chat.ts<br/>Supabase Realtime"]
     UI --> RZ["RazorpaySheet<br/>WebView checkout.js"]
   end
-  SVC -- "REST /api (JWT)" --> BE["prsnn-backend<br/>Express 5 on Render"]
-  CHAT -- "Socket.io (JWT)" --> BE
+  SVC -- "RPC + Storage (Supabase JWT)" --> BE["Supabase (Mumbai)<br/>Postgres functions + RLS"]
+  CHAT -- "Realtime (RLS)" --> BE
   RZ -- "card / UPI" --> RP["Razorpay"]
-  BE --> DB[("MongoDB")]
-  BE --> CL["Cloudinary<br/>photos, ID"]
+  BE --> DB[("Postgres<br/>pg_cron sweeper")]
+  BE --> CL["Storage<br/>avatars (public), verification (private)"]
   BE --> WA["Waplify<br/>WhatsApp OTP"]
   BE --> SMS["MSG91<br/>SMS backup"]
   BE --> RS["Resend<br/>email OTP"]
@@ -44,7 +44,7 @@ src/
     RazorpaySheet.tsx  Checkout in a WebView (native) / script (web)
   domain/              PURE logic, unit-tested: pricing, slots, stages, search, phone
   services/            backend.ts (REST), demo.ts (sample data), index.ts (svc + query keys)
-  lib/                 api client, config, chat socket hook, flows, storage, image picker
+  lib/                 supabase client, config, chat (Realtime), local PIN, flows, storage, image picker
   state/session.ts     token, user, prefs (Zustand)
   theme/               tokens.ts (palette), fonts.ts (type scale)
 __tests__/             Jest (jest-expo) tests for src/domain
@@ -99,7 +99,7 @@ sequenceDiagram
   M->>B: POST /payments/verify-payment
   B->>R: fetch payment (captured? amount?)
   B-->>M: booking.paymentStatus = paid
-  M-)B: socket join_room / send_message
+  M-)B: insert into messages (Realtime pushes it to both)
   B-)C: receive_message (numbers masked)
 ```
 
@@ -122,8 +122,8 @@ backend's `amountDueInPaise()`, so the price shown is the price charged.
 
 | Variable | Default |
 |---|---|
-| `EXPO_PUBLIC_API_URL` | `https://prssn-backend.onrender.com/api` |
-| `EXPO_PUBLIC_SOCKET_URL` | same host without `/api` |
+| `EXPO_PUBLIC_SUPABASE_URL` | `https://mhovyhapzhxcmcuelbol.supabase.co` |
+| `EXPO_PUBLIC_SUPABASE_KEY` | the project's **publishable** key (safe to ship; never the secret/service key) |
 | `EXPO_PUBLIC_DEMO` | `0` |
 
 ## Backend changes this app depends on

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secure } from '@/lib/storage';
 import { setApiToken } from '@/lib/api';
+import { DEMO } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
 import type { Role, SessionUser } from '@/domain/types';
 
 const TOKEN_KEY = 'prsnn.token';
@@ -53,8 +55,15 @@ export const useSession = create<SessionState>((set, get) => ({
     try {
       prefs = { saved: [], ...(prefsRaw ? JSON.parse(prefsRaw) : {}) };
     } catch {}
-    setApiToken(token && user ? token : null);
-    set({ hydrated: true, token: token && user ? token : null, user: token ? user : null, prefs });
+    // Supabase keeps the real session (and refreshes it); the stored user is the profile we showed last.
+    let live = token;
+    if (!DEMO) {
+      const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+      live = data.session?.access_token ?? null;
+      if (!live) user = null;
+    }
+    setApiToken(live && user ? live : null);
+    set({ hydrated: true, token: live && user ? live : null, user: live ? user : null, prefs });
   },
 
   async signIn(token, user) {
@@ -74,6 +83,7 @@ export const useSession = create<SessionState>((set, get) => ({
 
   async signOut() {
     setApiToken(null);
+    if (!DEMO) await supabase.auth.signOut().catch(() => {});
     set({ token: null, user: null });
     await Promise.all([secure.remove(TOKEN_KEY), secure.remove(USER_KEY)]);
   },
@@ -91,3 +101,15 @@ export const useSession = create<SessionState>((set, get) => ({
 }));
 
 export const isCompanionUser = (u: SessionUser | null) => u?.role === 'companion';
+
+/** Keep the stored token in step with Supabase (refreshes) and sign out when the session ends. */
+if (!DEMO) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    const st = useSession.getState();
+    if (event === 'TOKEN_REFRESHED' && session && st.user) useSession.setState({ token: session.access_token });
+    if (event === 'SIGNED_OUT' && st.token) {
+      setApiToken(null);
+      useSession.setState({ token: null, user: null });
+    }
+  });
+}

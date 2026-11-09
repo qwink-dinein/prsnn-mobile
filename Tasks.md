@@ -29,6 +29,11 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 ## Before the first real build
 
+- ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.
+- 🔑 **Supabase dashboard** (see prsnn-backend/supabase/README.md): enable Phone auth, turn on the Send SMS hook, add the Waplify secrets, add your superadmin numbers, add reviewer test numbers.
+- ⏳ Razorpay on Supabase (create order + verify + webhook + refund sender as edge functions). Until then `payment_mode = simulated`.
+- ⏳ Website (prsnn-frontend) still talks to the old Express API — being moved next.
+
 - ✅ End-to-end tested locally (2026-11-09) against MongoDB 7 + the backend branch: OTP and PIN login, member and companion onboarding, admin verification, prepaid booking, simulated payment, offer/accept, chat (live, numbers masked), 85% cancellation refund, dispute handling, sub-admin limits, price change, suspend. Real WhatsApp delivery was not tested (needs the Waplify key, and this environment can't reach Waplify or Render).
 - 🔑 **Test logins for App Store / Play review**: set `OTP_TEST_NUMBERS=9000000009:<6 digits>` on Render and give that number and code to the reviewers. No message is sent for these numbers.
 

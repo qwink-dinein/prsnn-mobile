@@ -6,7 +6,7 @@ Expo / React Native.
 
 | | |
 |---|---|
-| Backend | [qwink-dinein/prsnn-backend](https://github.com/qwink-dinein/prsnn-backend) (Express + MongoDB on Render) |
+| Backend | Supabase project `prsnn` (Mumbai); SQL + edge functions in [qwink-dinein/prsnn-backend](https://github.com/qwink-dinein/prsnn-backend) `supabase/` |
 | Web + admin | [qwink-dinein/prsnn-frontend](https://github.com/qwink-dinein/prsnn-frontend) (Next.js) |
 | Docs | [PRD](PRD.md) · [Design](design.md) · [Architecture](Architecture.md) · [API](API.md) · [Tasks](Tasks.md) · [Phases](Phases.md) |
 
@@ -49,8 +49,14 @@ npx eas-cli build -p android --profile preview
 ```
 
 Local builds need Node 20+, Java 17 and the Android SDK (`ANDROID_HOME`) for Android,
-Xcode for iOS. `EXPO_PUBLIC_API_URL` is read at build time — set it in `.env` first
-(testing backend for tester builds).
+Xcode for iOS. The Supabase URL and publishable key default to the `prsnn` project
+(`src/lib/config.ts`); override with `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_KEY`.
+
+End-to-end check against the real project (test accounts, simulated payments):
+
+```bash
+node scripts/e2e-supabase.mjs
+```
 
 ## Payments
 

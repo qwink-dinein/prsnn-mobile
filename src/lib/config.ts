@@ -4,8 +4,14 @@
  */
 const trim = (s: string) => s.replace(/\/+$/, '');
 
-export const API_URL = trim(process.env.EXPO_PUBLIC_API_URL || 'https://prssn-backend.onrender.com/api');
-export const SOCKET_URL = trim(process.env.EXPO_PUBLIC_SOCKET_URL || API_URL.replace(/\/api$/, ''));
+/**
+ * Supabase project (Mumbai). The publishable key is meant to ship inside apps:
+ * every table is behind row-level security and every write goes through
+ * functions that check who is calling. Never put a secret / service-role key here.
+ */
+export const SUPABASE_URL = trim(process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://mhovyhapzhxcmcuelbol.supabase.co');
+export const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || 'sb_publishable_EjvwHde8WRvzboJF3JE6LQ_1L5FJdIT';
+
 /** Run on built-in sample data (no network). Design review, screenshots, store previews. */
 export const DEMO = process.env.EXPO_PUBLIC_DEMO === '1';
 

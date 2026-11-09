@@ -130,7 +130,7 @@ export const demo: Backend = {
   booking: (id) => (find(id) ? wait({ ...find(id)! }) : fail('Booking not found.')),
   setBookingStatus: (id, status) => {
     patch(id, { status });
-    return wait({ booking: find(id)! });
+    return wait({ message: 'Updated.', booking: find(id)! });
   },
   cancelBooking: (id) => {
     const b = find(id);
@@ -139,7 +139,7 @@ export const demo: Backend = {
     const r = refundIfCancelledNow(b);
     const refund = r.amount > 0 ? { status: 'processed' as const, amount: r.amount, retained: r.fee } : undefined;
     patch(id, { status: 'cancelled', cancelledBy: 'requester', allocation: b.flow === 'prepaid' ? { state: 'cancelled' } : b.allocation, ...(refund ? { refund, paymentStatus: 'refunded' as const } : {}), offerSummary: undefined });
-    return wait({ booking: find(id)! });
+    return wait({ message: r.amount > 0 ? `Cancelled. ₹${r.amount} is being refunded.` : 'Cancelled.', booking: find(id)! });
   },
 
   policy: () => wait(POLICY),
@@ -233,6 +233,7 @@ export const demo: Backend = {
   updateProfile: () => wait({ message: 'Updated' }),
   deleteAccount: () => wait({ message: 'Deleted' }),
   savePushToken: () => wait({ message: 'Notifications on.' }),
+  signOut: () => wait(undefined),
   pricing: () => wait({ ...pricing() }),
   admin: demoAdmin,
 };
