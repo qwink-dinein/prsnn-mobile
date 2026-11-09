@@ -1,3 +1,4 @@
+import { CANCELLATION_CUTOFF_MINUTES, CANCELLATION_FEE, companionShareOf } from './pricing';
 import type { Availability, Booking, Companion, DayKey, Duration, PersonRef } from './types';
 
 /** Durations the backend accepts (Booking.duration enum, minutes as strings). */
@@ -5,9 +6,9 @@ export const DURATIONS: Duration[] = ['30', '60', '90', '120', '180', '240'];
 
 export const DAY_KEYS: DayKey[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-/** Companions can only offer hours inside 09:00–21:00 (backend onboardCompanion rule). */
-export const DEFAULT_START = '09:00';
-export const DEFAULT_END = '21:00';
+/** Sessions run inside 07:00–22:00 (business rule; backend enforces it). */
+export const DEFAULT_START = '07:00';
+export const DEFAULT_END = '22:00';
 
 export const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
@@ -44,10 +45,15 @@ export function durationLabel(d: Duration | string): string {
  * price we show is the price Razorpay charges:
  *   Math.round(pricePerHour * (minutes / 60) * 100)
  */
-export function amountDuePaise(pricePerHour: number, duration: Duration | string): number {
+export function amountDuePaise(pricePerHour: number, duration: Duration | string, packagePrice?: number | null): number {
+  if (packagePrice) return Math.round(packagePrice * 100);
   const hours = (parseInt(String(duration), 10) || 60) / 60;
   return Math.round(pricePerHour * hours * 100);
 }
+
+/** Total for a booking: what was paid, else its package price, else rate × hours (older bookings). */
+export const totalOfBooking = (b: Pick<Booking, 'amountPaid' | 'packagePrice' | 'pricePerHour' | 'duration'>) =>
+  b.amountPaid || b.packagePrice || rupees(amountDuePaise(b.pricePerHour, b.duration));
 
 export const rupees = (paise: number) => paise / 100;
 
@@ -89,9 +95,10 @@ export function availableDayNames(availability: Availability | undefined): strin
  * companion's start and end (inclusive); we offer every 30 minutes and drop
  * slots already in the past when the chosen day is today.
  */
-export function timeSlots(c: Pick<Companion, 'startTime' | 'endTime'>, day: Date, now: Date = new Date(), step = 30, leadMinutes = 30): string[] {
-  const start = toMinutes(c.startTime || DEFAULT_START);
-  const end = toMinutes(c.endTime || DEFAULT_END);
+export function timeSlots(c: Pick<Companion, 'startTime' | 'endTime'>, day: Date, now: Date = new Date(), step = 30, leadMinutes = 30, durationMinutes = 0): string[] {
+  const start = Math.max(toMinutes(c.startTime || DEFAULT_START), toMinutes(DEFAULT_START));
+  // Start inside the companion's hours, and finish by 22:00.
+  const end = Math.min(toMinutes(c.endTime || DEFAULT_END), toMinutes(DEFAULT_END) - durationMinutes);
   const isToday = toDateKey(day) === toDateKey(now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const out: string[] = [];
@@ -192,16 +199,30 @@ export function paymentLabel(b: Pick<Booking, 'paymentStatus'> & Partial<Pick<Bo
  * What the customer gets back if they cancel now (prsnn refund policy):
  * before the session starts → everything paid; after it starts → nothing automatic.
  */
-export function refundIfCancelledNow(b: Booking, now: Date = new Date()): { amount: number; reason: string } {
-  if (b.paymentStatus !== 'paid') return { amount: 0, reason: 'Nothing has been charged.' };
-  if (startsAt(b).getTime() > now.getTime()) return { amount: b.amountPaid ?? 0, reason: 'Cancelling before the session starts: full refund.' };
-  return { amount: 0, reason: 'The session has started: no automatic refund. Use “Report a problem” if something went wrong.' };
+export function refundIfCancelledNow(b: Booking, now: Date = new Date(), by: 'customer' | 'companion' = 'customer'): { amount: number; fee: number; reason: string } {
+  const paid = b.amountPaid ?? 0;
+  if (b.paymentStatus !== 'paid') return { amount: 0, fee: 0, reason: 'Nothing has been charged.' };
+  if (by === 'companion') return { amount: paid, fee: 0, reason: 'The customer gets a full refund when a companion cancels.' };
+  const minutesToStart = (startsAt(b).getTime() - now.getTime()) / 60000;
+  if (minutesToStart >= CANCELLATION_CUTOFF_MINUTES) {
+    const amount = Math.round(paid * (1 - CANCELLATION_FEE));
+    return { amount, fee: paid - amount, reason: `Cancelling ${CANCELLATION_CUTOFF_MINUTES}+ minutes before the start: ${Math.round((1 - CANCELLATION_FEE) * 100)}% refunded (a ${Math.round(CANCELLATION_FEE * 100)}% cancellation fee applies).` };
+  }
+  return { amount: 0, fee: paid, reason: `It’s within ${CANCELLATION_CUTOFF_MINUTES} minutes of the start (or later), so there’s no refund. Use “Report a problem” if something went wrong.` };
 }
 
 /** Minutes left on a deadline (rounded up), or 0. */
 export function minutesLeft(iso: string | null | undefined, now: Date = new Date()): number {
   if (!iso) return 0;
   return Math.max(0, Math.ceil((new Date(iso).getTime() - now.getTime()) / 60000));
+}
+
+/** "12 min", "2 h", "4 h 50 min". */
+export function formatMinutes(m: number): string {
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h} h ${r} min` : `${h} h`;
 }
 
 /** Earliest session the prepaid flow accepts (allocation needs 90 minutes). */
@@ -248,7 +269,8 @@ export function earningsFor(bookings: Booking[], year: number, month: number): E
     return d.getFullYear() === year && d.getMonth() === month;
   });
   const paid = inMonth.filter((b) => b.paymentStatus === 'paid');
-  const amount = (b: Booking) => b.amountPaid || rupees(amountDuePaise(b.pricePerHour, b.duration));
+  // The companion's 80%, not the customer's total.
+  const amount = (b: Booking) => b.companionShare ?? companionShareOf(totalOfBooking(b));
   const total = paid.reduce((s, b) => s + amount(b), 0);
   const days = new Date(year, month + 1, 0).getDate();
   const ranges: [number, number][] = [[1, 7], [8, 14], [15, 21], [22, days]];

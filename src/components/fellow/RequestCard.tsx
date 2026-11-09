@@ -8,7 +8,8 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui/confirm';
 import { MetaLine, totalOf, whenOf } from '@/components/bookings';
-import { durationLabel, formatINR, minutesLeft, personOf, startsAt } from '@/domain/booking';
+import { durationLabel, formatINR, formatMinutes, minutesLeft, personOf, startsAt } from '@/domain/booking';
+import { companionShareOf } from '@/domain/pricing';
 import type { Booking, BookingStatus } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -62,7 +63,7 @@ export function RequestCard({ b }: { b: Booking }) {
 
   const pill = offer
     ? offerLive
-      ? { label: `Paid offer · ${left} min left`, tone: 'warning' as const }
+      ? { label: `Paid offer · ${formatMinutes(left)} left`, tone: 'warning' as const }
       : offer.status === 'accepted'
         ? b.status === 'completed'
           ? { label: 'Completed', tone: 'neutral' as const }
@@ -94,7 +95,12 @@ export function RequestCard({ b }: { b: Booking }) {
           </Text>
           <Pill label={pill.label} tone={pill.tone} />
         </View>
-        <Text variant="subhead">{formatINR(totalOf(b))}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text variant="subhead">{formatINR(b.companionShare ?? companionShareOf(totalOf(b)))}</Text>
+          <Text variant="caption" muted>
+            you earn
+          </Text>
+        </View>
       </View>
       <MetaLine icon="calendar" text={whenOf(b)} />
       <MetaLine icon="clock" text={durationLabel(b.duration)} />
@@ -103,7 +109,7 @@ export function RequestCard({ b }: { b: Booking }) {
       {offer && offerLive ? (
         <>
           <Text variant="footnote" color={colors.gray600}>
-            Already paid by the customer. The first companion to accept gets it — after {left} min it goes to someone else.
+            Already paid by the customer. Accept within {formatMinutes(left)} or it goes to someone else.
           </Text>
           <View style={styles.actions}>
             <Button

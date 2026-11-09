@@ -87,10 +87,12 @@ describe('availability and slots', () => {
     const now = new Date(2030, 0, 1, 10, 15);
     expect(timeSlots(c, new Date(2030, 0, 1), now)).toEqual(['11:00', '11:30', '12:00']);
   });
-  it('falls back to 9–9 when the companion set no hours', () => {
+  it('falls back to 7 AM – 10 PM when the companion set no hours, and must end by 10 PM', () => {
     const s = timeSlots({}, new Date(2030, 0, 1), new Date(2029, 0, 1));
-    expect(s[0]).toBe('09:00');
-    expect(s[s.length - 1]).toBe('21:00');
+    expect(s[0]).toBe('07:00');
+    expect(s[s.length - 1]).toBe('22:00');
+    const twelve = timeSlots({}, new Date(2030, 0, 1), new Date(2029, 0, 1), 30, 30, 720);
+    expect(twelve[twelve.length - 1]).toBe('10:00'); // 10:00 + 12 h = 22:00
   });
   it('checks the weekday', () => {
     const sunday = new Date(2026, 10, 15);
@@ -123,7 +125,7 @@ describe('booking stages follow the backend flow', () => {
 });
 
 describe('earnings', () => {
-  it('sums paid sessions in the month, by week', () => {
+  it('sums the companion’s 80% of paid sessions in the month, by week', () => {
     const list = [
       booking({ status: 'completed', paymentStatus: 'paid', amountPaid: 1200, scheduledDate: '2026-11-03T00:00:00.000Z' }),
       booking({ status: 'completed', paymentStatus: 'paid', amountPaid: 900, scheduledDate: '2026-11-20T00:00:00.000Z' }),
@@ -131,11 +133,11 @@ describe('earnings', () => {
       booking({ status: 'completed', paymentStatus: 'paid', amountPaid: 5000, scheduledDate: '2026-10-30T00:00:00.000Z' }),
     ];
     const e = earningsFor(list, 2026, 10);
-    expect(e.total).toBe(2100);
+    expect(e.total).toBe(1680); // 960 + 720
     expect(e.sessions).toBe(2);
-    expect(e.average).toBe(1050);
+    expect(e.average).toBe(840);
     expect(e.pending).toBe(1);
-    expect(e.weeks.map((w) => w.amount)).toEqual([1200, 0, 900, 0]);
+    expect(e.weeks.map((w) => w.amount)).toEqual([960, 0, 720, 0]);
   });
 });
 

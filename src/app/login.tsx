@@ -145,7 +145,7 @@ export default function Login() {
 }
 
 /**
- * The italic "person." wordmark with its clay full stop settling in after the
+ * The italic "prsnn." wordmark with its clay full stop settling in after the
  * word: the one deliberate flourish on a screen people see rarely.
  */
 function Wordmark() {

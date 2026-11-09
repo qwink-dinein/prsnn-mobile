@@ -10,7 +10,7 @@ export interface IdentityValue {
   gender?: Gender;
   seeGender?: SeeGender;
   visibility?: Visibility;
-  /** The person ticked "I agree…" for the visibility shown. */
+  /** The person tapped a visibility option (the card states that this is their agreement). */
   consent: boolean;
 }
 
@@ -30,7 +30,7 @@ export function IdentityForm({ value, onChange, showSee = true, role = 'member' 
               key={g.value}
               label={g.label}
               selected={value.gender === g.value}
-              onPress={() => onChange({ ...value, gender: g.value, visibility: value.visibility && value.consent ? value.visibility : defaultVisibility(g.value), consent: value.visibility && value.consent ? value.consent : false })}
+              onPress={() => onChange({ ...value, gender: g.value, visibility: value.visibility ?? defaultVisibility(g.value), consent: value.consent })}
             />
           ))}
         </View>
@@ -60,7 +60,7 @@ export function IdentityForm({ value, onChange, showSee = true, role = 'member' 
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${VISIBILITY_COPY[v].title}. ${VISIBILITY_COPY[v].body}`}
-              onPress={() => onChange({ ...value, visibility: v, consent: false })}
+              onPress={() => onChange({ ...value, visibility: v, consent: true })}
               style={[styles.option, on && styles.optionOn]}
             >
               <Icon name={v === 'locked' ? 'lock' : 'eye'} size={20} color={colors.moss} />
@@ -77,14 +77,9 @@ export function IdentityForm({ value, onChange, showSee = true, role = 'member' 
             </Pressable>
           );
         })}
-        {value.visibility ? (
-          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: value.consent }} onPress={() => onChange({ ...value, consent: !value.consent })} style={styles.consent}>
-            <View style={[styles.box, value.consent && styles.boxOn]}>{value.consent ? <Icon name="check" size={14} color={colors.onMoss} strokeWidth={2.4} /> : null}</View>
-            <Text variant="footnote" style={{ flex: 1 }}>
-              I agree to my profile being shown as <Text variant="footnote" style={{ fontFamily: 'DMSans-SemiBold' }}>{VISIBILITY_COPY[value.visibility].title}</Text>. I can change this any time in Profile → Privacy.
-            </Text>
-          </Pressable>
-        ) : null}
+        <Text variant="caption" muted>
+          Tapping an option means you agree to your profile being shown that way. Change it any time in Profile → Privacy.
+        </Text>
       </View>
     </View>
   );

@@ -12,9 +12,11 @@ import { Brand } from '@/components/ui/Brand';
 import { IdentityForm, identityComplete, type IdentityValue } from '@/components/IdentityForm';
 import { AreaPicker, CityPicker } from '@/components/PlacePicker';
 import { stateOf } from '@/domain/places';
+import { PackageGrid } from '@/components/PackageGrid';
+import { ALL_HOURS, HEADLINE_HOURS, companionShareOf, priceFor } from '@/domain/pricing';
+import { formatINR , CATEGORIES } from '@/domain/booking';
 import { TextField } from '@/components/ui/forms';
 import { AvailabilityEditor, emptyAvailability, type AvailabilityValue } from '@/components/fellow/AvailabilityEditor';
-import { CATEGORIES } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
 import { pickImage } from '@/lib/pickImage';
@@ -24,7 +26,7 @@ const STEPS: { title: string; sub: string; icon: IconName }[] = [
   { title: 'Basic information', sub: 'Name, gender, city, privacy, about you', icon: 'user' },
   { title: 'Identity verification', sub: 'Government ID, front and back', icon: 'idCard' },
   { title: 'Photos', sub: 'A clear photo of your face', icon: 'camera' },
-  { title: 'Rates & availability', sub: 'Your price, days and hours', icon: 'clock' },
+  { title: 'Packages & availability', sub: 'Durations you offer, days and hours', icon: 'clock' },
   { title: 'Go live', sub: 'Review and submit', icon: 'sparkle' },
 ];
 
@@ -43,7 +45,7 @@ export default function CompanionOnboarding() {
   const [idBack, setIdBack] = useState<UploadFile | null>(null);
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [selfie, setSelfie] = useState<UploadFile | null>(null);
-  const [price, setPrice] = useState('500');
+  const [packages, setPackages] = useState<number[]>(HEADLINE_HOURS);
   const [avail, setAvail] = useState<AvailabilityValue>(emptyAvailability());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,8 +64,7 @@ export default function CompanionOnboarding() {
     if (s === 1 && (!idFront || !idBack)) return 'Add both sides of your ID.';
     if (s === 2 && !photo) return 'Add a profile photo.';
     if (s === 3) {
-      const p = Number(price);
-      if (!p || p < 1 || p > 1000) return 'Hourly rate must be between ₹1 and ₹1,000.';
+      if (!packages.length) return 'Choose at least one duration you offer.';
       if (!Object.values(avail.days).some(Boolean)) return 'Choose at least one day.';
     }
     return null;
@@ -85,7 +86,7 @@ export default function CompanionOnboarding() {
         gender: identity.gender,
         profileVisibility: identity.visibility,
         description: basic.description.trim(),
-        pricePerHour: Number(price),
+        packages,
         startTime: avail.startTime,
         endTime: avail.endTime,
         tags,
@@ -153,7 +154,13 @@ export default function CompanionOnboarding() {
         </View>
       ) : step === 3 ? (
         <View style={styles.form}>
-          <TextField label="Hourly rate" prefix="₹" value={price} onChangeText={(t) => setPrice(t.replace(/\D/g, ''))} keyboardType="number-pad" hint="Between ₹1 and ₹1,000 per hour. You can change it later." />
+          <View style={{ gap: space.xs }}>
+            <Text variant="headline">Durations you offer</Text>
+            <Text variant="footnote" muted>
+              Everyone on <Brand /> uses the same prices, so members compare people, not rates. Tick any lengths you’re happy to do. <Brand /> keeps 20%; you receive 80% of every booking.
+            </Text>
+          </View>
+          <PackageGrid mode="offer" hours={ALL_HOURS} selected={packages} onSelect={(h) => setPackages((cur) => (cur.includes(h) ? cur.filter((x) => x !== h) : [...cur, h].sort((a, b) => a - b)))} />
           <AvailabilityEditor value={avail} onChange={setAvail} />
         </View>
       ) : (
@@ -161,7 +168,7 @@ export default function CompanionOnboarding() {
           <Review label="Name" value={`${basic.fullName} · ${basic.area}, ${basic.city}`} />
           <Review label="Photo" value={identity.visibility === 'locked' ? 'Locked — blurred placeholder until a booking is confirmed' : 'Open — everyone can see it'} />
           <Review label="Enjoys" value={tags.join(', ')} />
-          <Review label="Rate" value={`₹${price} per hour`} />
+          <Review label="Packages" value={packages.map((h) => `${h} h ${formatINR(priceFor(h) ?? 0)} (you get ${formatINR(companionShareOf(priceFor(h) ?? 0))})`).join(' · ')} />
           <Review
             label="Available"
             value={`${Object.entries(avail.days)

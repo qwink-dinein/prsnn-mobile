@@ -40,6 +40,8 @@ export interface Companion {
   gender?: Gender;
   /** Locked by the companion: no photo, first name only (until a confirmed booking). */
   locked?: boolean;
+  /** Durations (hours) this companion offers at the fixed package prices. */
+  packages?: number[];
   tags: string[];
   availability?: Availability;
   startTime?: string; // "HH:MM"
@@ -48,7 +50,8 @@ export interface Companion {
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type Duration = '30' | '60' | '90' | '120' | '180' | '240';
+/** Minutes. Whole hours 1–12 are packages; 30/90/180 exist on older website bookings. */
+export type Duration = '30' | '60' | '90' | '120' | '180' | '240' | '300' | '360' | '420' | '480' | '540' | '600' | '660' | '720';
 
 export interface PersonRef {
   _id: string;
@@ -75,7 +78,7 @@ export interface Booking {
   offerSummary?: { tried: number; liveUntil: string | null };
   /** Companion's view: their own offer. */
   myOffer?: { status: 'offered' | 'accepted' | 'declined' | 'expired' | 'withdrawn'; expiresAt: string; offeredAt: string } | null;
-  refund?: { status: RefundStatus; amount: number; reason?: string; processedAt?: string };
+  refund?: { status: RefundStatus; amount: number; retained?: number; reason?: string; processedAt?: string };
   dispute?: { status: 'none' | 'open' | 'resolved'; reason?: string; openedAt?: string };
   cancelledBy?: 'requester' | 'companion' | 'system' | 'admin';
   cancelReason?: string;
@@ -84,6 +87,10 @@ export interface Booking {
   city?: string;
   area?: string;
   experience?: string;
+  /** Fixed package price (₹), same for every companion. */
+  packagePrice?: number;
+  /** What the companion receives (80%). */
+  companionShare?: number;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   message?: string;
@@ -128,6 +135,7 @@ export interface Profile {
   startTime?: string;
   endTime?: string;
   tags?: string[];
+  packages?: number[];
   availability?: Availability;
   verification_status: VerificationStatus;
   is_verified: boolean;
@@ -150,6 +158,8 @@ export interface Quote {
   currency: 'INR';
   amount: number;
   fees: number;
+  hours?: number;
+  effectiveHourly?: number;
   pricePerHour: number;
   duration: string;
 }

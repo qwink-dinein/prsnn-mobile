@@ -2,8 +2,8 @@ import { Text as RNText, type TextStyle, type StyleProp } from 'react-native';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 
-/** The brand word, always the same way: italic serif "person" + a clay full stop. */
-export const BRAND_WORD = 'person';
+/** The brand word, always the same way: italic serif "prsnn" + a clay full stop. */
+export const BRAND_WORD = 'prsnn';
 
 /**
  * Inline brand mark inside running text: <Text>Verified by <Brand /></Text>.

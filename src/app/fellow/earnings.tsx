@@ -43,7 +43,7 @@ export default function Earnings() {
       <View style={styles.total}>
         <Text variant="largeTitle">{formatINR(sum.total)}</Text>
         <Text variant="footnote" muted>
-          Total earnings
+          Your earnings · 80% of each booking after <Brand />’s 20%
         </Text>
       </View>
       <View style={styles.stats}>

@@ -1,5 +1,6 @@
 import type { AppNotification, Booking, Companion, Gender, Policy, Profile, SessionUser } from '@/domain/types';
-import { amountDuePaise, toDateKey } from '@/domain/booking';
+import { amountDuePaise, refundIfCancelledNow, toDateKey } from '@/domain/booking';
+import { PACKAGE_PRICES } from '@/domain/pricing';
 import { useSession } from '@/state/session';
 import type { Backend, AuthResult } from './backend';
 
@@ -16,29 +17,29 @@ const allDays = { monday: true, tuesday: true, wednesday: true, thursday: true, 
 type DemoCompanion = Companion & { gender: Gender; visibility: 'open' | 'locked' };
 
 const people: DemoCompanion[] = [
-  { id: 'c1', fullName: 'Ayesha Khan', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Banjara Hills', pricePerHour: 600, tags: ['Coffee', 'Walks', 'Books', 'Hindi'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'I love exploring new cafés, long walks and meaningful chats. Available for coffee meetups and city walks. Public places only, for safety.' },
-  { id: 'c2', fullName: 'Rohan Mehta', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Jubilee Hills', pricePerHour: 500, tags: ['Walks', 'Events', 'Cricket'], availability: { ...allDays, monday: false }, startTime: '09:00', endTime: '21:00', description: 'Weekend explorer and live-music regular. Happy to come along to an event so you don’t go alone.' },
-  { id: 'c3', fullName: 'Fatima Siddiqui', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Tolichowki', pricePerHour: 450, tags: ['Study', 'Coffee', 'Urdu'], availability: allDays, startTime: '11:00', endTime: '19:00', description: 'Study partner and quiet café company. I keep you on task and the coffee coming.' },
-  { id: 'c4', fullName: 'Arjun Reddy', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', pricePerHour: 700, tags: ['Events', 'Food', 'Telugu'], availability: allDays, startTime: '12:00', endTime: '21:00', description: 'Foodie who knows every biryani spot worth the queue. Good company for dinners and shows.' },
-  { id: 'c5', fullName: 'Neha Sharma', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Madhapur', pricePerHour: 550, tags: ['Walks', 'Study', 'Yoga'], availability: { ...allDays, sunday: false }, startTime: '09:00', endTime: '18:00', description: 'Morning walks at KBR Park, slow mornings, honest conversation.' },
-  { id: 'c6', fullName: 'Sameer Ali', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Old City', pricePerHour: 400, tags: ['Walks', 'Food', 'History'], availability: allDays, startTime: '15:00', endTime: '21:00', description: 'Old City walks: Charminar, Laad Bazaar and the best Irani chai. Let me show you around.' },
-  { id: 'c7', fullName: 'Priya Iyer', gender: 'woman', visibility: 'locked', city: 'Bengaluru', state: 'Karnataka', area: 'Indiranagar', pricePerHour: 650, tags: ['Coffee', 'Events', 'Kannada'], availability: allDays, startTime: '10:00', endTime: '21:00', description: 'Indiranagar cafés and weekend gigs. Calm, curious, a good listener.' },
-  { id: 'c8', fullName: 'Kabir Das', gender: 'nonbinary', visibility: 'locked', city: 'Mumbai', state: 'Maharashtra', area: 'Bandra West', pricePerHour: 600, tags: ['Walks', 'Food', 'Art'], availability: allDays, startTime: '11:00', endTime: '21:00', description: 'Bandra sea-face walks, galleries and street food.' },
-  { id: 'c9', fullName: 'Zoya Ansari', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Kondapur', pricePerHour: 500, tags: ['Coffee', 'Study', 'Urdu'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'Book-club regular and coffee snob. Happy to be your study buddy.' },
+  { id: 'c1', packages: [1, 2, 4, 6], fullName: 'Ayesha Khan', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Banjara Hills', pricePerHour: 399, tags: ['Coffee', 'Walks', 'Books', 'Hindi'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'I love exploring new cafés, long walks and meaningful chats. Available for coffee meetups and city walks. Public places only, for safety.' },
+  { id: 'c2', fullName: 'Rohan Mehta', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Jubilee Hills', pricePerHour: 399, tags: ['Walks', 'Events', 'Cricket'], availability: { ...allDays, monday: false }, startTime: '09:00', endTime: '21:00', description: 'Weekend explorer and live-music regular. Happy to come along to an event so you don’t go alone.' },
+  { id: 'c3', fullName: 'Fatima Siddiqui', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Tolichowki', pricePerHour: 399, tags: ['Study', 'Coffee', 'Urdu'], availability: allDays, startTime: '11:00', endTime: '19:00', description: 'Study partner and quiet café company. I keep you on task and the coffee coming.' },
+  { id: 'c4', packages: [2, 4, 8, 12], fullName: 'Arjun Reddy', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', pricePerHour: 399, tags: ['Events', 'Food', 'Telugu'], availability: allDays, startTime: '12:00', endTime: '21:00', description: 'Foodie who knows every biryani spot worth the queue. Good company for dinners and shows.' },
+  { id: 'c5', fullName: 'Neha Sharma', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Madhapur', pricePerHour: 399, tags: ['Walks', 'Study', 'Yoga'], availability: { ...allDays, sunday: false }, startTime: '09:00', endTime: '18:00', description: 'Morning walks at KBR Park, slow mornings, honest conversation.' },
+  { id: 'c6', fullName: 'Sameer Ali', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Old City', pricePerHour: 399, tags: ['Walks', 'Food', 'History'], availability: allDays, startTime: '15:00', endTime: '21:00', description: 'Old City walks: Charminar, Laad Bazaar and the best Irani chai. Let me show you around.' },
+  { id: 'c7', fullName: 'Priya Iyer', gender: 'woman', visibility: 'locked', city: 'Bengaluru', state: 'Karnataka', area: 'Indiranagar', pricePerHour: 399, tags: ['Coffee', 'Events', 'Kannada'], availability: allDays, startTime: '10:00', endTime: '21:00', description: 'Indiranagar cafés and weekend gigs. Calm, curious, a good listener.' },
+  { id: 'c8', fullName: 'Kabir Das', gender: 'nonbinary', visibility: 'locked', city: 'Mumbai', state: 'Maharashtra', area: 'Bandra West', pricePerHour: 399, tags: ['Walks', 'Food', 'Art'], availability: allDays, startTime: '11:00', endTime: '21:00', description: 'Bandra sea-face walks, galleries and street food.' },
+  { id: 'c9', fullName: 'Zoya Ansari', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Kondapur', pricePerHour: 399, tags: ['Coffee', 'Study', 'Urdu'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'Book-club regular and coffee snob. Happy to be your study buddy.' },
 ];
 
 const POLICY: Policy = {
-  fees: 'No booking fee. You pay the companion’s hourly rate × hours.',
+  fees: 'No booking fee. One price list for every companion: ₹399 for 1 hour, with lower hourly rates for longer bookings. The price shown is the total you pay.',
   allocation:
-    'Your chosen companion has 15 minutes to accept. If they can’t, we offer your booking to up to 2 similar verified companions (same city, your “show me” preference, same or lower rate). If nobody accepts within 2 hours (or 1 hour before the session), the booking is cancelled and fully refunded.',
+    'Payment reserves your booking; it is confirmed when an eligible companion accepts. Your chosen companion gets between 15 minutes and 5 hours to respond, depending on how far away your session is. If they can’t make it, we offer your booking to up to 2 similar verified companions, one at a time. If nobody accepts at least 1 hour before the session, it is cancelled and fully refunded.',
   cancellation: [
-    'Cancel any time before the session starts: full refund.',
-    'If your companion cancels before the start: full refund.',
-    'After the session starts: no automatic refund. Report a problem and we review it.',
-    'Companion no-show: full refund. Your own no-show: no refund.',
+    'Cancel at least 15 minutes before the session starts: 85% refunded (a 15% cancellation fee is kept by prsnn).',
+    'Cancel within 15 minutes of the start, or after it starts: no refund.',
+    'If your companion cancels, or no companion accepts: full refund.',
+    'Companion no-show: full refund after review. Your own no-show: no refund.',
   ],
   refunds: 'Refunds go to your original payment method. Timing depends on your bank or UPI app.',
-  support: 'admin@prsnn.com',
+  support: 'mukarramjahmm@gmail.com',
 };
 
 const viewer = () => useSession.getState().user;
@@ -66,24 +67,24 @@ const inMin = (m: number) => new Date(Date.now() + m * 60_000).toISOString();
 
 let bookings: Booking[] = [
   // App bookings (prepaid)
-  { _id: 'p1', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[2]), companionId: null, status: 'pending', paymentStatus: 'paid', paymentMode: 'simulated', amountPaid: 675, pricePerHour: 450, startTime: '11:30', duration: '90', scheduledDate: day(2), createdAt: day(0), allocation: { state: 'offering', deadline: inMin(110) }, offerSummary: { tried: 1, liveUntil: inMin(12) } },
-  { _id: 'b1', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[0]), companionId: { ...ref(people[0]), fullName: people[0].fullName, locked: false }, status: 'accepted', paymentStatus: 'paid', paymentMode: 'simulated', pricePerHour: 600, startTime: '16:00', duration: '120', scheduledDate: day(1), amountPaid: 1200, createdAt: day(-1), allocation: { state: 'assigned' } },
-  { _id: 'p2', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[6]), companionId: null, status: 'cancelled', paymentStatus: 'refunded', paymentMode: 'simulated', amountPaid: 650, pricePerHour: 650, startTime: '19:00', duration: '60', scheduledDate: day(-1), createdAt: day(-2), allocation: { state: 'failed', failedReason: 'no_one_accepted_in_time' }, refund: { status: 'processed', amount: 650 }, cancelledBy: 'system' },
+  { _id: 'p1', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[2]), companionId: null, status: 'pending', paymentStatus: 'paid', paymentMode: 'simulated', amountPaid: 999, pricePerHour: 399, packagePrice: 999, startTime: '11:30', duration: '180', scheduledDate: day(2), createdAt: day(0), allocation: { state: 'offering', deadline: inMin(110) }, offerSummary: { tried: 1, liveUntil: inMin(130) } },
+  { _id: 'b1', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[0]), companionId: { ...ref(people[0]), fullName: people[0].fullName, locked: false }, status: 'accepted', paymentStatus: 'paid', paymentMode: 'simulated', pricePerHour: 399, packagePrice: 699, startTime: '16:00', duration: '120', scheduledDate: day(1), amountPaid: 699, createdAt: day(-1), allocation: { state: 'assigned' } },
+  { _id: 'p2', flow: 'prepaid', requesterId: 'me', preferredCompanionId: ref(people[6]), companionId: null, status: 'cancelled', paymentStatus: 'refunded', paymentMode: 'simulated', amountPaid: 399, pricePerHour: 399, packagePrice: 399, startTime: '19:00', duration: '60', scheduledDate: day(-1), createdAt: day(-2), allocation: { state: 'failed', failedReason: 'no_one_accepted_in_time' }, refund: { status: 'processed', amount: 399 }, cancelledBy: 'system' },
   // Older website-style bookings (request → accept → pay) still show and work.
-  { _id: 'b2', flow: 'request', requesterId: 'me', companionId: ref(people[1]), status: 'accepted', paymentStatus: 'pending', pricePerHour: 500, startTime: '17:00', duration: '60', scheduledDate: day(3), createdAt: day(0) },
-  { _id: 'b4', flow: 'request', requesterId: 'me', companionId: ref(people[3]), status: 'completed', paymentStatus: 'paid', pricePerHour: 700, startTime: '19:00', duration: '120', scheduledDate: day(-6), amountPaid: 1400, createdAt: day(-9) },
+  { _id: 'b2', flow: 'request', requesterId: 'me', companionId: ref(people[1]), status: 'accepted', paymentStatus: 'pending', pricePerHour: 399, packagePrice: 399, startTime: '17:00', duration: '60', scheduledDate: day(3), createdAt: day(0) },
+  { _id: 'b4', flow: 'request', requesterId: 'me', companionId: ref(people[3]), status: 'completed', paymentStatus: 'paid', pricePerHour: 399, packagePrice: 699, startTime: '19:00', duration: '120', scheduledDate: day(-6), amountPaid: 699, createdAt: day(-9) },
 ];
 
 const incoming: Booking[] = [
-  { _id: 'o1', flow: 'prepaid', requesterId: { _id: 'u7', fullName: 'Karan', locked: true }, companionId: null, status: 'pending', paymentStatus: 'paid', paymentMode: 'simulated', amountPaid: 600, pricePerHour: 600, startTime: '16:00', duration: '60', scheduledDate: day(2), createdAt: day(0), message: 'Coffee at Roastery? First time in Hyderabad.', allocation: { state: 'offering' }, myOffer: { status: 'offered', expiresAt: inMin(12), offeredAt: inMin(-3) } },
-  { _id: 'i2', flow: 'prepaid', requesterId: { _id: 'u8', fullName: 'Priya Nair' }, companionId: 'me', status: 'accepted', paymentStatus: 'paid', paymentMode: 'simulated', pricePerHour: 600, startTime: '11:00', duration: '120', scheduledDate: day(1), amountPaid: 1200, createdAt: day(-2), allocation: { state: 'assigned' }, myOffer: { status: 'accepted', expiresAt: inMin(-30), offeredAt: inMin(-40) } },
-  { _id: 'i3', flow: 'request', requesterId: { _id: 'u9', fullName: 'Imran Shaikh' }, companionId: 'me', status: 'completed', paymentStatus: 'paid', pricePerHour: 600, startTime: '17:00', duration: '90', scheduledDate: day(-3), amountPaid: 900, createdAt: day(-5) },
+  { _id: 'o1', flow: 'prepaid', requesterId: { _id: 'u7', fullName: 'Karan', locked: true }, companionId: null, status: 'pending', paymentStatus: 'paid', paymentMode: 'simulated', amountPaid: 399, pricePerHour: 399, packagePrice: 399, startTime: '16:00', duration: '60', scheduledDate: day(2), createdAt: day(0), message: 'Coffee at Roastery? First time in Hyderabad.', allocation: { state: 'offering' }, myOffer: { status: 'offered', expiresAt: inMin(170), offeredAt: inMin(-10) } },
+  { _id: 'i2', companionShare: 559, flow: 'prepaid', requesterId: { _id: 'u8', fullName: 'Priya Nair' }, companionId: 'me', status: 'accepted', paymentStatus: 'paid', paymentMode: 'simulated', pricePerHour: 399, packagePrice: 699, startTime: '11:00', duration: '120', scheduledDate: day(1), amountPaid: 699, createdAt: day(-2), allocation: { state: 'assigned' }, myOffer: { status: 'accepted', expiresAt: inMin(-30), offeredAt: inMin(-40) } },
+  { _id: 'i3', flow: 'request', requesterId: { _id: 'u9', fullName: 'Imran Shaikh' }, companionId: 'me', status: 'completed', paymentStatus: 'paid', pricePerHour: 399, packagePrice: 1299, startTime: '17:00', duration: '240', scheduledDate: day(-3), amountPaid: 1299, createdAt: day(-5) },
 ];
 
 let notifications: AppNotification[] = [
   { _id: 'n1', type: 'booking_confirmed', message: 'Ayesha confirmed your booking #B1. Chat is open.', isRead: false, createdAt: inMin(-2) },
   { _id: 'n2', type: 'payment_completed', message: 'Payment received for booking #P1. We’re confirming your companion.', isRead: false, createdAt: inMin(-20) },
-  { _id: 'n3', type: 'refund', message: 'We couldn’t find an available companion for booking #P2. Your full payment of ₹650 was refunded.', isRead: true, createdAt: inMin(-26 * 60) },
+  { _id: 'n3', type: 'refund', message: 'We couldn’t find an available companion for booking #P2. Your full payment of ₹399 was refunded.', isRead: true, createdAt: inMin(-26 * 60) },
   { _id: 'n4', type: 'other', message: 'New companions near you in Banjara Hills.', isRead: true, createdAt: inMin(-3 * 24 * 60) },
 ];
 
@@ -129,8 +130,9 @@ export const demo: Backend = {
   cancelBooking: (id) => {
     const b = find(id);
     if (!b) return fail('Booking not found.');
-    const started = new Date(`${b.scheduledDate.slice(0, 10)}T${b.startTime}:00`).getTime() <= Date.now();
-    const refund = b.paymentStatus === 'paid' && !started ? { status: 'processed' as const, amount: b.amountPaid ?? 0 } : undefined;
+    // Same rule as the server: 15+ min before the start → 85% back; later → nothing.
+    const r = refundIfCancelledNow(b);
+    const refund = r.amount > 0 ? { status: 'processed' as const, amount: r.amount, retained: r.fee } : undefined;
     patch(id, { status: 'cancelled', cancelledBy: 'requester', allocation: b.flow === 'prepaid' ? { state: 'cancelled' } : b.allocation, ...(refund ? { refund, paymentStatus: 'refunded' as const } : {}), offerSummary: undefined });
     return wait({ booking: find(id)! });
   },
@@ -140,7 +142,7 @@ export const demo: Backend = {
     const existing = keys.get(b.idempotencyKey);
     if (existing) {
       const again = find(existing)!;
-      return wait({ booking: again, quote: { currency: 'INR' as const, amount: amountDuePaise(again.pricePerHour, again.duration) / 100, fees: 0, pricePerHour: again.pricePerHour, duration: again.duration }, policy: POLICY, replayed: true });
+      return wait({ booking: again, quote: { currency: 'INR' as const, amount: again.packagePrice ?? 0, fees: 0, pricePerHour: 399, duration: again.duration }, policy: POLICY, replayed: true });
     }
     const c = people.find((x) => x.id === b.companionId) ?? people[0];
     const booking: Booking = {
@@ -151,7 +153,8 @@ export const demo: Backend = {
       companionId: null,
       status: 'pending',
       paymentStatus: 'pending',
-      pricePerHour: c.pricePerHour ?? 500,
+      pricePerHour: 399,
+      packagePrice: PACKAGE_PRICES[Number(b.duration) / 60],
       startTime: b.startTime,
       duration: b.duration,
       scheduledDate: `${b.scheduledDate}T00:00:00.000Z`,
@@ -161,7 +164,7 @@ export const demo: Backend = {
     };
     bookings = [booking, ...bookings];
     keys.set(b.idempotencyKey, booking._id);
-    return wait({ booking, quote: { currency: 'INR' as const, amount: amountDuePaise(booking.pricePerHour, booking.duration) / 100, fees: 0, pricePerHour: booking.pricePerHour, duration: booking.duration }, policy: POLICY });
+    return wait({ booking, quote: { currency: 'INR' as const, amount: booking.packagePrice ?? 0, fees: 0, pricePerHour: 399, duration: booking.duration }, policy: POLICY });
   },
   acceptOffer: (id) => {
     const b = incoming.find((x) => x._id === id);
@@ -183,16 +186,16 @@ export const demo: Backend = {
   createPaymentIntent: (bookingId) => {
     const b = find(bookingId);
     if (!b) return fail('Booking not found.');
-    return wait({ mode: 'simulated' as const, orderId: `sim_${bookingId}`, amount: amountDuePaise(b.pricePerHour, b.duration), currency: 'INR' });
+    return wait({ mode: 'simulated' as const, orderId: `sim_${bookingId}`, amount: amountDuePaise(b.pricePerHour, b.duration, b.packagePrice), currency: 'INR' });
   },
   verifyPayment: ({ bookingId }) => demo.simulatePayment(bookingId, 'success'),
   simulatePayment: (bookingId, outcome) => {
     if (outcome === 'failure') return fail('Test payment declined. No money was taken.');
     const b = find(bookingId);
     if (!b) return fail('Booking not found.');
-    const amountPaid = amountDuePaise(b.pricePerHour, b.duration) / 100;
+    const amountPaid = amountDuePaise(b.pricePerHour, b.duration, b.packagePrice) / 100;
     if (b.flow === 'prepaid') {
-      patch(bookingId, { paymentStatus: 'paid', paymentMode: 'simulated', amountPaid, allocation: { state: 'offering', deadline: inMin(120) }, offerSummary: { tried: 1, liveUntil: inMin(15) } });
+      patch(bookingId, { paymentStatus: 'paid', paymentMode: 'simulated', amountPaid, allocation: { state: 'offering', deadline: inMin(120) }, offerSummary: { tried: 1, liveUntil: inMin(140) } });
       // Demo only: the chosen companion accepts after a few seconds.
       setTimeout(() => {
         const cur = find(bookingId);

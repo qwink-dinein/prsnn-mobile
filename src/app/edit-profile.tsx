@@ -24,7 +24,7 @@ export default function EditProfile() {
 function EditForm({ p }: { p?: Profile }) {
   const qc = useQueryClient();
   const updateUser = useSession((s) => s.updateUser);
-  const [form, setForm] = useState({ fullName: p?.fullName ?? '', city: p?.city ?? '', area: p?.area ?? '', description: p?.description ?? '', pricePerHour: p?.pricePerHour ? String(p.pricePerHour) : '' });
+  const [form, setForm] = useState({ fullName: p?.fullName ?? '', city: p?.city ?? '', area: p?.area ?? '', description: p?.description ?? '' });
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,8 +33,6 @@ function EditForm({ p }: { p?: Profile }) {
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = async () => {
-    const price = Number(form.pricePerHour);
-    if (isCompanion && (!price || price < 1 || price > 1000)) return setError('Hourly rate must be between ₹1 and ₹1,000.');
     setBusy(true);
     setError(null);
     try {
@@ -43,7 +41,7 @@ function EditForm({ p }: { p?: Profile }) {
           fullName: form.fullName.trim(),
           city: form.city.trim(),
           area: form.area.trim(),
-          ...(isCompanion ? { description: form.description.trim(), pricePerHour: price } : {}),
+          ...(isCompanion ? { description: form.description.trim() } : {}),
         },
         photo,
       );
@@ -73,7 +71,9 @@ function EditForm({ p }: { p?: Profile }) {
         {isCompanion ? (
           <>
             <TextField label="About you" value={form.description} onChangeText={set('description')} multiline maxLength={600} />
-            <TextField label="Hourly rate" prefix="₹" value={form.pricePerHour} onChangeText={(t) => set('pricePerHour')(t.replace(/\D/g, ''))} keyboardType="number-pad" hint="Between ₹1 and ₹1,000 per hour." />
+            <Text variant="footnote" muted>
+              Prices are the same for every companion. Choose which durations you offer in Profile → Packages & availability.
+            </Text>
           </>
         ) : null}
         {p?.phoneNumber ? <TextField label="Mobile number" value={`+91 ${p.phoneNumber}`} editable={false} hint="Your number is never shown to other members." /> : null}

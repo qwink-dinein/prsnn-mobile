@@ -76,8 +76,8 @@ export function CompanionDashboard() {
       <View style={[styles.group, { marginTop: space.xxl }]}>
         <ListRow icon="calendar" label="Upcoming bookings" onPress={() => router.push('/bookings')} />
         <ListRow icon="wallet" label="Earnings" value={formatINR(month.total) + ' this month'} onPress={() => router.push('/fellow/earnings')} />
-        <ListRow icon="edit" label="Edit profile & rate" onPress={() => router.push('/edit-profile')} />
-        <ListRow icon="clock" label="Availability" value="Days and hours" onPress={() => router.push('/fellow/availability')} last />
+        <ListRow icon="edit" label="Edit profile" onPress={() => router.push('/edit-profile')} />
+        <ListRow icon="clock" label="Packages & availability" value="Durations, days and hours" onPress={() => router.push('/fellow/availability')} last />
       </View>
       {!pending.length && live ? <Button label="Share your profile" variant="secondary" icon="users" onPress={() => router.push(`/companion/${user?.id}`)} /> : null}
     </Screen>

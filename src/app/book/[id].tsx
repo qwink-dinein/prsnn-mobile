@@ -3,10 +3,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
-import { Screen, Header, Chip, Loading, ErrorState, IconButton } from '@/components/ui/layout';
+import { Screen, Header, Loading, ErrorState, IconButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { MIN_LEAD_MINUTES, DURATIONS, durationLabel, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf, toMinutes, DEFAULT_END } from '@/domain/booking';
+import { PackageGrid } from '@/components/PackageGrid';
+import { MIN_LEAD_MINUTES, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf , formatINR } from '@/domain/booking';
+import { hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
 import type { Duration } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -14,7 +16,7 @@ import { errorMessage } from '@/lib/api';
 const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const BOOK_AHEAD_DAYS = 60;
 
-/** Screen 9 · Select date & time. */
+/** Screen 9 · Choose your time (package), day and start time. */
 export default function SelectDateTime() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const q = useQuery({ queryKey: qk.companion(id), queryFn: () => svc.companion(id) });
@@ -24,39 +26,58 @@ export default function SelectDateTime() {
     return d;
   }, []);
   const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const [hours, setHours] = useState<number | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string | null>(null);
-  const [duration, setDuration] = useState<Duration>('60');
 
   const c = q.data;
+  const offered = offeredHours(c?.packages);
   const weeks = monthGrid(cursor.y, cursor.m);
   const last = new Date(today);
   last.setDate(last.getDate() + BOOK_AHEAD_DAYS);
-  // Prepaid bookings need ~90 minutes to offer up to three companions before the start.
-  const slots = c && date ? timeSlots(c, date, new Date(), 30, MIN_LEAD_MINUTES) : [];
+  // Starts inside the companion's hours, ends by 10 PM, and ~90 min notice so a companion can be confirmed.
+  const slots = c && date && hours ? timeSlots(c, date, new Date(), 30, MIN_LEAD_MINUTES, hours * 60) : [];
   const monthLabel = new Date(cursor.y, cursor.m, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   const canPrev = cursor.y > today.getFullYear() || cursor.m > today.getMonth();
   const canNext = new Date(cursor.y, cursor.m + 1, 1) <= last;
-  // Sessions may run past the companion's listed end time only by the session length itself; warn, don't block.
-  const runsLate = time && c ? toMinutes(endTimeOf(time, duration)) > toMinutes(c.endTime || DEFAULT_END) : false;
 
   if (q.isLoading) return <Loading />;
   if (q.isError || !c) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
 
   const shift = (n: number) => setCursor(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
+  const duration = hours ? (String(hours * 60) as Duration) : null;
 
   return (
     <Screen
       footer={
         <Button
-          label="Continue"
-          disabled={!date || !time}
-          onPress={() => router.push({ pathname: '/book/review', params: { id: c.id, date: toDateKey(date!), time: time!, duration } })}
+          label={hours ? `Continue · ${formatINR(priceFor(hours) ?? 0)}` : 'Continue'}
+          disabled={!date || !time || !duration}
+          onPress={() => router.push({ pathname: '/book/review', params: { id: c.id, date: toDateKey(date!), time: time!, duration: duration! } })}
         />
       }
     >
-      <Header title="Select date & time" />
+      <Header title="Book a time" />
 
+      <Text variant="title2" style={styles.h1} accessibilityRole="header">
+        Choose your time
+      </Text>
+      <Text variant="callout" muted style={{ marginBottom: space.md }}>
+        Choose how long you’d like company. Longer bookings offer a lower hourly rate.
+      </Text>
+      <PackageGrid
+        mode="book"
+        hours={offered}
+        selected={hours}
+        onSelect={(h) => {
+          setHours(h);
+          setTime(null);
+        }}
+      />
+
+      <Text variant="title3" style={styles.h}>
+        Pick a day
+      </Text>
       <View style={styles.card}>
         <View style={styles.monthRow}>
           <IconButton name="chevronLeft" label="Previous month" onPress={() => canPrev && shift(-1)} color={canPrev ? colors.ink : colors.gray300} />
@@ -102,52 +123,44 @@ export default function SelectDateTime() {
       </View>
 
       <Text variant="title3" style={styles.h}>
-        How long?
-      </Text>
-      <View style={styles.wrap}>
-        {DURATIONS.map((d) => (
-          <Chip key={d} label={durationLabel(d)} selected={duration === d} onPress={() => setDuration(d)} />
-        ))}
-      </View>
-
-      <Text variant="title3" style={styles.h}>
         Start time
       </Text>
-      {!date ? (
+      {!hours ? (
+        <Text variant="callout" muted>
+          Choose how long first.
+        </Text>
+      ) : !date ? (
         <Text variant="callout" muted>
           Pick a day first.
         </Text>
       ) : slots.length === 0 ? (
         <Text variant="callout" muted>
-          No times left on this day. Try another day.
+          No {hoursLabel(hours)} slot fits that day between 7 AM and 10 PM. Try another day or a shorter time.
         </Text>
       ) : (
-        <View style={styles.wrap}>
-          {slots.map((s) => (
-            <Pressable
-              key={s}
-              accessibilityRole="button"
-              accessibilityState={{ selected: time === s }}
-              onPress={() => setTime(s)}
-              style={[styles.slot, time === s && styles.slotOn]}
-            >
-              <Text variant="subhead" color={time === s ? colors.onMoss : colors.ink}>
-                {formatTime(s)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <>
+          <View style={styles.wrap}>
+            {slots.map((s) => (
+              <Pressable key={s} accessibilityRole="button" accessibilityState={{ selected: time === s }} onPress={() => setTime(s)} style={[styles.slot, time === s && styles.slotOn]}>
+                <Text variant="subhead" color={time === s ? colors.onMoss : colors.ink}>
+                  {formatTime(s)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {time ? (
+            <Text variant="footnote" muted style={{ marginTop: space.sm }}>
+              {formatTime(time)} – {formatTime(endTimeOf(time, String(hours * 60)))} · sessions run between 7 AM and 10 PM
+            </Text>
+          ) : null}
+        </>
       )}
-      {runsLate ? (
-        <Text variant="footnote" color={colors.clay} style={{ marginTop: space.sm }}>
-          This session ends after {formatTime(c.endTime || DEFAULT_END)}, when {c.fullName?.split(' ')[0]} usually stops. They can still accept.
-        </Text>
-      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  h1: { marginTop: space.sm, marginBottom: space.xs },
   card: { backgroundColor: colors.paper, borderRadius: radius.xl, padding: space.md, borderWidth: 1, borderColor: colors.line },
   monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   week: { flexDirection: 'row' },

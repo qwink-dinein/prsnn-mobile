@@ -48,9 +48,12 @@ describe('prepaid stages (booking state separate from payment state)', () => {
 });
 
 describe('refund preview follows the refund policy', () => {
-  it('full refund before the start, none after', () => {
-    expect(refundIfCancelledNow(b(), NOW)).toMatchObject({ amount: 600 });
+  it('85% back 15+ min before the start, nothing later; companion cancel = 100%', () => {
+    expect(refundIfCancelledNow(b(), NOW)).toMatchObject({ amount: 510, fee: 90 });
+    expect(refundIfCancelledNow(b({ startTime: '12:10' }), NOW)).toMatchObject({ amount: 0 }); // 10 min before
+    expect(refundIfCancelledNow(b({ startTime: '12:15' }), NOW)).toMatchObject({ amount: 510 }); // exactly 15 min
     expect(refundIfCancelledNow(b({ startTime: '11:00' }), NOW)).toMatchObject({ amount: 0 });
+    expect(refundIfCancelledNow(b(), NOW, 'companion')).toMatchObject({ amount: 600, fee: 0 });
     expect(refundIfCancelledNow(b({ paymentStatus: 'pending' }), NOW)).toMatchObject({ amount: 0, reason: 'Nothing has been charged.' });
   });
   it('counts down offer minutes', () => {

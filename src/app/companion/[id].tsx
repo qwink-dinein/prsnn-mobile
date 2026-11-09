@@ -10,7 +10,8 @@ import { Brand } from '@/components/ui/Brand';
 import { LockedPhoto } from '@/components/LockedPhoto';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
-import { HeartButton, firstName, placeOf } from '@/components/companions';
+import { HeartButton, firstName, fromPrice, placeOf } from '@/components/companions';
+import { hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
 import { availableDayNames, CATEGORIES, DEFAULT_END, DEFAULT_START, formatINR, formatTime, matchesCategory } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -113,6 +114,20 @@ export default function CompanionProfile() {
           </Text>
 
           <Text variant="title3" style={styles.h}>
+            Durations & prices
+          </Text>
+          <View style={styles.tags}>
+            {offeredHours(c.packages).map((h) => (
+              <View key={h} style={styles.pkg}>
+                <Text variant="caption" muted>
+                  {hoursLabel(h)}
+                </Text>
+                <Text variant="subhead">{formatINR(priceFor(h) ?? 0)}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text variant="title3" style={styles.h}>
             Availability
           </Text>
           <View style={styles.infoCard}>
@@ -132,14 +147,14 @@ export default function CompanionProfile() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm }]}>
         <View style={{ flex: 1 }}>
-          <Text variant="title3">{c.pricePerHour ? formatINR(c.pricePerHour) : '—'}</Text>
+          <Text variant="title3">From {formatINR(fromPrice(c))}</Text>
           <Text variant="caption" muted>
-            per hour
+            for {hoursLabel(offeredHours(c.packages)[0] ?? 1)} · longer costs less per hour
           </Text>
         </View>
         <Button
           label={isMe ? 'This is you' : 'Book now'}
-          disabled={isMe || !c.pricePerHour || !days.length}
+          disabled={isMe || !days.length}
           onPress={() => router.push(`/book/${c.id}`)}
           style={{ flex: 1.6 }}
         />
@@ -161,6 +176,7 @@ const styles = StyleSheet.create({
   tagCard: { alignItems: 'center', gap: 4, minWidth: 68, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   h: { marginTop: space.xl, marginBottom: space.xs },
   lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, marginVertical: space.xs },
+  pkg: { minWidth: 84, paddingVertical: space.sm, paddingHorizontal: space.md, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, gap: 2 },
   infoCard: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: space.lg, gap: space.sm, borderWidth: 1, borderColor: colors.line },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: GUTTER, paddingTop: space.md, backgroundColor: colors.paper, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
 });

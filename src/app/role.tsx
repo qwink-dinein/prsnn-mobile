@@ -6,7 +6,6 @@ import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
-import { Button } from '@/components/ui/Button';
 import { useSession } from '@/state/session';
 
 type R = 'user' | 'companion';
@@ -16,24 +15,13 @@ const OPTIONS: { role: R; title: string; body: string; image: number }[] = [
   { role: 'companion', title: 'Become a companion', body: 'Spend time with people and earn on your own terms.', image: require('../../assets/images/together.jpg') },
 ];
 
-/** Screen 3 · Choose role. */
+/** Screen 3 · Choose role — tapping a card is the choice (no Continue button). */
 export default function Role() {
   const initial = useSession((s) => s.prefs.intendedRole);
   const [role, setRole] = useState<R | undefined>(initial);
   const setPrefs = useSession((s) => s.setPrefs);
   return (
-    <Screen
-      footer={
-        <Button
-          label="Continue"
-          disabled={!role}
-          onPress={() => {
-            setPrefs({ intendedRole: role });
-            router.push('/login');
-          }}
-        />
-      }
-    >
+    <Screen>
       <Header />
       <Text variant="title1" style={{ marginTop: space.sm, marginBottom: space.xl }} accessibilityRole="header">
         I’m here as a…
@@ -47,7 +35,12 @@ export default function Role() {
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${o.title}. ${o.body}`}
-              onPress={() => setRole(o.role)}
+              onPress={() => {
+                // One tap: remember the choice and go straight on.
+                setRole(o.role);
+                setPrefs({ intendedRole: o.role });
+                router.push('/login');
+              }}
               style={({ pressed }) => [styles.card, on && styles.cardOn, pressed && { opacity: 0.92 }]}
             >
               <Image source={o.image} style={styles.image} contentFit="cover" />

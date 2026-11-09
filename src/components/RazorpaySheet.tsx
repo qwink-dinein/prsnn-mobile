@@ -97,7 +97,7 @@ function baseOptions(o: CheckoutOptions) {
     order_id: o.orderId,
     amount: o.amount,
     currency: 'INR',
-    name: o.name ?? 'person.',
+    name: o.name ?? 'prsnn.',
     description: o.description ?? 'Companion booking',
     prefill: o.prefill ?? {},
     theme: { color: colors.moss },

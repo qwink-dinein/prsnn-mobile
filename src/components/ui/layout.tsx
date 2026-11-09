@@ -249,7 +249,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
   return <EmptyState icon="info" title="Something went wrong" body={message ?? 'Check your connection and try again.'} action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
 }
 
-/** The italic "person." wordmark with the clay full stop (see Brand.tsx). */
+/** The italic "prsnn." wordmark with the clay full stop (see Brand.tsx). */
 export function Logo({ size = 28, color = colors.ink }: { size?: number; color?: string }) {
   return <Wordmark size={size} color={color} />;
 }

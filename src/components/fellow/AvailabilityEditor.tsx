@@ -15,8 +15,8 @@ export const WEEK_DAYS: { key: DayKey; label: string }[] = [
   { key: 'sunday', label: 'Sun' },
 ];
 
-/** Hourly options inside the backend's allowed window, 9 AM – 9 PM. */
-export const HOURS = Array.from({ length: 13 }, (_, i) => fromMinutes(540 + i * 60));
+/** Hourly options inside the allowed session window, 7 AM – 10 PM. */
+export const HOURS = Array.from({ length: 16 }, (_, i) => fromMinutes(420 + i * 60));
 
 export type AvailabilityValue = { days: Record<DayKey, boolean>; startTime: string; endTime: string };
 

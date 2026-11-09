@@ -9,6 +9,8 @@ import { AvailabilityEditor, emptyAvailability, WEEK_DAYS, type AvailabilityValu
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import type { Profile } from '@/domain/types';
+import { PackageGrid } from '@/components/PackageGrid';
+import { ALL_HOURS, offeredHours } from '@/domain/pricing';
 
 /** Companion availability: days and hours (PUT /profile/update). */
 export default function Availability() {
@@ -30,17 +32,20 @@ function initial(p?: Profile): AvailabilityValue {
 function AvailabilityForm({ p }: { p?: Profile }) {
   const qc = useQueryClient();
   const [value, setValue] = useState<AvailabilityValue>(() => initial(p));
+  const [packages, setPackages] = useState<number[]>(() => offeredHours(p?.packages));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     if (!Object.values(value.days).some(Boolean)) return setError('Choose at least one day.');
+    if (!packages.length) return setError('Choose at least one duration you offer.');
     setBusy(true);
     setError(null);
     try {
       await svc.updateProfile({
         startTime: value.startTime,
         endTime: value.endTime,
+        packages,
         ...Object.fromEntries(Object.entries(value.days).map(([d, on]) => [`${d}_availability`, on])),
       });
       qc.invalidateQueries({ queryKey: qk.profile });
@@ -55,9 +60,19 @@ function AvailabilityForm({ p }: { p?: Profile }) {
 
   return (
     <Screen footer={<Button label="Save availability" onPress={save} loading={busy} />}>
-      <Header title="Availability" />
-      <Text variant="callout" muted style={{ marginBottom: space.lg }}>
-        Members can only request times inside these hours, between 9 AM and 9 PM.
+      <Header title="Packages & availability" />
+      <Text variant="headline" style={{ marginTop: space.sm }}>
+        Durations you offer
+      </Text>
+      <Text variant="footnote" muted style={{ marginBottom: space.md }}>
+        Same prices for everyone. You receive 80% of each booking.
+      </Text>
+      <PackageGrid mode="offer" hours={ALL_HOURS} selected={packages} onSelect={(h) => setPackages((cur) => (cur.includes(h) ? cur.filter((x) => x !== h) : [...cur, h].sort((a, b) => a - b)))} />
+      <Text variant="headline" style={{ marginTop: space.xl }}>
+        Days and hours
+      </Text>
+      <Text variant="footnote" muted style={{ marginBottom: space.md }}>
+        Members can only book inside these hours. Sessions run between 7 AM and 10 PM.
       </Text>
       <AvailabilityEditor value={value} onChange={setValue} />
       {error ? (

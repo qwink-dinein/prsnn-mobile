@@ -11,6 +11,7 @@ import { TextField } from '@/components/ui/forms';
 import { MetaLine, formatDate } from '@/components/bookings';
 import { placeOf } from '@/components/companions';
 import { amountDuePaise, durationLabel, endTimeOf, formatINR, formatTime, rupees } from '@/domain/booking';
+import { hourlyFor, hoursLabel, priceFor, savingFor } from '@/domain/pricing';
 import type { Duration } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -54,9 +55,8 @@ export default function Checkout() {
   if (q.isLoading) return <Loading />;
   if (q.isError || !q.data) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
   const c = q.data;
-  const rate = c.pricePerHour ?? 0;
-  const total = rupees(amountDuePaise(rate, p.duration));
   const hours = Number(p.duration) / 60;
+  const total = priceFor(hours) ?? rupees(amountDuePaise(c.pricePerHour ?? 0, p.duration));
   const first = c.fullName?.split(' ')[0] ?? 'your companion';
 
   return (
@@ -104,10 +104,20 @@ export default function Checkout() {
       <Card style={{ gap: space.md }}>
         <View style={styles.line}>
           <Text variant="callout" muted>
-            {formatINR(rate)} × {hours % 1 === 0 ? hours : hours.toFixed(1)} {hours === 1 ? 'hour' : 'hours'}
+            {hoursLabel(hours)} package · {formatINR(hourlyFor(hours))}/hour
           </Text>
           <Text variant="callout">{formatINR(total)}</Text>
         </View>
+        {savingFor(hours) ? (
+          <View style={styles.line}>
+            <Text variant="callout" muted>
+              You save vs. hourly
+            </Text>
+            <Text variant="callout" color={colors.moss}>
+              {formatINR(savingFor(hours))}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.line}>
           <Text variant="callout" muted>
             Booking fee
@@ -126,10 +136,10 @@ export default function Checkout() {
         How it works
       </Text>
       <Card style={{ gap: space.md }}>
-        <Step n={1} text={`You pay now. Your booking shows “Paid — awaiting companion”.`} />
-        <Step n={2} text={`${first} gets 15 minutes to accept.`} />
-        <Step n={3} text="If they can’t, we offer it to up to 2 similar verified companions (same city, your “show me” choice, same or lower rate) — one at a time." />
-        <Step n={4} text="Nobody accepts within 2 hours (or 1 hour before the session)? It’s cancelled and you get a full refund automatically." />
+        <Step n={1} text="You pay now. Payment reserves your booking; it’s confirmed when a companion accepts. It shows “Paid — awaiting companion” until then." />
+        <Step n={2} text={`${first} gets between 15 minutes and 5 hours to accept, depending on how far away your session is.`} />
+        <Step n={3} text="If they can’t, we offer it to up to 2 similar verified companions (same city, your “show me” choice, available for this duration) — one at a time." />
+        <Step n={4} text="Nobody accepts by 1 hour before the session? It’s cancelled and you get a full refund automatically." />
       </Card>
 
       <Text variant="title3" style={styles.h}>

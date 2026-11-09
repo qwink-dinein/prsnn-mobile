@@ -3,12 +3,16 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { colors, radius, space } from '@/theme/tokens';
 import { formatINR } from '@/domain/booking';
+import { offeredHours, priceFor } from '@/domain/pricing';
 import type { Companion } from '@/domain/types';
 import { useSession } from '@/state/session';
 import { Text } from './ui/Text';
 import { Icon } from './ui/Icon';
 import { Avatar } from './ui/layout';
 import { LockedPhoto } from './LockedPhoto';
+
+/** Lowest package this companion offers (prices are the same for everyone). */
+export const fromPrice = (c: Pick<Companion, 'packages'>) => priceFor(offeredHours(c.packages)[0]) ?? 399;
 
 export const firstName = (name?: string) => (name ?? '').trim().split(/\s+/)[0] || 'Companion';
 export const placeOf = (c: Pick<Companion, 'area' | 'city'>) => [c.area, c.city].filter(Boolean).join(', ');
@@ -45,7 +49,7 @@ export function CompanionCard({ c, width }: { c: Companion; width: number }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}, ${c.pricePerHour ? `${formatINR(c.pricePerHour)} per hour` : ''}`}
+      accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}, from ${formatINR(fromPrice(c))}`}
       onPress={() => router.push(`/companion/${c.id}`)}
       style={({ pressed }) => [styles.card, { width }, pressed && { opacity: 0.9 }]}
     >
@@ -60,11 +64,9 @@ export function CompanionCard({ c, width }: { c: Companion; width: number }) {
         <Text variant="footnote" muted numberOfLines={1}>
           {placeOf(c) || 'Nearby'}
         </Text>
-        {c.pricePerHour ? (
-          <Text variant="subhead" color={colors.moss}>
-            {formatINR(c.pricePerHour)}/hr
-          </Text>
-        ) : null}
+        <Text variant="subhead" color={colors.moss}>
+          From {formatINR(fromPrice(c))}
+        </Text>
       </View>
     </Pressable>
   );
@@ -95,11 +97,9 @@ export function CompanionRow({ c }: { c: Companion }) {
       </View>
       <View style={{ alignItems: 'flex-end', gap: space.sm }}>
         <HeartButton id={c.id} />
-        {c.pricePerHour ? (
-          <Text variant="subhead" color={colors.moss}>
-            {formatINR(c.pricePerHour)}/hr
-          </Text>
-        ) : null}
+        <Text variant="subhead" color={colors.moss}>
+          From {formatINR(fromPrice(c))}
+        </Text>
       </View>
     </Pressable>
   );

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { colors, space } from '@/theme/tokens';
-import { durationLabel, endTimeOf, formatINR, formatTime, parseDateKey, companionOf, stageOf, amountDuePaise, rupees, paymentLabel, minutesLeft, type Stage } from '@/domain/booking';
+import { durationLabel, endTimeOf, formatINR, formatTime, parseDateKey, companionOf, stageOf, totalOfBooking, paymentLabel, minutesLeft, formatMinutes, type Stage } from '@/domain/booking';
 import type { Booking } from '@/domain/types';
 import { Text } from './ui/Text';
 import { Icon, type IconName } from './ui/Icon';
@@ -25,7 +25,7 @@ export const formatDate = (iso: string, opts: Intl.DateTimeFormatOptions = { wee
 
 export const whenOf = (b: Booking) => `${formatDate(b.scheduledDate)} · ${formatTime(b.startTime)} – ${formatTime(endTimeOf(b.startTime, b.duration))}`;
 
-export const totalOf = (b: Booking) => b.amountPaid || rupees(amountDuePaise(b.pricePerHour, b.duration));
+export const totalOf = (b: Booking) => totalOfBooking(b);
 
 export function MetaLine({ icon, text }: { icon: IconName; text: string }) {
   return (
@@ -61,7 +61,7 @@ export function BookingCard({ b }: { b: Booking }) {
       <MetaLine icon="clock" text={durationLabel(b.duration)} />
       {b.flow === 'prepaid' ? <MetaLine icon="wallet" text={paymentLabel(b)} /> : null}
       {stage === 'finding' ? (
-        <MetaLine icon="users" text={assigned ? 'Confirmed' : `Waiting for ${b.offerSummary?.tried && b.offerSummary.tried > 1 ? 'a similar companion' : person?.fullName?.split(' ')[0] ?? 'your companion'}${left ? ` · ${left} min left to answer` : ''}`} />
+        <MetaLine icon="users" text={assigned ? 'Confirmed' : `Waiting for ${b.offerSummary?.tried && b.offerSummary.tried > 1 ? 'a similar companion' : person?.fullName?.split(' ')[0] ?? 'your companion'}${left ? ` · ${formatMinutes(left)} left to answer` : ''}`} />
       ) : null}
       {stage === 'pay' || stage === 'paying' ? (
         <Button label={stage === 'paying' ? `Finish payment · ${formatINR(totalOf(b))}` : `Pay ${formatINR(totalOf(b))}`} onPress={() => router.push(`/pay/${b._id}`)} compact />
@@ -94,7 +94,7 @@ export function PrepaidStatus({ b }: { b: Booking }) {
       label: 'Finding your companion',
       detail:
         stage === 'finding'
-          ? `${tried > 1 ? `Offered to companion ${tried} of 3` : 'Offered to your chosen companion'}${left ? ` · ${left} min left to answer` : ''}`
+          ? `${tried > 1 ? `Offered to companion ${tried} of 3` : 'Offered to your chosen companion'}${left ? ` · ${formatMinutes(left)} left to answer` : ''}`
           : stage === 'unfulfilled'
             ? 'Nobody could take it in time'
             : undefined,

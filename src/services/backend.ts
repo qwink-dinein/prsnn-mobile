@@ -10,6 +10,7 @@ export function normaliseCompanion(raw: Record<string, any>): Companion {
     profilePhoto: raw.profilePhoto ?? raw.profilePhotoUrl ?? null,
     description: raw.description,
     pricePerHour: raw.pricePerHour ?? raw.price_per_hour,
+    packages: Array.isArray(raw.packages) ? raw.packages : undefined,
     city: raw.city,
     area: raw.area,
     state: raw.state,
@@ -43,7 +44,8 @@ export interface CompanionForm {
   city: string;
   area: string;
   description: string;
-  pricePerHour: number;
+  /** Durations (hours) the companion offers; prices are fixed. */
+  packages: number[];
   startTime: string;
   endTime: string;
   tags: string[];
@@ -114,7 +116,7 @@ export const backend = {
           city: f.city,
           area: f.area,
           description: f.description,
-          pricePerHour: f.pricePerHour,
+          packages: f.packages,
           startTime: f.startTime,
           endTime: f.endTime,
           tags: f.tags,
