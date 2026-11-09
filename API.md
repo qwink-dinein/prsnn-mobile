@@ -45,8 +45,17 @@ time falls inside `startTime`–`endTime`, and that a price is set.
 
 ## Payments 🔒
 
-| POST `/payments/create-intent` | `{ bookingId }` → `{ orderId, amount (paise), currency, keyId }` | booking must be `accepted`, unpaid; order reused if one exists |
+| POST `/payments/create-intent` | `{ bookingId }` → `{ mode, orderId, amount (paise), currency, keyId? }` | booking must be `accepted`, unpaid; `mode` is `simulated` or `razorpay` |
+| POST `/payments/simulate` **New** | `{ bookingId, outcome?: 'success'\|'failure' }` | only when the server runs `PAYMENT_MODE=simulated`; same ownership/state rules; marks paid with `paymentMode: 'simulated'` |
 | POST `/payments/verify-payment` | `{ bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature }` | checks signature, order ↔ booking, captured, amount ≥ due |
+
+**Simulated payments.** Until Razorpay is switched on, set `PAYMENT_MODE=simulated` on the
+backend (testing service only: the website needs real Razorpay orders). The app reads `mode`
+from create-intent and shows a test checkout clearly marked "no money will be taken". Switching
+the backend to `razorpay` turns on real checkout with no app update.
+
+**WhatsApp booking updates** (best effort, after the in-app notification): booking request →
+companion, accepted → member (pay prompt), paid → companion. See WHATSAPP_TEMPLATES.md.
 
 ## Notifications 🔒
 
@@ -80,4 +89,8 @@ WAPLIFY_API_KEY=wapl_...          # Waplify dashboard
 WAPLIFY_TEMPLATE_NAME=...         # Meta-approved AUTHENTICATION template
 WAPLIFY_CODE_KEYS=1               # body_data keys for the code
 MSG91_AUTH_KEY= / MSG91_TEMPLATE_ID=   # optional SMS backup (DLT)
+WAPLIFY_TPL_BOOKING_REQUEST=prsnn_booking_request
+WAPLIFY_TPL_BOOKING_ACCEPTED=prsnn_booking_accepted
+WAPLIFY_TPL_PAYMENT_RECEIVED=prsnn_payment_received
+PAYMENT_MODE=simulated            # or razorpay
 ```

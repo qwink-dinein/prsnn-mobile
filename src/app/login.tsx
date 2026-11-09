@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header, Logo } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
@@ -15,7 +15,9 @@ import { useSession } from '@/state/session';
 /** Screen 4 · Login / Sign up with mobile number (code arrives on WhatsApp, SMS as backup). */
 export default function Login() {
   const lastPhone = useSession((s) => s.prefs.lastPhone);
-  const [phone, setPhone] = useState('');
+  const params = useLocalSearchParams<{ reset?: string; phone?: string }>();
+  const resetting = params.reset === '1';
+  const [phone, setPhone] = useState(resetting && params.phone ? params.phone.replace(/^91/, '') : '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const normalised = normaliseIndianMobile(phone);
@@ -29,7 +31,7 @@ export default function Login() {
     setError(null);
     try {
       await svc.sendOtp(normalised);
-      router.push({ pathname: '/otp', params: { phone: normalised } });
+      router.push({ pathname: '/otp', params: { phone: normalised, ...(resetting ? { reset: '1' } : {}) } });
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -41,12 +43,20 @@ export default function Login() {
     <Screen>
       <Header />
       <View style={styles.head}>
-        <Text variant="title1" center>
-          Welcome to
-        </Text>
-        <Logo size={44} />
+        {resetting ? (
+          <Text variant="title1" center>
+            Reset your PIN
+          </Text>
+        ) : (
+          <>
+            <Text variant="title1" center>
+              Welcome to
+            </Text>
+            <Logo size={44} />
+          </>
+        )}
         <Text variant="callout" muted center style={{ marginTop: space.sm }}>
-          Continue with your mobile number
+          {resetting ? 'We’ll send a code to your number, then you can choose a new PIN.' : 'Continue with your mobile number'}
         </Text>
       </View>
 
@@ -71,7 +81,7 @@ export default function Login() {
         />
         <Button label="Send OTP" onPress={send} loading={busy} disabled={!normalised} />
 
-        {lastPhone ? (
+        {lastPhone && !resetting ? (
           <Button
             label={`Log in with PIN · ${displayPhone(lastPhone)}`}
             variant="secondary"
@@ -80,6 +90,8 @@ export default function Login() {
           />
         ) : null}
 
+        {resetting ? null : (
+        <>
         <View style={styles.divider}>
           <View style={styles.line} />
           <Text variant="footnote" muted>
@@ -88,10 +100,12 @@ export default function Login() {
           <View style={styles.line} />
         </View>
         <Button label="Email" icon="mail" variant="secondary" onPress={() => router.push('/login-email')} />
+        </>
+        )}
       </View>
 
       <Text variant="caption" muted center style={styles.legal}>
-        By continuing, you agree to our{' '}
+        By continuing, you agree to get login codes and booking updates on WhatsApp, and to our{' '}
         <Text variant="caption" color={colors.moss} onPress={() => Linking.openURL(LINKS.terms)} accessibilityRole="link">
           Terms of Service
         </Text>{' '}

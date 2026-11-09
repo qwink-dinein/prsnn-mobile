@@ -17,9 +17,11 @@ export function goHome(user: SessionUser | null = useSession.getState().user) {
  *   new or nameless account → set up profile → set PIN → home
  *   no PIN yet              → set PIN → home
  */
-export async function afterAuth(res: AuthResult) {
+export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean } = {}) {
   await useSession.getState().signIn(res.token, res.user);
-  if (res.isNewUser || !res.user.fullName) router.replace('/setup-profile');
+  // Forgot PIN: the OTP proved it's them, so go straight to choosing a new PIN.
+  if (opts.resetPin && !res.isNewUser) router.replace({ pathname: '/pin', params: { mode: 'set', reset: '1' } });
+  else if (res.isNewUser || !res.user.fullName) router.replace('/setup-profile');
   else if (res.user.phone && !res.user.hasPin) router.replace({ pathname: '/pin', params: { mode: 'set' } });
   else goHome(res.user);
 }

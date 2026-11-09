@@ -84,11 +84,17 @@ export const demo: Backend = {
   createPaymentIntent: (bookingId) => {
     const b = bookings.find((x) => x._id === bookingId);
     const amount = b ? Math.round(b.pricePerHour * (Number(b.duration) / 60) * 100) : 0;
-    return wait({ orderId: 'order_demo', amount, currency: 'INR', keyId: 'rzp_test_demo' });
+    return wait({ mode: 'simulated' as const, orderId: `sim_${bookingId}`, amount, currency: 'INR' });
   },
   verifyPayment: ({ bookingId }) => {
     bookings = bookings.map((b) => (b._id === bookingId ? { ...b, paymentStatus: 'paid' } : b));
     return wait({ message: 'Payment verified successfully.', booking: bookings.find((b) => b._id === bookingId)! });
+  },
+
+  simulatePayment: (bookingId, outcome) => {
+    if (outcome === 'failure') return Promise.reject(new Error('Test payment declined. No money was taken.'));
+    bookings = bookings.map((b) => (b._id === bookingId ? { ...b, paymentStatus: 'paid', amountPaid: Math.round(b.pricePerHour * (Number(b.duration) / 60)) } : b));
+    return wait({ message: 'Test payment successful.', booking: bookings.find((b) => b._id === bookingId)! });
   },
 
   notifications: () => wait(notifications),

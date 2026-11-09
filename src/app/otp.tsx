@@ -15,7 +15,7 @@ const RESEND_AFTER = 30;
 
 /** Verify the 6-digit code sent on WhatsApp (or SMS). */
 export default function Otp() {
-  const { phone = '' } = useLocalSearchParams<{ phone: string }>();
+  const { phone = '', reset } = useLocalSearchParams<{ phone: string; reset?: string }>();
   const role = useSession((s) => s.prefs.intendedRole);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function Otp() {
     setBusy(true);
     setError(null);
     try {
-      await afterAuth(await svc.verifyOtp(phone, value, role));
+      await afterAuth(await svc.verifyOtp(phone, value, role), { resetPin: reset === '1' });
     } catch (e) {
       setError(errorMessage(e));
       setCode('');

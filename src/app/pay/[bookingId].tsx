@@ -8,11 +8,11 @@ import { Text } from '@/components/ui/Text';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { RazorpaySheet, openWebCheckout, type CheckoutOptions, type RazorpaySuccess } from '@/components/RazorpaySheet';
+import { SimulatedCheckout } from '@/components/SimulatedCheckout';
 import { totalOf, whenOf } from '@/components/bookings';
 import { formatINR, personOf } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
-import { DEMO } from '@/lib/config';
 import { useSession } from '@/state/session';
 
 const METHODS: { key: string; label: string; icon: IconName; hint: string }[] = [
@@ -30,6 +30,7 @@ export default function Pay() {
   const q = useQuery({ queryKey: qk.booking(bookingId), queryFn: () => svc.booking(bookingId) });
   const [method, setMethod] = useState('upi');
   const [checkout, setCheckout] = useState<CheckoutOptions | null>(null);
+  const [simulated, setSimulated] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +44,7 @@ export default function Pay() {
     setBusy(true);
     try {
       await svc.verifyPayment({ bookingId, razorpayOrderId: r.razorpay_order_id, razorpayPaymentId: r.razorpay_payment_id, razorpaySignature: r.razorpay_signature });
-      qc.invalidateQueries({ queryKey: qk.myBookings });
-      qc.invalidateQueries({ queryKey: qk.booking(bookingId) });
-      router.replace({ pathname: '/confirmed', params: { kind: 'paid', bookingId } });
+      paidOk();
     } catch (e) {
       // Money may have moved even if verification failed — never tell people it didn't.
       setError(`${errorMessage(e)} If money left your account, it will be matched or refunded. Contact support with booking #${bookingId.slice(-6).toUpperCase()}.`);
@@ -54,11 +53,33 @@ export default function Pay() {
     }
   };
 
+  const paidOk = () => {
+    qc.invalidateQueries({ queryKey: qk.myBookings });
+    qc.invalidateQueries({ queryKey: qk.booking(bookingId) });
+    router.replace({ pathname: '/confirmed', params: { kind: 'paid', bookingId } });
+  };
+
+  const simulate = async (outcome: 'success' | 'failure') => {
+    try {
+      await svc.simulatePayment(bookingId, outcome);
+      setSimulated(false);
+      paidOk();
+    } catch (e) {
+      setSimulated(false);
+      setError(errorMessage(e));
+    }
+  };
+
   const pay = async () => {
     setError(null);
     setBusy(true);
     try {
       const intent = await svc.createPaymentIntent(bookingId);
+      if (intent.mode === 'simulated') {
+        setSimulated(true);
+        return;
+      }
+      if (!intent.keyId) throw new Error('Payments are not set up on the server yet.');
       const opts: CheckoutOptions = {
         keyId: intent.keyId,
         orderId: intent.orderId,
@@ -66,9 +87,7 @@ export default function Pay() {
         description: `Booking with ${person?.fullName ?? 'your companion'}`,
         prefill: { name: user?.fullName, email: user?.email, contact: user?.phone ? `+${user.phone}` : undefined, method },
       };
-      if (DEMO) {
-        await done({ razorpay_order_id: intent.orderId, razorpay_payment_id: 'pay_demo', razorpay_signature: 'demo' });
-      } else if (Platform.OS === 'web') {
+      if (Platform.OS === 'web') {
         openWebCheckout(opts, done, (reason) => reason && setError(reason));
       } else setCheckout(opts);
     } catch (e) {
@@ -86,7 +105,7 @@ export default function Pay() {
           <View style={styles.secure}>
             <Icon name="shieldCheck" size={14} color={colors.gray500} />
             <Text variant="caption" muted>
-              Secure payment powered by Razorpay
+              Secure checkout · verified by prsnn
             </Text>
           </View>
         </View>
@@ -142,6 +161,14 @@ export default function Pay() {
         </Text>
       ) : null}
 
+      <SimulatedCheckout
+        visible={simulated}
+        amount={totalOf(b)}
+        methodLabel={METHODS.find((m) => m.key === method)?.label ?? 'UPI'}
+        description={`Booking with ${person?.fullName ?? 'your companion'}`}
+        onPay={simulate}
+        onClose={() => setSimulated(false)}
+      />
       <RazorpaySheet
         visible={!!checkout}
         options={checkout}

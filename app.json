@@ -2,6 +2,7 @@
   "expo": {
     "name": "prsnn",
     "slug": "prsnn",
+    "owner": "mukarramjah",
     "scheme": "prsnn",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +17,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.prsnn.app",
-      "config": { "usesNonExemptEncryption": false },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "prsnn uses the camera so you can take your profile photo and ID photos for verification.",
         "NSPhotoLibraryUsageDescription": "prsnn uses your photos so you can choose a profile photo and upload ID documents for verification."
@@ -29,7 +32,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2F4A34"
       },
-      "permissions": ["android.permission.CAMERA"]
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -50,6 +55,8 @@
         }
       ]
     ],
-    "experiments": { "typedRoutes": false }
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }

@@ -18,7 +18,7 @@ const WEAK = new Set(['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7
 
 /** Screen 5 · Set a 4-digit PIN (mode=set) or log in with it (mode=login). */
 export default function Pin() {
-  const { mode = 'set', phone } = useLocalSearchParams<{ mode?: 'set' | 'login'; phone?: string }>();
+  const { mode = 'set', phone, reset } = useLocalSearchParams<{ mode?: 'set' | 'login'; phone?: string; reset?: string }>();
   const updateUser = useSession((s) => s.updateUser);
   const [first, setFirst] = useState<string | null>(null);
   const [value, setValue] = useState('');
@@ -73,14 +73,14 @@ export default function Pin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const title = mode === 'login' ? 'Enter your PIN' : first ? 'Confirm your PIN' : 'Set a 4-digit PIN';
+  const title = mode === 'login' ? 'Enter your PIN' : first ? 'Confirm your PIN' : reset ? 'Choose a new PIN' : 'Set a 4-digit PIN';
   const sub = mode === 'login' ? `For ${displayPhone(phone)}` : 'Use this PIN for quicker and more secure access.';
 
   return (
     <Screen scroll={false}>
       <Header
         right={
-          mode === 'set' ? (
+          mode === 'set' && !reset ? (
             <Text variant="subhead" color={colors.moss} onPress={() => goHome()} accessibilityRole="button" style={{ padding: space.md }}>
               Skip
             </Text>
@@ -108,8 +108,8 @@ export default function Pin() {
       </View>
       <PinPad value={value} onChange={(v) => !busy && setValue(v)} length={LEN} />
       {mode === 'login' ? (
-        <Text variant="subhead" color={colors.moss} center onPress={() => router.replace('/login')} accessibilityRole="button" style={{ padding: space.lg }}>
-          Forgot PIN? Log in with OTP
+        <Text variant="subhead" color={colors.moss} center onPress={() => router.replace({ pathname: '/login', params: { reset: '1', phone: phone ?? '' } })} accessibilityRole="button" style={{ padding: space.lg }}>
+          Forgot PIN? Reset it with a code
         </Text>
       ) : (
         <View style={{ height: space.xxl }} />

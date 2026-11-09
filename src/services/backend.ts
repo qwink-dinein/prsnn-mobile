@@ -26,10 +26,12 @@ export interface AuthResult {
 }
 
 export interface PaymentIntent {
+  /** 'simulated' while the backend runs PAYMENT_MODE=simulated (test checkout, no money moves). */
+  mode?: 'razorpay' | 'simulated';
   orderId: string;
   amount: number; // paise
   currency: string;
-  keyId: string;
+  keyId?: string;
 }
 
 export interface CompanionForm {
@@ -77,6 +79,7 @@ export const backend = {
   createPaymentIntent: (bookingId: string) => api.post<PaymentIntent>('/payments/create-intent', { bookingId }),
   verifyPayment: (p: { bookingId: string; razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }) =>
     api.post<{ message: string; booking: Booking }>('/payments/verify-payment', p),
+  simulatePayment: (bookingId: string, outcome: 'success' | 'failure' = 'success') => api.post<{ message: string; booking: Booking }>('/payments/simulate', { bookingId, outcome }),
 
   // ── Notifications ──
   notifications: () => api.get<AppNotification[]>('/notifications'),

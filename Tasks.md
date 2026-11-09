@@ -12,12 +12,16 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ Demo mode with sample data; web preview checked at 375pt and 440pt
 - ✅ Unit tests for pricing, slots, stages, earnings, search, phone and time
 - ✅ Backend: phone OTP (Waplify, with MSG91 backup), PIN, self-delete, security fixes, migration script, tests
+- ✅ WhatsApp Utility notices: booking request → companion, accepted → member (pay), paid → companion (WHATSAPP_TEMPLATES.md)
+- ✅ Simulated payments (`PAYMENT_MODE=simulated`) with a test checkout in the app, including a failure path
+- ✅ Forgot PIN → code on WhatsApp → choose a new PIN
 
 ## Before the first real build
 
 - 🔑 **Waplify**: API key + Meta-approved *Authentication* template name (and `WAPLIFY_CODE_KEYS` if the code isn't `{{1}}`). Set these on Render.
 - 🔑 **MSG91** (optional SMS backup): auth key + DLT template id.
-- 🔑 **Razorpay**: the live keys on Render are already used by the web app. For testing, a `rzp_test_` pair on the testing service.
+- ⏸ **Razorpay**: deferred (owner, 2026-11-09). Payments are simulated until then; switching on Razorpay is a backend env change (`PAYMENT_MODE=razorpay` + keys), no app update.
+- 🔑 Submit the 4 WhatsApp templates (WHATSAPP_TEMPLATES.md) and set their names on Render.
 - ⏳ Run `node src/scripts/migratePhoneAuth.js` on the testing DB, deploy the backend branch to the testing service, and smoke-test OTP → book → pay → chat.
 - 🔑 **Expo/EAS**: `eas init` on the owner's Expo account (`mukarramjah`), then `eas build -p android --profile preview` for an installable APK.
 - 🔑 **Apple Developer** account for iOS builds and TestFlight.

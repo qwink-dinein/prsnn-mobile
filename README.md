@@ -32,10 +32,31 @@ npm run typecheck && npm run lint && npm test
 
 ## Builds
 
+Builds go under the `mukarramjah` Expo account (same as Hyderabad Rishta).
+First time only: `npx eas-cli init` to link the project.
+
+**Local build (unlimited, no EAS queue)** — like the HR tester APK, on the Mac:
+
 ```bash
-npx eas-cli build -p android --profile preview   # installable APK
-npx eas-cli build -p ios --profile production    # needs an Apple Developer account
+npx eas-cli build -p android --profile preview --local   # → build-*.apk, share via Drive
+npx eas-cli build -p ios --profile preview --local       # needs Xcode + Apple Developer account
 ```
+
+Cloud build (same profiles, uses EAS minutes):
+
+```bash
+npx eas-cli build -p android --profile preview
+```
+
+Local builds need Node 20+, Java 17 and the Android SDK (`ANDROID_HOME`) for Android,
+Xcode for iOS. `EXPO_PUBLIC_API_URL` is read at build time — set it in `.env` first
+(testing backend for tester builds).
+
+## Payments
+
+Until Razorpay is switched on, the backend runs `PAYMENT_MODE=simulated` and the app shows a
+**test checkout** (clearly marked, no money moves, you can also simulate a failure). When the
+backend switches to `razorpay`, the same app build opens real Razorpay checkout.
 
 ## Phone login setup (backend)
 
