@@ -21,7 +21,7 @@ npm start                   # scan the QR code with Expo Go
 Look around without a backend (sample data):
 
 ```bash
-EXPO_PUBLIC_DEMO=1 npm run web
+EXPO_PUBLIC_DEMO=1 npm run web   # admin in demo: log in with 90000 00000 (superadmin) or 90000 00001 (sub-admin), any code
 ```
 
 Checks:

@@ -1,5 +1,7 @@
 import { api, toForm, type UploadFile } from '@/lib/api';
-import type { AppNotification, Booking, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus } from '@/domain/types';
+import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus } from '@/domain/types';
+import type { PricingSettings } from '@/domain/pricing';
+import type { BookingTab } from '@/domain/admin';
 
 /** The list endpoint returns a mapped shape, search/get return raw User docs. Normalise both. */
 export function normaliseCompanion(raw: Record<string, any>): Companion {
@@ -134,6 +136,45 @@ export const backend = {
     api.put<{ message: string }>('/profile/update', toForm(f)),
   updateProfile: (fields: Record<string, unknown>, photo?: UploadFile | null) => api.put<{ message: string }>('/profile/update', toForm(fields, { profilePhoto: photo })),
   deleteAccount: () => api.del<{ message: string }>('/profile'),
+  /** Expo push token for this device; null turns pushes off (sign-out). */
+  savePushToken: (token: string | null) => api.put<{ message: string }>('/profile/push-token', { token }),
+
+  // ── Prices (public; the app falls back to the bundled defaults) ──
+  pricing: () => api.get<PricingSettings>('/settings/pricing'),
+
+  // ── In-app admin (staff only; money/price/push routes are superadmin-only on the server) ──
+  admin: {
+    overview: () => api.get<AdminOverview>('/admin/app/overview'),
+    verifications: () => api.get<AdminUser[]>('/admin/app/verifications'),
+    decideVerification: (id: string, decision: 'verified' | 'rejected', note?: string) => api.post<{ message: string; user: AdminUser }>(`/admin/app/verifications/${id}`, { decision, note }),
+    users: (p: { q?: string; role?: string } = {}) => api.get<AdminUser[]>(`/admin/app/users?${new URLSearchParams(Object.entries(p).filter(([, v]) => v) as [string, string][]).toString()}`),
+    user: (id: string) => api.get<{ user: AdminUser; bookings: AdminBooking[] }>(`/admin/app/users/${id}`),
+    updateUser: (id: string, fields: Partial<AdminUser>) => api.patch<{ message: string; user: AdminUser }>(`/admin/app/users/${id}`, fields),
+    suspendUser: (id: string, suspended: boolean, reason?: string) => api.post<{ message: string; user: AdminUser }>(`/admin/app/users/${id}/suspend`, { suspended, reason }),
+    deleteUser: (id: string) => api.del<{ message: string }>(`/admin/app/users/${id}`),
+    admins: () => api.get<AdminUser[]>('/admin/app/admins'),
+    addAdmin: (phone: string) => api.post<{ message: string; user: AdminUser }>('/admin/app/admins', { phone }),
+    removeAdmin: (id: string) => api.del<{ message: string }>(`/admin/app/admins/${id}`),
+    bookings: (tab: BookingTab) => api.get<AdminBooking[]>(`/admin/app/bookings?tab=${tab}`),
+    booking: (id: string) => api.get<AdminBooking>(`/admin/app/bookings/${id}`),
+    bookingMessages: (id: string) => api.get<AdminChatMessage[]>(`/admin/app/bookings/${id}/messages`),
+    updateBooking: (id: string, fields: { scheduledDate?: string; startTime?: string; message?: string; status?: 'completed' }) => api.patch<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}`, fields),
+    cancelBooking: (id: string, reason: string, refundAmount?: number) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/cancel`, { reason, refundAmount }),
+    reassignBooking: (id: string, companionId: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/reassign`, { companionId }),
+    refund: (id: string, amount: number, reason: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/refund`, { amount, reason }),
+    retryRefund: (id: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/refund/retry`),
+    markPaid: (id: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/mark-paid`),
+    overrideFee: (id: string, retained: number) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/bookings/${id}/cancellation-fee`, { retained }),
+    deleteBooking: (id: string) => api.del<{ message: string }>(`/admin/app/bookings/${id}`),
+    disputes: (status: 'open' | 'resolved') => api.get<AdminBooking[]>(`/admin/app/disputes?status=${status}`),
+    replyDispute: (id: string, message: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/disputes/${id}/reply`, { message }),
+    closeDispute: (id: string, resolution: string) => api.post<{ message: string; booking: AdminBooking }>(`/admin/app/disputes/${id}/close`, { resolution }),
+    savePricing: (p: Partial<PricingSettings> & { repriceUnpaid?: boolean }) => api.put<{ message: string; pricing: PricingSettings; repriced: number }>('/admin/settings/pricing', p),
+    audience: () => api.get<Record<BroadcastAudience, number>>('/admin/app/broadcast/audience'),
+    broadcast: (b: { audience: BroadcastAudience; title: string; body: string }) => api.post<{ message: string; broadcast: BroadcastRecord }>('/admin/broadcast', b),
+    broadcasts: () => api.get<BroadcastRecord[]>('/admin/app/broadcasts'),
+    activity: (before?: string) => api.get<AuditEntry[]>(`/admin/app/activity${before ? `?before=${encodeURIComponent(before)}` : ''}`),
+  },
 };
 
 export type Backend = typeof backend;

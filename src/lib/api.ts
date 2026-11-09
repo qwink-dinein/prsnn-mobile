@@ -21,7 +21,7 @@ export const setUnauthorizedHandler = (fn: (() => void) | null) => {
   onUnauthorized = fn;
 };
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** A file picked with expo-image-picker, ready for multipart upload. */
 export interface UploadFile {
@@ -74,6 +74,7 @@ export const api = {
   get: <T>(p: string) => request<T>('GET', p),
   post: <T>(p: string, b?: unknown) => request<T>('POST', p, b ?? {}),
   put: <T>(p: string, b?: unknown) => request<T>('PUT', p, b ?? {}),
+  patch: <T>(p: string, b?: unknown) => request<T>('PATCH', p, b ?? {}),
   del: <T>(p: string, b?: unknown) => request<T>('DELETE', p, b),
 };
 

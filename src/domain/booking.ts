@@ -1,4 +1,4 @@
-import { CANCELLATION_CUTOFF_MINUTES, CANCELLATION_FEE, companionShareOf } from './pricing';
+import { companionShareOf, pricing } from './pricing';
 import type { Availability, Booking, Companion, DayKey, Duration, PersonRef } from './types';
 
 /** Durations the backend accepts (Booking.duration enum, minutes as strings). */
@@ -204,6 +204,7 @@ export function refundIfCancelledNow(b: Booking, now: Date = new Date(), by: 'cu
   if (b.paymentStatus !== 'paid') return { amount: 0, fee: 0, reason: 'Nothing has been charged.' };
   if (by === 'companion') return { amount: paid, fee: 0, reason: 'The customer gets a full refund when a companion cancels.' };
   const minutesToStart = (startsAt(b).getTime() - now.getTime()) / 60000;
+  const { cancellationCutoffMinutes: CANCELLATION_CUTOFF_MINUTES, cancellationFee: CANCELLATION_FEE } = pricing();
   if (minutesToStart >= CANCELLATION_CUTOFF_MINUTES) {
     const amount = Math.round(paid * (1 - CANCELLATION_FEE));
     return { amount, fee: paid - amount, reason: `Cancelling ${CANCELLATION_CUTOFF_MINUTES}+ minutes before the start: ${Math.round((1 - CANCELLATION_FEE) * 100)}% refunded (a ${Math.round(CANCELLATION_FEE * 100)}% cancellation fee applies).` };

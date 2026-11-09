@@ -1,11 +1,16 @@
 /**
- * prsnn price list — identical for every companion. Mirrors
- * prsnn-backend/src/utils/pricing.js exactly (a test checks the anchors).
- * Companions choose which durations they offer; they don't set prices.
+ * prsnn price list — identical for every companion.
+ *
+ * The values here are the DEFAULTS, the same as prsnn-backend's
+ * src/utils/pricing.js. The live prices come from GET /settings/pricing
+ * (a superadmin can change them in the app); `applyPricing` swaps them in and
+ * every helper below reads `pricing()`. If the server can't be reached the
+ * bundled defaults are used. Companions choose which durations they offer;
+ * they don't set prices.
  */
 export const BASE_RATE = 399;
 
-export const PACKAGE_PRICES: Record<number, number> = {
+export const DEFAULT_PACKAGE_PRICES: Readonly<Record<number, number>> = Object.freeze({
   1: 399,
   2: 699,
   3: 999,
@@ -18,32 +23,98 @@ export const PACKAGE_PRICES: Record<number, number> = {
   10: 3099,
   11: 3349,
   12: 3599,
-};
+});
+/** @deprecated use pricing().packagePrices (live) or DEFAULT_PACKAGE_PRICES. */
+export const PACKAGE_PRICES = DEFAULT_PACKAGE_PRICES;
 
-export const ALL_HOURS = Object.keys(PACKAGE_PRICES).map(Number);
-/** Shown to customers when a companion hasn't customised their list. */
-export const HEADLINE_HOURS = [1, 2, 4, 6, 12];
+export const ALL_HOURS = Object.keys(DEFAULT_PACKAGE_PRICES).map(Number);
 /** Highlighted as "Popular choice". */
 export const POPULAR_HOURS = 4;
 
-/** prsnn keeps 20% of each booking; the companion receives 80%. */
-export const PLATFORM_SHARE = 0.2;
-/** Customer cancels 15+ minutes before the start: 85% back, 15% fee. */
-export const CANCELLATION_FEE = 0.15;
-export const CANCELLATION_CUTOFF_MINUTES = 15;
+export interface PricingSettings {
+  packagePrices: Record<number, number>;
+  /** prsnn's share of each booking (0.2 → companion receives 80%). */
+  platformShare: number;
+  /** Kept when a customer cancels before the cutoff (0.15 → 85% refunded). */
+  cancellationFee: number;
+  cancellationCutoffMinutes: number;
+  offerMinMinutes: number;
+  offerMaxMinutes: number;
+  /** Sessions run inside dayStart–dayEnd ("HH:MM"). */
+  dayStart: string;
+  dayEnd: string;
+  /** Shown to customers when a companion hasn't customised their list. */
+  headlineHours: number[];
+}
 
-/** Sessions run inside 07:00–22:00. */
-export const DAY_START = '07:00';
-export const DAY_END = '22:00';
+export const DEFAULT_PRICING: Readonly<PricingSettings> = Object.freeze({
+  packagePrices: DEFAULT_PACKAGE_PRICES,
+  platformShare: 0.2,
+  cancellationFee: 0.15,
+  cancellationCutoffMinutes: 15,
+  offerMinMinutes: 15,
+  offerMaxMinutes: 300,
+  dayStart: '07:00',
+  dayEnd: '22:00',
+  headlineHours: [1, 2, 4, 6, 12],
+});
 
-export const priceFor = (hours: number): number | null => PACKAGE_PRICES[hours] ?? null;
-export const hourlyFor = (hours: number) => Math.round((PACKAGE_PRICES[hours] ?? BASE_RATE * hours) / hours);
-/** Saving versus paying ₹399 for every hour. */
-export const savingFor = (hours: number) => Math.max(0, BASE_RATE * hours - (PACKAGE_PRICES[hours] ?? BASE_RATE * hours));
-export const companionShareOf = (amount: number) => Math.floor(amount * (1 - PLATFORM_SHARE));
+let current: PricingSettings = DEFAULT_PRICING;
+const listeners = new Set<() => void>();
+
+/** Pricing in force (server copy once loaded, else the defaults). */
+export const pricing = () => current;
+
+/** Swap in the server's pricing. Unknown or missing fields keep the defaults. */
+export function applyPricing(p: Partial<PricingSettings> | null | undefined) {
+  if (!p) return;
+  const prices: Record<number, number> = { ...DEFAULT_PACKAGE_PRICES };
+  for (const [h, v] of Object.entries(p.packagePrices ?? {})) if (ALL_HOURS.includes(Number(h)) && Number(v) > 0) prices[Number(h)] = Number(v);
+  current = { ...DEFAULT_PRICING, ...p, packagePrices: prices, headlineHours: p.headlineHours?.length ? p.headlineHours : DEFAULT_PRICING.headlineHours };
+  listeners.forEach((l) => l());
+}
+export const resetPricing = () => {
+  current = DEFAULT_PRICING;
+  listeners.forEach((l) => l());
+};
+/** For useSyncExternalStore. */
+export const subscribePricing = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
+/** Backwards-compatible names (read the live values). */
+export const HEADLINE_HOURS = DEFAULT_PRICING.headlineHours;
+
+export const priceFor = (hours: number): number | null => current.packagePrices[hours] ?? null;
+export const hourlyFor = (hours: number) => Math.round((current.packagePrices[hours] ?? current.packagePrices[1] * hours) / hours);
+/** Saving versus paying the 1-hour price for every hour. */
+export const savingFor = (hours: number) => Math.max(0, current.packagePrices[1] * hours - (current.packagePrices[hours] ?? current.packagePrices[1] * hours));
+export const companionShareOf = (amount: number) => Math.floor(amount * (1 - current.platformShare));
 export const platformShareOf = (amount: number) => amount - companionShareOf(amount);
 
 export const hoursLabel = (h: number) => `${h} ${h === 1 ? 'hour' : 'hours'}`;
 
-/** Durations a companion offers (older profiles: the five headline packages). */
-export const offeredHours = (packages?: number[] | null) => (packages && packages.length ? [...packages].sort((a, b) => a - b) : HEADLINE_HOURS);
+/** Durations a companion offers (older profiles: the headline packages). */
+export const offeredHours = (packages?: number[] | null) => (packages && packages.length ? [...packages].sort((a, b) => a - b) : current.headlineHours);
+
+/**
+ * Same rules the server applies to a price change (PUT /admin/settings/pricing):
+ * every longer package costs more in total and less per hour. Returns an error
+ * message for the first broken pair, or null.
+ */
+export function priceCurveError(prices: Record<number, number>): string | null {
+  for (const h of ALL_HOURS) {
+    const v = prices[h];
+    if (!Number.isInteger(v) || v < 1) return `Enter a whole rupee price for ${hoursLabel(h)}.`;
+  }
+  for (let h = 2; h <= 12; h++) {
+    const a = prices[h - 1];
+    const b = prices[h];
+    if (!(b > a)) return `${hoursLabel(h)} must cost more than ${hoursLabel(h - 1)}.`;
+    if (!(b / h < a / (h - 1))) return `${hoursLabel(h)} must cost less per hour than ${hoursLabel(h - 1)} (₹${Math.round(b / h)} vs ₹${Math.round(a / (h - 1))}).`;
+  }
+  return null;
+}

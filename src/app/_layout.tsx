@@ -12,6 +12,18 @@ import { colors } from '@/theme/tokens';
 import { useSession } from '@/state/session';
 import { setUnauthorizedHandler } from '@/lib/api';
 import { ConfirmProvider } from '@/components/ui/confirm';
+import { usePricingSync } from '@/lib/pricing';
+import { registerForPush } from '@/lib/push';
+
+/** App-wide background work that needs React Query: live prices, push token after sign-in. */
+function AppEffects() {
+  usePricingSync();
+  const token = useSession((s) => s.token);
+  useEffect(() => {
+    if (token) void registerForPush();
+  }, [token]);
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -45,12 +57,14 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <ConfirmProvider>
+          <AppEffects />
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist }, animation: 'default' }}>
             <Stack.Screen name="index" options={{ animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen name="pay/[bookingId]" options={{ presentation: 'card' }} />
             <Stack.Screen name="confirmed" options={{ gestureEnabled: false, animation: 'fade' }} />
+            <Stack.Screen name="admin" />
           </Stack>
           </ConfirmProvider>
         </QueryClientProvider>

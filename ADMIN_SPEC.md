@@ -1,5 +1,13 @@
 # In-app admin: approved spec (owner, 2026-11-09)
 
+> **Status: built** (2026-11-09). App: `src/app/admin/*` (Profile → Admin for staff), rules in
+> `src/domain/admin.ts`. Backend: `/api/admin/app/*`, `/api/settings/pricing`,
+> `/api/admin/settings/pricing`, `/api/admin/broadcast`, `/api/profile/push-token` on branch
+> `claude/adoring-euler-w8jj3h`. Routes in API.md §Admin. Owner to do: set `SUPERADMIN_PHONES`
+> on Render, `eas init` (push needs the project id). Notes: a sub-admin cancel of a paid
+> booking flags it for a superadmin refund decision (Refunds tab) instead of moving money;
+> deleting a user is refused while they have an open paid booking.
+
 Mock-ups approved: https://claude.ai/artifact/7cz4LvKLuv852ZknbsujtQ (Overview, Verify, Bookings & refunds, Dispute, plus a Users tab).
 Build in `prsnn-mobile` (screens under `src/app/admin/*`, shown only to admin roles) and `prsnn-backend` (routes + tests). Document every new route in API.md.
 

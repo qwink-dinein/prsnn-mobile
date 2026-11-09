@@ -53,6 +53,12 @@
           "photosPermission": "prsnn uses your photos so you can choose a profile photo and upload ID documents for verification.",
           "cameraPermission": "prsnn uses the camera so you can take your profile photo and ID photos for verification."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2F4A34"
+        }
       ]
     ],
     "experiments": {

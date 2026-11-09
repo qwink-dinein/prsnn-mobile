@@ -10,6 +10,8 @@ import { displayPhone } from '@/lib/flow';
 import { queryClient } from '@/lib/queryClient';
 import { useSession } from '@/state/session';
 import { seeLabel } from '@/domain/privacy';
+import { isStaff, roleLabel } from '@/domain/admin';
+import { unregisterPush } from '@/lib/push';
 
 /** Screen 15 · Profile (grouped settings list, no hamburger menu). */
 export default function ProfileTab() {
@@ -23,6 +25,7 @@ export default function ProfileTab() {
   const confirm = useConfirm();
   const logout = async () => {
     if (!(await confirm({ title: 'Log out?', message: 'You can log back in with your number and OTP or your PIN.', confirmLabel: 'Log out', destructive: true }))) return;
+    await unregisterPush();
     await signOut();
     queryClient.clear();
     router.replace('/welcome');
@@ -56,6 +59,12 @@ export default function ProfileTab() {
           ) : null}
         </View>
       </View>
+
+      {isStaff(user?.role) ? (
+        <View style={styles.group}>
+          <ListRow icon="shieldCheck" label="Admin" value={roleLabel(user!.role)} onPress={() => router.push('/admin')} last />
+        </View>
+      ) : null}
 
       {isCompanion ? (
         <View style={styles.group}>

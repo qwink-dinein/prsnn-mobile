@@ -13,7 +13,7 @@ import { IdentityForm, identityComplete, type IdentityValue } from '@/components
 import { AreaPicker, CityPicker } from '@/components/PlacePicker';
 import { stateOf } from '@/domain/places';
 import { PackageGrid } from '@/components/PackageGrid';
-import { ALL_HOURS, HEADLINE_HOURS, companionShareOf, priceFor } from '@/domain/pricing';
+import { ALL_HOURS, companionShareOf, pricing, priceFor } from '@/domain/pricing';
 import { formatINR , CATEGORIES } from '@/domain/booking';
 import { TextField } from '@/components/ui/forms';
 import { AvailabilityEditor, emptyAvailability, type AvailabilityValue } from '@/components/fellow/AvailabilityEditor';
@@ -45,7 +45,7 @@ export default function CompanionOnboarding() {
   const [idBack, setIdBack] = useState<UploadFile | null>(null);
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [selfie, setSelfie] = useState<UploadFile | null>(null);
-  const [packages, setPackages] = useState<number[]>(HEADLINE_HOURS);
+  const [packages, setPackages] = useState<number[]>(() => pricing().headlineHours);
   const [avail, setAvail] = useState<AvailabilityValue>(emptyAvailability());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

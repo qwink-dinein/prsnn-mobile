@@ -1,8 +1,9 @@
 import type { AppNotification, Booking, Companion, Gender, Policy, Profile, SessionUser } from '@/domain/types';
 import { amountDuePaise, refundIfCancelledNow, toDateKey } from '@/domain/booking';
-import { PACKAGE_PRICES } from '@/domain/pricing';
+import { priceFor, pricing } from '@/domain/pricing';
 import { useSession } from '@/state/session';
 import type { Backend, AuthResult } from './backend';
+import { demoAdmin, demoRoleFor } from './demoAdmin';
 
 /**
  * Sample data for EXPO_PUBLIC_DEMO=1 (design review, preview, screenshots).
@@ -101,9 +102,13 @@ const patch = (id: string, p: Partial<Booking>) => {
 export const demo: Backend = {
   sendOtp: () => wait({ message: 'Code sent on WhatsApp', expiresIn: 300 }),
   // New phone numbers are new accounts: they go through "About you" (gender, show me, privacy, city).
-  verifyOtp: (phone, _otp, role) => wait({ ...auth({ ...me, phone, role: role ?? 'user', hasPin: false, fullName: undefined, gender: undefined, seeGender: undefined, profileVisibility: undefined }), isNewUser: true }),
+  verifyOtp: (phone, _otp, role) => {
+    const staff = demoRoleFor(phone);
+    if (staff) return wait({ ...auth({ ...me, phone, role: staff, fullName: staff === 'superadmin' ? 'Owner' : 'Farah (ops)' }), isNewUser: false });
+    return wait({ ...auth({ ...me, phone, role: role ?? 'user', hasPin: false, fullName: undefined, gender: undefined, seeGender: undefined, profileVisibility: undefined }), isNewUser: true });
+  },
   setPin: () => wait({ message: 'PIN set' }),
-  pinLogin: (phone) => wait(auth({ ...me, phone })),
+  pinLogin: (phone) => wait(auth({ ...me, phone, role: demoRoleFor(phone) ?? me.role })),
   emailLogin: () => wait(auth()),
   verifyEmail: () => wait(auth()),
 
@@ -154,7 +159,7 @@ export const demo: Backend = {
       status: 'pending',
       paymentStatus: 'pending',
       pricePerHour: 399,
-      packagePrice: PACKAGE_PRICES[Number(b.duration) / 60],
+      packagePrice: priceFor(Number(b.duration) / 60) ?? undefined,
       startTime: b.startTime,
       duration: b.duration,
       scheduledDate: `${b.scheduledDate}T00:00:00.000Z`,
@@ -227,6 +232,9 @@ export const demo: Backend = {
   updateIdentity: () => wait({ message: 'Updated' }),
   updateProfile: () => wait({ message: 'Updated' }),
   deleteAccount: () => wait({ message: 'Deleted' }),
+  savePushToken: () => wait({ message: 'Notifications on.' }),
+  pricing: () => wait({ ...pricing() }),
+  admin: demoAdmin,
 };
 
 export const demoIncoming = incoming;

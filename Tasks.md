@@ -23,6 +23,9 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ Sessions 7 AM–10 PM; offer windows scale with notice (15 min–5 h each); refund if nobody accepts 1 h before
 - ✅ Cancellation: customer 85% if ≥15 min before (15% fee to prsnn.), none later; companion cancels → 100%
 - ✅ Tap-to-advance onboarding (role, gender, show me, visibility, city, area)
+- ✅ **In-app admin** (ADMIN_SPEC.md): superadmin/sub-admin roles, Overview, Verify, Bookings (Live/Refunds/Done) with edit/cancel/reassign and superadmin money actions, Disputes with chat, Users (edit/suspend/delete/make sub-admin), Sub-admins, Prices, Broadcast, Activity log; server-enforced, every action audited
+- ✅ Prices, split, cancellation fee and offer/day windows live in a `Settings` document; the app reads them from the API with the bundled table as fallback
+- ✅ Push token saved at login (`expo-notifications`); superadmin push broadcasts via Expo
 
 ## Before the first real build
 
@@ -32,7 +35,9 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 🔑 Submit the remaining 2 WhatsApp templates (`prsnn_booking_confirmed`, `prsnn_booking_unfulfilled`, see WHATSAPP_TEMPLATES.md) and set all template names on Render.
 - ⏳ Existing companions get the default packages 1, 2, 4, 6, 12 h until they choose; existing bookings keep their old price.
 - ⏳ Run `node src/scripts/migratePhoneAuth.js` on the testing DB, deploy the backend branch to the testing service, and smoke-test OTP → book → pay → chat.
-- 🔑 **Expo/EAS**: `eas init` on the owner's Expo account (`mukarramjah`), then `eas build -p android --profile preview` for an installable APK.
+- 🔑 **Expo/EAS**: `eas init` on the owner's Expo account (`mukarramjah`), then `eas build -p android --profile preview` for an installable APK. `eas init` also writes the EAS project id that push notifications need; until then the app skips push registration (Expo Go and web can't receive pushes anyway).
+- 🔑 **Superadmins**: set `SUPERADMIN_PHONES` on Render (both services) to the owner's two numbers, then log in with OTP or PIN. Never commit the numbers.
+- 🔑 **Android push**: upload the FCM V1 service-account key to EAS (`eas credentials`) before broadcasts reach Android devices; iOS needs the APNs key (EAS can create it).
 - 🔑 **Apple Developer** account for iOS builds and TestFlight.
 - ⏳ Add `https://prsnn.com` deep links (`/companions/:id`) as intentFilters / associatedDomains.
 
@@ -42,12 +47,12 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ⏳ Razorpay Dashboard → Webhooks → add `/api/payments/webhook` (payment.captured, refund.processed) and set `RAZORPAY_WEBHOOK_SECRET` when Razorpay goes live.
 - ⏳ Push notifications for offers: a 15-minute window is short without them (WhatsApp `booking_request` covers it meanwhile).
 - 💡 When a companion cancels a confirmed booking before the start, offer it to backups instead of refunding straight away (needs a product decision).
-- 💡 Admin view of open disputes and refunds (today: emailed to SUPPORT_EMAIL).
 - 💡 Older companions without a gender appear only to members who chose “Everyone” until they set one (the app asks on next login).
 
 ## P1 (launch quality)
 
-- ⏳ Push notifications (expo-notifications plus a `pushToken` on User; the backend sends on booking_request, booking_accepted, payment_completed and new messages)
+- ⏳ Push for booking events (the token and Expo sender exist now for broadcasts; still to send on booking_request, booking_accepted, payment_completed and new messages)
+- ⏳ Admin follow-ups: the member app's slot picker still uses the default 07:00–22:00 window client-side (the server enforces the live window); only one refund per booking is possible (a second partial refund needs a refunds array); suspended users' existing tokens stay valid until expiry for non-admin routes (login is blocked)
 - ⏳ Offline banner and retry (expo-network)
 - ⏳ Server-side "mark notification read" (the backend only has clear-all)
 - ⏳ Companion photo gallery (backend stores one photo)
