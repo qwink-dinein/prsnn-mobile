@@ -17,15 +17,20 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ Forgot PIN → code on WhatsApp → choose a new PIN
 - ✅ Easier PIN keypad (76pt keys, no dropped taps, hardware keyboard) and login motion
 - ✅ **Prepaid booking**: pay first → chosen companion (15 min) → up to 2 backups → atomic assignment → auto refund; idempotency, webhook, cancel policy, disputes
-- ✅ Italic “person.” brand everywhere; gender + “show me” filter (server-side); profile lock with consent and a static blurred placeholder
+- ✅ Italic “prsnn.” brand everywhere; gender + “show me” filter (server-side); profile lock with consent and a static blurred placeholder
 - ✅ All Indian cities (ODbL dataset) + metro area lists in onboarding, companion registration and Search
+- ✅ **Fixed package prices** (₹399 base, 1–12 h, longer = cheaper per hour), price cards for members and companions, 80/20 split with “You get ₹X”
+- ✅ Sessions 7 AM–10 PM; offer windows scale with notice (15 min–5 h each); refund if nobody accepts 1 h before
+- ✅ Cancellation: customer 85% if ≥15 min before (15% fee to prsnn.), none later; companion cancels → 100%
+- ✅ Tap-to-advance onboarding (role, gender, show me, visibility, city, area)
 
 ## Before the first real build
 
 - 🔑 **Waplify**: API key + Meta-approved *Authentication* template name (and `WAPLIFY_CODE_KEYS` if the code isn't `{{1}}`). Set these on Render.
 - 🔑 **MSG91** (optional SMS backup): auth key + DLT template id.
 - ⏸ **Razorpay**: deferred (owner, 2026-11-09). Payments are simulated until then; switching on Razorpay is a backend env change (`PAYMENT_MODE=razorpay` + keys), no app update.
-- 🔑 Submit the 4 WhatsApp templates (WHATSAPP_TEMPLATES.md) and set their names on Render.
+- 🔑 Submit the remaining 2 WhatsApp templates (`prsnn_booking_confirmed`, `prsnn_booking_unfulfilled`, see WHATSAPP_TEMPLATES.md) and set all template names on Render.
+- ⏳ Existing companions get the default packages 1, 2, 4, 6, 12 h until they choose; existing bookings keep their old price.
 - ⏳ Run `node src/scripts/migratePhoneAuth.js` on the testing DB, deploy the backend branch to the testing service, and smoke-test OTP → book → pay → chat.
 - 🔑 **Expo/EAS**: `eas init` on the owner's Expo account (`mukarramjah`), then `eas build -p android --profile preview` for an installable APK.
 - 🔑 **Apple Developer** account for iOS builds and TestFlight.
@@ -35,10 +40,9 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 - ⏳ Run the allocation tests against a real MongoDB on the testing service (this session couldn't download MongoDB). The concurrency guarantees rely on MongoDB conditional updates.
 - ⏳ Razorpay Dashboard → Webhooks → add `/api/payments/webhook` (payment.captured, refund.processed) and set `RAZORPAY_WEBHOOK_SECRET` when Razorpay goes live.
-- ⏳ Push notifications for offers: 15 minutes is short without them (WhatsApp `booking_request` covers it meanwhile).
+- ⏳ Push notifications for offers: a 15-minute window is short without them (WhatsApp `booking_request` covers it meanwhile).
 - 💡 When a companion cancels a confirmed booking before the start, offer it to backups instead of refunding straight away (needs a product decision).
 - 💡 Admin view of open disputes and refunds (today: emailed to SUPPORT_EMAIL).
-- 💡 Product decision: a backup with a lower rate currently earns the price the customer paid.
 - 💡 Older companions without a gender appear only to members who chose “Everyone” until they set one (the app asks on next login).
 
 ## P1 (launch quality)
@@ -58,7 +62,6 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 💡 Refer & earn, wallet credit, offers (mock-up 15, 16)
 - 💡 Payout details and payout history for companions (mock-up 20 "Payouts")
 - 💡 Google / Apple sign-in
-- 💡 Multiple cities (location picker; the backend has `city`)
 - 💡 Hindi, Urdu and Telugu (i18n like Hyderabad Rishta)
 
 ## Known backend issues found while reading the code

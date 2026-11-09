@@ -206,4 +206,4 @@ Booking reference: {{6}}
 
 Your full refund has been started to your original payment method. You can book again in the app anytime.
 ```
-Samples: {{1}} Karan · {{2}} prsnn · {{3}} Sun, 15 Nov · {{4}} 4:00 PM · {{5}} 1,200 · {{6}} ABC9F1
+Samples: {{1}} Karan · {{2}} prsnn · {{3}} Sun, 15 Nov · {{4}} 4:00 PM · {{5}} 1,299 · {{6}} ABC9F1

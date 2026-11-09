@@ -48,42 +48,59 @@ stateDiagram-v2
   [*] --> awaiting_payment: POST /bookings/prepaid (terms accepted, idempotencyKey)
   awaiting_payment --> cancelled: not paid in 30 min (nothing charged)
   awaiting_payment --> offering: payment verified (verify, webhook or simulated)
-  offering --> offering: offer declined / expired (15 min) → next companion (max 3)
+  offering --> offering: offer declined / expired (15 min–5 h window) → next companion (max 3)
   offering --> assigned: first companion to accept a live offer (atomic)
-  offering --> failed: no one left / deadline → full refund
+  offering --> failed: no one left / 1 h before start → full refund
   offering --> cancelled: customer cancels → full refund
-  assigned --> cancelled: before start → full refund · after start → no automatic refund
+  assigned --> cancelled: companion → 100% · customer ≥15 min before → 85% · later → none
   assigned --> [*]: completed
 ```
 
 | Method & path | Who | Body / result |
 |---|---|---|
 | GET `/bookings/prepaid/policy` | anyone | fees, matching rules, cancellation and refund terms (shown before payment) |
-| POST `/bookings/prepaid` | member | `{ companionId, scheduledDate, startTime, duration, idempotencyKey, acceptTerms: true, message?, city?, area? }` → `{ booking, quote: { amount, fees: 0 }, policy }`. Same key again → same booking (`replayed: true`) |
+| POST `/bookings/prepaid` | member | `{ companionId, scheduledDate, startTime, duration: '60'…'720' (whole hours the companion offers), idempotencyKey, acceptTerms: true, message?, city?, area? }` → `{ booking, quote: { amount, fees: 0, hours, effectiveHourly }, policy }`. 400 if the session starts before 07:00 or ends after 22:00. Same key again → same booking (`replayed: true`) |
 | POST `/bookings/:id/offer/accept` | companion | 200 confirmed · 409 expired, taken or time clash |
 | POST `/bookings/:id/offer/decline` | companion | next companion is offered straight away |
-| POST `/bookings/:id/cancel` | either party | prepaid: refund follows the policy, returns `{ refund }` |
+| POST `/bookings/:id/cancel` | either party | prepaid: returns `{ refund: { amount, retained, reason } }` per the table below |
 | POST `/bookings/:id/dispute` | either party, paid bookings | `{ reason }` (≥10 chars) → emailed to `SUPPORT_EMAIL`; never blocked by payment |
 
 Rules: the session must be ≥90 min away. Payment is applied once (atomic `markPaid`).
 There is one live offer at a time; acceptance is a single conditional update on a live,
-unexpired offer, so only one companion can win. Deadline = min(paid + 2 h, start − 1 h).
+unexpired offer, so only one companion can win. Each offer window =
+clamp((start − 1 h − now) ÷ 3, 15 min, 5 h); the overall deadline is start − 1 h.
 Refunds are claimed atomically (never twice) and retried. Backups must be in the same city,
-match the customer's gender preference, be free at that time, and charge the same or a lower
-rate than was paid. The customer never sees which other companions were offered (only
+match the customer's gender preference, be free at that time, and offer the booked duration.
+Prices are the same for every companion, so the customer always pays the checkout price;
+any difference that could arise on reassignment is retained by the platform
+(`platformShare` = amount − `companionShare`), never added to the payout or charged to the customer. The customer never sees which other companions were offered (only
 `offerSummary: { tried, liveUntil }`). A companion sees only `myOffer`. Booking state
 (`status` + `allocation.state`) and payment state (`paymentStatus` + `refund`) are separate
 fields. A background sweep every 30 s expires offers, moves to the next companion and fails
 bookings past their deadline.
 
-Tunable in backend env: `OFFER_TTL_MINUTES=15`, `ALLOCATION_TIMEOUT_MINUTES=120`,
-`PAYMENT_TIMEOUT_MINUTES=30`, `MAX_COMPANION_OFFERS=3`.
+### Prices and refunds
+
+`packagePrice` is fixed by duration (₹399 base; 1 h ₹399 · 2 h ₹699 · 3 h ₹999 · 4 h ₹1,299 ·
+5 h ₹1,599 · 6 h ₹1,899 · 7 h ₹2,199 · 8 h ₹2,499 · 9 h ₹2,799 · 10 h ₹3,099 · 11 h ₹3,349 ·
+12 h ₹3,599). `companionShare` = floor(80%) is set when a companion is assigned; the other 20%
+is prsnn.'s share. `pricePerHour` is always 399 and is ignored on update.
+
+| Cancelled by | When | `refund.amount` | `refund.retained` |
+|---|---|---|---|
+| customer | ≥15 min before start | 85% (rounded) | 15% |
+| customer | <15 min before start or later | 0 | 100% |
+| companion | any time | 100% | 0 |
+| system (nobody accepted) | start − 1 h | 100% | 0 |
+
+Tunable in backend env: `OFFER_MIN_MINUTES=15`, `OFFER_MAX_MINUTES=300`,
+`PAYMENT_TIMEOUT_MINUTES=30`, `MAX_COMPANION_OFFERS=3`, `SUPPORT_EMAIL`.
 
 ## Bookings 🔒 (website request flow, unchanged)
 
 | Method & path | Who | Body |
 |---|---|---|
-| POST `/bookings/request` | member | `{ companionId, scheduledDate: 'YYYY-MM-DD', startTime: 'HH:MM', duration: '30'…'240', message? }` |
+| POST `/bookings/request` | member | `{ companionId, scheduledDate: 'YYYY-MM-DD', startTime: 'HH:MM', duration: '60'…'720' (whole hours), message? }` |
 | GET `/bookings/my-requests` | member | |
 | GET `/bookings/incoming-requests` | companion | |
 | GET `/bookings/:id` | either party | |
@@ -92,7 +109,8 @@ Tunable in backend env: `OFFER_TTL_MINUTES=15`, `ALLOCATION_TIMEOUT_MINUTES=120`
 | GET `/bookings/:id/messages?limit&before` | either party (member must have paid) | |
 
 The server checks that the companion offers that weekday, that the start
-time falls inside `startTime`–`endTime`, and that a price is set.
+time falls inside `startTime`–`endTime` and the session runs between 07:00 and 22:00.
+The price is the fixed package price.
 
 ## Payments 🔒
 
@@ -118,7 +136,7 @@ companion, accepted → member (pay prompt), paid → companion. See WHATSAPP_TE
 
 | GET `/profile` | own profile (private fields stripped) |
 | GET `/profile/check` | `{ hasProfile, status, is_verified, role }` |
-| PUT `/profile/update` (multipart) | `fullName, city, state, area, phoneNumber, description, pricePerHour (1–1000), startTime, endTime, <day>_availability, tags, profilePhoto`, plus `gender`, `seeGender`, `profileVisibility` (needs `visibilityConsent: true`; the consent time is stored) |
+| PUT `/profile/update` (multipart) | `fullName, city, state, area, phoneNumber, description, packages (array of whole hours 1–12), startTime, endTime (07:00–22:00), <day>_availability, tags, profilePhoto`, plus `gender`, `seeGender`, `profileVisibility` (needs `visibilityConsent: true`; the consent time is stored) |
 | POST `/profile/onboard-companion` (multipart) | all companion fields + `profilePhoto, idProofFront, idProofBack, backupPhoto?` → status `pending` |
 | DELETE `/profile` **New** | delete own account (members and companions) |
 
@@ -148,5 +166,6 @@ WAPLIFY_TPL_BOOKING_CONFIRMED=prsnn_booking_confirmed
 WAPLIFY_TPL_BOOKING_UNFULFILLED=prsnn_booking_unfulfilled
 PAYMENT_MODE=simulated            # or razorpay
 RAZORPAY_WEBHOOK_SECRET=          # when Razorpay is on
-SUPPORT_EMAIL=admin@prsnn.com     # dispute reports
+SUPPORT_EMAIL=mukarramjahmm@gmail.com   # dispute reports
+OFFER_MIN_MINUTES=15 / OFFER_MAX_MINUTES=300
 ```

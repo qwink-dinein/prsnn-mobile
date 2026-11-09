@@ -34,9 +34,9 @@ Online/verified dot: `#3FB950` with a paper ring.
 
 ## Wordmark
 
-**“person.”** in Lora SemiBold *Italic*, then a **clay** full stop. Use `<Wordmark/>` for the
-large mark, and `<Brand/>` inside running text (“ID verified by *person.*”). System alerts
-can't show italics, so they use plain “person.”. The app icon is a cream italic “p” and a
+**“prsnn.”** in Lora SemiBold *Italic*, then a **clay** full stop. Use `<Wordmark/>` for the
+large mark, and `<Brand/>` inside running text (“ID verified by *prsnn.*”). System alerts
+can't show italics, so they use plain “prsnn.”. The app icon is a cream italic “p” and a
 clay “.” on moss. The store and app name stays “prsnn”.
 
 ## Locked profiles
@@ -134,3 +134,19 @@ action) and pull-to-refresh on lists.
 
 The marketing photos in `assets/images/` come from the web app's `public/`
 folder, compressed to around 50–115 KB each.
+
+## Price cards (`PackageGrid`)
+
+Two columns; an odd last card spans the full width (12 hours). Each card, top to bottom:
+duration (footnote, muted) → **total** (title2, the most prominent number) → hourly rate
+(caption, muted) → **“Save ₹X”** in moss (caption, semibold) when there is a saving.
+The 4-hour card carries a **“Popular choice”** pill. The selected card gets a 1.5 pt moss
+border and the `green50` background; unselected cards are paper with a `line` border.
+In companion mode the cards are multi-select with a checkbox and an extra line,
+**“You get ₹X”** (their 80%). Cards are `accessibilityRole="radio"` (booking) or
+`"checkbox"` (companion), labelled with duration, price and saving.
+
+## Tap to advance
+
+Onboarding choices (role, I am, Show me, visibility, city, area) are single taps that move
+to the next step with no Confirm button. Only free text (name) has a Next button.

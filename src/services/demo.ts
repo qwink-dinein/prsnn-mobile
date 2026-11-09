@@ -29,7 +29,7 @@ const people: DemoCompanion[] = [
 ];
 
 const POLICY: Policy = {
-  fees: 'No booking fee. One price list for every companion: ₹399 for 1 hour, with lower hourly rates for longer bookings. The price shown is the total you pay.',
+  fees: 'No booking fee. One price list for every companion: ₹399 for 1 hour, with lower hourly rates for longer bookings. The price shown is the total you pay, whichever companion accepts — you are never charged more.',
   allocation:
     'Payment reserves your booking; it is confirmed when an eligible companion accepts. Your chosen companion gets between 15 minutes and 5 hours to respond, depending on how far away your session is. If they can’t make it, we offer your booking to up to 2 similar verified companions, one at a time. If nobody accepts at least 1 hour before the session, it is cancelled and fully refunded.',
   cancellation: [
