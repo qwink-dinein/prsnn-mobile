@@ -1,0 +1,260 @@
+<title>prsnn app preview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a quiet control rail beside a stage that holds one phone at true device size (scaled to fit).
+     On a real phone the rail and frame disappear and the app fills the screen. */
+  :root {
+    --bg: #E8E5DC;          /* mist-deep, so the phone reads as an object */
+    --panel: #FAF9F6;
+    --ink: #0E110D;
+    --muted: #6A665C;
+    --line: #D6D3C9;
+    --moss: #2F4A34;
+    --clay: #C45C2A;
+    --soft: #D7E3D4;
+    --stage: #DEDBD1;
+    --bezel: #121611;
+    --chip-on-fg: #FAF9F6;
+    --display: "Lora", Georgia, "Times New Roman", serif;
+    --body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10140F; --panel: #171C15; --ink: #EDEBE4; --muted: #A9A699; --line: #2A3227;
+      --moss: #B9D1B4; --clay: #E08A5E; --soft: #22301F; --stage: #0B0E0A; --bezel: #050605; --chip-on-fg: #10140F;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10140F; --panel: #171C15; --ink: #EDEBE4; --muted: #A9A699; --line: #2A3227;
+    --moss: #B9D1B4; --clay: #E08A5E; --soft: #22301F; --stage: #0B0E0A; --bezel: #050605; --chip-on-fg: #10140F;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; }
+  .lab { height: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+  .rail {
+    padding-block: 24px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: 20px;
+    border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  h1 { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.1; margin: 0; color: var(--ink); letter-spacing: -0.02em; }
+  h1 em { font-style: normal; color: var(--clay); }
+  .sub { color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
+  h2 { font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  .devices { display: grid; gap: 6px; }
+  .dev {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+    padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font: inherit; cursor: pointer; text-align: left;
+  }
+  .dev small { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .dev[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: var(--chip-on-fg); }
+  .dev[aria-pressed="true"] small { color: inherit; opacity: .8; }
+  .dev:focus-visible, .btn:focus-visible, select:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--moss); background: transparent;
+    color: var(--moss); font: 500 13px/1.2 var(--body); cursor: pointer; white-space: nowrap;
+  }
+  .btn[aria-pressed="true"] { background: var(--moss); color: var(--chip-on-fg); }
+  select { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; }
+  .steps { margin: 0; padding: 12px 14px 12px 30px; border-radius: 12px; background: var(--soft); line-height: 1.5; display: grid; gap: 4px; }
+  .steps b { font-weight: 600; }
+  .note { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0; }
+  .stage { position: relative; background: var(--stage); display: grid; place-items: center; overflow: hidden; min-height: 0; }
+  .fit { transform-origin: center center; margin-bottom: 28px; transition: transform .25s ease; }
+  .phone { position: relative; background: var(--bezel); padding: 12px; box-shadow: 0 30px 60px -20px rgba(14, 17, 13, .45), inset 0 0 0 2px #2A302A; }
+  .screen { position: relative; overflow: hidden; background: #F3F1EB; display: flex; flex-direction: column; }
+  .status { flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; color: #0E110D; font: 600 15px/1 var(--body); font-variant-numeric: tabular-nums; position: relative; z-index: 2; background: #F3F1EB; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+  .island { position: absolute; left: 50%; transform: translateX(-50%); background: #000; z-index: 3; }
+  iframe { flex: 1; width: 100%; border: 0; display: block; background: #F3F1EB; }
+  .home { flex: none; display: grid; place-items: center; background: #F3F1EB; }
+  .home i { display: block; width: 134px; height: 5px; border-radius: 3px; background: #0E110D; opacity: .85; }
+  .caption { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 760px) {
+    .lab { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(560px, 1fr); height: auto; min-height: 100%; }
+    .rail { border-right: 0; border-bottom: 1px solid var(--line); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+    .stage { min-height: 620px; }
+  }
+  body.on-phone .lab { display: block; height: 100%; }
+  body.on-phone .rail, body.on-phone .caption, body.on-phone .status, body.on-phone .home, body.on-phone .island { display: none; }
+  body.on-phone .stage, body.on-phone .fit, body.on-phone .phone, body.on-phone .screen { height: 100%; width: 100% !important; padding: 0; border-radius: 0 !important; box-shadow: none; transform: none !important; background: #F3F1EB; display: block; }
+  body.on-phone iframe { height: 100%; }
+  @media (prefers-reduced-motion: reduce) { .fit { transition: none; } }
+</style>
+
+<div class="lab">
+  <aside class="rail" aria-label="Preview controls">
+    <div>
+      <h1>prsnn<em>.</em></h1>
+      <p class="sub">Phone preview of the iOS and Android app, on sample data. Switch phones without losing your place.</p>
+    </div>
+
+    <section>
+      <h2 id="dev-h">Phone</h2>
+      <div class="devices" role="group" aria-labelledby="dev-h" id="devices"></div>
+    </section>
+
+    <section>
+      <h2 id="zoom-h">Zoom</h2>
+      <div class="row" role="group" aria-labelledby="zoom-h">
+        <button class="btn" id="zoom-fit" aria-pressed="true">Fit to window</button>
+        <button class="btn" id="zoom-100" aria-pressed="false">Actual size</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Log in on sample data</h2>
+      <ol class="steps">
+        <li><b>Get started</b>, pick a role</li>
+        <li>Any mobile number starting 6–9</li>
+        <li>Any 6-digit code</li>
+        <li>Set a PIN (not 1234 or 0000), or Skip</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2><label for="jump">Jump to screen (after login)</label></h2>
+      <select id="jump">
+        <option value="/home">Home / Discover · or companion dashboard</option>
+        <option value="/search">Search &amp; filters</option>
+        <option value="/companion/c1">Companion profile (Ayesha)</option>
+        <option value="/book/c1">Select date &amp; time</option>
+        <option value="/pay/b2">Payment (test checkout)</option>
+        <option value="/chat/b1">Chat with Ayesha</option>
+        <option value="/bookings">My bookings · or requests</option>
+        <option value="/messages">Messages</option>
+        <option value="/notifications">Notifications</option>
+        <option value="/profile">Profile</option>
+        <option value="/fellow/apply">Become a companion</option>
+        <option value="/fellow/onboarding">Companion onboarding</option>
+        <option value="/fellow/verification">Verification status</option>
+        <option value="/fellow/earnings">Earnings</option>
+      </select>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="go">Open</button>
+        <button class="btn" id="restart">Restart app</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="reset">Log out &amp; reset</button>
+      </div>
+    </section>
+
+    <p class="note"><b>Member or companion:</b> the role you pick on "I'm here as a…" decides which side you see. Choose "Become a companion" for the dashboard, Accept/Decline requests and Earnings. Use <b>Log out &amp; reset</b> to switch.</p>
+    <p class="note"><b>Payments</b> are a test checkout: no money moves, and you can simulate a failed payment. Rohan's booking under Bookings is ready to pay.</p>
+    <p class="note">All people are fictional sample data. Open this link on your phone to use the app full screen.</p>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="fit" id="fit">
+      <div class="phone" id="phone">
+        <div class="screen" id="screen">
+          <div class="island" id="island" aria-hidden="true"></div>
+          <div class="status" id="status" aria-hidden="true">
+            <span id="clock">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#0E110D"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+              <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0zM3.3 6.7a6.6 6.6 0 0 1 9.4 0l-1.6 1.6a4.4 4.4 0 0 0-6.2 0zM1 4.4a9.9 9.9 0 0 1 14 0l-1.6 1.6a7.6 7.6 0 0 0-10.8 0z" fill="#0E110D"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="#0E110D" opacity=".45"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#0E110D"/><rect x="23.5" y="4" width="2" height="4" rx="1" fill="#0E110D" opacity=".45"/></svg>
+            </span>
+          </div>
+          <iframe id="app" src="app.html?v=1" title="prsnn app"></iframe>
+          <div class="home" id="home" aria-hidden="true"><i></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="caption" id="caption"></div>
+  </main>
+</div>
+
+<script>
+  const APP = 'app.html?v=1';
+  const DEVICES = [
+    { id: 'se', name: 'iPhone SE', w: 375, h: 667, top: 20, bottom: 0, radius: 18, island: null },
+    { id: 'i15', name: 'iPhone 15', w: 393, h: 852, top: 54, bottom: 34, radius: 50, island: 'pill' },
+    { id: 'max', name: 'iPhone 15 Pro Max', w: 430, h: 932, top: 54, bottom: 34, radius: 54, island: 'pill' },
+    { id: 'pixel', name: 'Pixel 8', w: 412, h: 915, top: 36, bottom: 20, radius: 40, island: 'dot' },
+    { id: 'galaxy', name: 'Galaxy S24', w: 360, h: 780, top: 34, bottom: 20, radius: 38, island: 'dot' },
+    { id: 'small', name: 'Small Android', w: 320, h: 640, top: 24, bottom: 16, radius: 22, island: null },
+  ];
+  const $ = (id) => document.getElementById(id);
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  let current = DEVICES.find((d) => d.id === store.get('prsnn.preview.device')) || DEVICES[1];
+  let zoom = store.get('prsnn.preview.zoom') === 'actual' ? 'actual' : 'fit';
+
+  const onPhone = () => matchMedia('(max-width: 560px) and (pointer: coarse)').matches || innerWidth < 500;
+
+  function renderDevices() {
+    $('devices').innerHTML = '';
+    for (const d of DEVICES) {
+      const b = document.createElement('button');
+      b.className = 'dev';
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d.id === current.id));
+      b.innerHTML = `<span>${d.name}</span><small>${d.w} × ${d.h}</small>`;
+      b.onclick = () => { current = d; store.set('prsnn.preview.device', d.id); renderDevices(); layout(); };
+      $('devices').appendChild(b);
+    }
+  }
+
+  function layout() {
+    document.body.classList.toggle('on-phone', onPhone());
+    if (onPhone()) return;
+    const d = current;
+    const screen = $('screen'), phone = $('phone'), island = $('island');
+    screen.style.width = d.w + 'px';
+    screen.style.height = d.h + 'px';
+    screen.style.borderRadius = d.radius + 'px';
+    phone.style.borderRadius = d.radius + 12 + 'px';
+    $('status').style.height = d.top + 'px';
+    $('status').style.paddingTop = d.island === 'pill' ? '12px' : '0px';
+    $('home').style.height = d.bottom + 'px';
+    $('home').firstElementChild.style.display = d.bottom ? 'block' : 'none';
+    if (d.island === 'pill') Object.assign(island.style, { display: 'block', top: '11px', width: '124px', height: '36px', borderRadius: '20px' });
+    else if (d.island === 'dot') Object.assign(island.style, { display: 'block', top: '10px', width: '14px', height: '14px', borderRadius: '50%' });
+    else island.style.display = 'none';
+    const stage = $('stage').getBoundingClientRect();
+    const fw = d.w + 24, fh = d.h + 24;
+    const s = zoom === 'actual' ? 1 : Math.min(1, (stage.width - 48) / fw, (stage.height - 104) / fh);
+    $('fit').style.transform = `scale(${s})`;
+    $('caption').textContent = `${d.name} · ${d.w} × ${d.h} pt · ${Math.round(s * 100)}%`;
+  }
+
+  function setZoom(z) {
+    zoom = z;
+    store.set('prsnn.preview.zoom', z);
+    $('zoom-fit').setAttribute('aria-pressed', String(z === 'fit'));
+    $('zoom-100').setAttribute('aria-pressed', String(z === 'actual'));
+    layout();
+  }
+  $('zoom-fit').onclick = () => setZoom('fit');
+  $('zoom-100').onclick = () => setZoom('actual');
+
+  // Navigate inside the running app (same origin): push the path and let the router react.
+  $('go').onclick = () => {
+    const w = $('app').contentWindow;
+    try {
+      w.history.pushState(null, '', $('jump').value);
+      w.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    } catch (e) {
+      $('app').src = APP;
+    }
+  };
+  $('restart').onclick = () => { $('app').src = APP; };
+  // Log out and start fresh: the app keeps its session in this browser's storage.
+  $('reset').onclick = () => {
+    try { const w = $('app').contentWindow; w.localStorage.clear(); w.sessionStorage.clear(); } catch (e) {}
+    $('app').src = APP + '&r=' + Date.now();
+  };
+
+  const tick = () => { const n = new Date(); $('clock').textContent = `${n.getHours() % 12 || 12}:${String(n.getMinutes()).padStart(2, '0')}`; };
+  tick(); setInterval(tick, 30000);
+  renderDevices();
+  setZoom(zoom);
+  addEventListener('resize', layout);
+</script>

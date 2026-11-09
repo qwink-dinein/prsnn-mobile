@@ -64,3 +64,14 @@ The app logs people in with a 6-digit code on WhatsApp (Waplify), with SMS
 (MSG91) as a backup. Set `WAPLIFY_API_KEY` and `WAPLIFY_TEMPLATE_NAME` on the
 backend, and run `node src/scripts/migratePhoneAuth.js` once per database.
 See [API.md](API.md).
+
+## Hosted preview (phone frame, sample data)
+
+Private Artifact: https://claude.ai/artifact/CBpyddfgmMmpXXm3Nj3xMJ. It has two files: `preview/index.html`
+(phone-frame shell, committed) and `preview/app.html` (the whole app packed into one file, not committed).
+Rebuild and republish to the same URL:
+
+```bash
+SINGLE_BUNDLE=1 EXPO_PUBLIC_DEMO=1 EXPO_OFFLINE=1 npx expo export --platform web --output-dir dist-single
+node scripts/pack-web.js dist-single preview/app.html --standalone
+```
