@@ -1,10 +1,11 @@
-import { forwardRef, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { forwardRef, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { Platform, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
+import { PressScale } from './motion';
 
 type FieldProps = TextInputProps & { label?: string; error?: string | null; hint?: string; icon?: IconName; prefix?: string };
 
@@ -90,31 +91,71 @@ export function CodeBoxes({ length, value, onChange, secure, autoFocus = true }:
   );
 }
 
-/** On-screen keypad for the 4-digit PIN (mock-up screen 5). */
-export function PinPad({ value, onChange, length = 4 }: { value: string; onChange: (v: string) => void; length?: number }) {
-  const press = (k: string) => {
-    Haptics.selectionAsync().catch(() => {});
-    if (k === 'del') onChange(value.slice(0, -1));
-    else if (value.length < length) onChange(value + k);
-  };
-  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+/**
+ * On-screen keypad for the 4-digit PIN (mock-up screen 5).
+ *
+ * - Large round keys (76pt) with a visible surface so they read as buttons.
+ * - A digit registers on press-IN, like the system passcode pad; nothing is
+ *   lost when tapping fast because the parent applies changes with a
+ *   functional update (`onKey` gets the key, not a stale value).
+ * - Press feedback: scale 0.94 + darker fill in 100ms, one selection haptic.
+ * - On web and with a hardware keyboard, digits and Backspace work too.
+ */
+export function PinPad({ onKey, disabled }: { onKey: (k: string) => void; disabled?: boolean }) {
+  // Did press-in already register this press? (React Native Web can skip
+  // press-in on a very quick click; then the release registers the key.)
+  const registered = useRef(false);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const handler = (e: KeyboardEvent) => {
+      if (disabled) return;
+      if (/^[0-9]$/.test(e.key)) onKey(e.key);
+      else if (e.key === 'Backspace') onKey('del');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onKey, disabled]);
+
+  const rows = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['', '0', 'del']];
   return (
     <View style={styles.pad}>
-      {keys.map((k, i) =>
-        k === '' ? (
-          <View key={i} style={styles.key} />
-        ) : (
-          <Pressable
-            key={i}
-            accessibilityRole="button"
-            accessibilityLabel={k === 'del' ? 'Delete' : k}
-            onPress={() => press(k)}
-            style={({ pressed }) => [styles.key, pressed && { backgroundColor: colors.mistDeep }]}
-          >
-            {k === 'del' ? <Icon name="backspace" size={24} color={colors.gray600} /> : <Text variant="title2" style={{ fontFamily: fonts.medium }}>{k}</Text>}
-          </Pressable>
-        ),
-      )}
+      {rows.map((row, r) => (
+        <View key={r} style={styles.padRow}>
+          {row.map((k, i) =>
+            k === '' ? (
+              <View key={i} style={styles.keySpace} />
+            ) : (
+              <PressScale
+                key={i}
+                accessibilityRole="button"
+                accessibilityLabel={k === 'del' ? 'Delete' : k}
+                disabled={disabled}
+                hitSlop={6}
+                scaleTo={0.94}
+                onPressIn={() => {
+                  registered.current = true;
+                  Haptics.selectionAsync().catch(() => {});
+                  onKey(k);
+                }}
+                onPress={() => {
+                  if (!registered.current) onKey(k);
+                  registered.current = false;
+                }}
+                innerStyle={[styles.key, k === 'del' && styles.keyDel]}
+                pressedStyle={k === 'del' ? styles.keyDelPressed : styles.keyPressed}
+              >
+                {k === 'del' ? (
+                  <Icon name="backspace" size={26} color={colors.gray600} />
+                ) : (
+                  <Text style={styles.keyText} maxFontSizeMultiplier={1.3}>
+                    {k}
+                  </Text>
+                )}
+              </PressScale>
+            ),
+          )}
+        </View>
+      ))}
     </View>
   );
 }
@@ -149,6 +190,21 @@ const styles = StyleSheet.create({
   },
   codeActive: { borderColor: colors.moss, borderWidth: 1.5 },
   hiddenInput: { position: 'absolute', opacity: 0.01, width: 1, height: 1 },
-  pad: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.sm, paddingHorizontal: space.xl },
-  key: { width: '30%', height: 60, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  pad: { alignSelf: 'center', width: '100%', maxWidth: 300, gap: space.md },
+  padRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  key: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  keyPressed: { backgroundColor: colors.mossSoft, borderColor: colors.mossSoft },
+  keyDel: { backgroundColor: 'transparent', borderColor: 'transparent' },
+  keyDelPressed: { backgroundColor: colors.mistDeep },
+  keySpace: { width: 76, height: 76 },
+  keyText: { fontFamily: fonts.medium, fontSize: 28, lineHeight: 34, color: colors.ink },
 });

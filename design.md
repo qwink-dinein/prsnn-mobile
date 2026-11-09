@@ -86,6 +86,23 @@ Online/verified dot: `#3FB950` with a paper ring.
 | 22 | Admin dashboard | — | Web only |
 | 24 | Mobile menu | — | Replaced by the tab bar |
 
+## Motion
+
+Built with Reanimated 4 (`src/components/ui/motion.tsx`) and the timings from the
+animate-expo skill. Motion only where it does a job; tabs never animate.
+
+| Where | What | Why |
+|---|---|---|
+| Login, PIN (seen rarely) | Blocks fade up 12pt, 420ms, 70ms stagger; the wordmark's clay dot settles in last | Explanation / first impression |
+| Every button, PIN key | Scale 0.97 (keys 0.94) on press-in, 100ms | Feedback |
+| PIN boxes | Dot pops in (scale 0.5→1, 140ms) as each digit lands; 160ms pause on the 4th | State |
+| Wrong PIN, invalid number | Short horizontal shake + error haptic | Feedback |
+
+Curve: `cubic-bezier(0.23, 1, 0.32, 1)` (strong ease-out), never ease-in. With
+Reduce Motion on, entrances become a 200ms fade and nothing moves or shakes.
+Entrances are Reanimated CSS animations, not `entering` layout animations (on web
+those pin elements in place when the layout changes).
+
 ## States every data screen has
 
 Loading (spinner), error (message + Try again), empty (icon, one line, next
@@ -98,7 +115,9 @@ action) and pull-to-refresh on lists.
 - Touch targets are 44–48pt or larger.
 - Text contrast is 4.5:1 or higher (muted grey `#6A665C` on mist passes).
 - Haptics are used only for meaningful moments: sending a request, paying,
-  success, and PIN errors.
+  success, PIN errors, and one tick per PIN key.
+- The PIN keypad has 76pt round keys, registers a digit the moment a key is
+  touched, never drops fast taps, and accepts a hardware keyboard.
 
 ## Photos
 

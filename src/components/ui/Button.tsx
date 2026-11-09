@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { PressScale } from './motion';
 import * as Haptics from 'expo-haptics';
 import { colors, HIT, radius } from '@/theme/tokens';
 import { Text } from './Text';
@@ -37,7 +38,7 @@ const FG: Record<Variant, string> = {
 export function Button({ label, onPress, variant = 'primary', icon, iconRight, loading, disabled, haptic, style, accessibilityHint, compact }: Props) {
   const inactive = disabled || loading;
   return (
-    <Pressable
+    <PressScale
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
@@ -47,15 +48,8 @@ export function Button({ label, onPress, variant = 'primary', icon, iconRight, l
         if (haptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         onPress?.();
       }}
-      style={({ pressed }) => [
-        styles.base,
-        compact && styles.compact,
-        { backgroundColor: BG[variant] },
-        variant === 'secondary' && styles.outline,
-        inactive && styles.disabled,
-        pressed && !inactive && styles.pressed,
-        style,
-      ]}
+      style={style}
+      innerStyle={[styles.base, compact && styles.compact, { backgroundColor: BG[variant] }, variant === 'secondary' && styles.outline, inactive && styles.disabled]}
     >
       {loading ? (
         <ActivityIndicator color={FG[variant]} />
@@ -68,7 +62,7 @@ export function Button({ label, onPress, variant = 'primary', icon, iconRight, l
           {iconRight ? <Icon name={iconRight} size={18} color={FG[variant]} /> : null}
         </View>
       )}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -84,5 +78,4 @@ const styles = StyleSheet.create({
   outline: { borderWidth: 1, borderColor: colors.lineStrong },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
 });
