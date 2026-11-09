@@ -49,3 +49,11 @@ describe('fixed price list', () => {
     expect(formatMinutes(290)).toBe('4 h 50 min');
   });
 });
+
+describe('formatINR', () => {
+  it('formats negatives with a minus sign', () => {
+    const { formatINR } = require('@/domain/booking');
+    expect(formatINR(-1447)).toBe('−₹1,447');
+    expect(formatINR(123456)).toBe('₹1,23,456');
+  });
+});

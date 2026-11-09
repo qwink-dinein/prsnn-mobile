@@ -23,5 +23,11 @@ export const VISIBILITY_COPY: Record<Visibility, { title: string; body: string }
 
 export const seeLabel = (s?: SeeGender | null) => SEE_OPTIONS.find((o) => o.value === s)?.label ?? 'Everyone';
 
-/** Has this person finished the gender / show-me / visibility step? */
-export const hasIdentity = (u?: { gender?: Gender; seeGender?: SeeGender; profileVisibility?: Visibility } | null) => !!(u?.gender && u?.seeGender && u?.profileVisibility);
+/**
+ * Has this person finished the gender / show-me / visibility step?
+ * Companions aren't asked "show me" (they don't browse), so they only need
+ * gender and visibility — otherwise every companion login looped back to setup.
+ */
+export const hasIdentity = (u?: { role?: string; gender?: Gender; seeGender?: SeeGender; profileVisibility?: Visibility } | null) =>
+  // Staff work in the admin screens and aren't listed, so they skip these questions.
+  ['admin', 'subadmin', 'superadmin'].includes(u?.role ?? '') || !!(u?.gender && u?.profileVisibility && (u.role === 'companion' || u.seeGender));

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { memo } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '@/theme/tokens';
@@ -66,13 +67,15 @@ const PATHS = {
 export type IconName = keyof typeof PATHS;
 
 const FILLED: Partial<Record<IconName, true>> = {};
+/** Icons are decorative; the button or row around them carries the label. (`accessible` isn't a valid DOM attribute on web.) */
+const A11Y_HIDDEN = Platform.OS === 'web' ? { 'aria-hidden': true } : { accessible: false };
 
 type Props = { name: IconName; size?: number; color?: string; filled?: boolean; strokeWidth?: number };
 
 export const Icon = memo(function Icon({ name, size = 22, color = colors.ink, filled, strokeWidth = 1.7 }: Props) {
   const fill = filled || FILLED[name] ? color : 'none';
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...A11Y_HIDDEN}>
       <Path
         d={PATHS[name]}
         stroke={color}

@@ -58,6 +58,7 @@ export const totalOfBooking = (b: Pick<Booking, 'amountPaid' | 'packagePrice' | 
 export const rupees = (paise: number) => paise / 100;
 
 export function formatINR(amount: number): string {
+  if (amount < 0) return `−${formatINR(-amount)}`;
   const fixed = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
   const [int, dec] = fixed.split('.');
   // Indian grouping: 1,23,456

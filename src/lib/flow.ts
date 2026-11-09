@@ -4,9 +4,14 @@ import type { AuthResult } from '@/services';
 import { useSession } from '@/state/session';
 import { svc } from '@/services';
 import { hasIdentity } from '@/domain/privacy';
+import { isStaff } from '@/domain/admin';
 
 /** Where to go once someone is signed in and set up. */
 export function goHome(user: SessionUser | null = useSession.getState().user) {
+  if (isStaff(user?.role)) {
+    router.replace('/admin');
+    return;
+  }
   if (user?.role === 'companion' && (user.verification_status === 'not_submitted' || !user.verification_status)) {
     router.replace('/fellow/onboarding');
     return;

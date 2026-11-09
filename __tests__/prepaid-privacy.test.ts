@@ -115,6 +115,9 @@ describe('privacy defaults', () => {
   it('identity is complete only with all three choices', () => {
     expect(hasIdentity({ gender: 'woman', seeGender: 'woman', profileVisibility: 'locked' })).toBe(true);
     expect(hasIdentity({ gender: 'woman', seeGender: 'woman' })).toBe(false);
+    // Companions are never asked "show me"; a finished companion must not loop back to setup.
+    expect(hasIdentity({ role: 'companion', gender: 'woman', profileVisibility: 'open' })).toBe(true);
+    expect(hasIdentity({ role: 'user', gender: 'woman', profileVisibility: 'open' })).toBe(false);
     expect(seeLabel('everyone')).toBe('Everyone');
   });
 });

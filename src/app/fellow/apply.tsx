@@ -1,4 +1,5 @@
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useAppWidth } from '@/lib/layout';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { colors, radius, space } from '@/theme/tokens';
@@ -16,7 +17,7 @@ const PERKS: { icon: IconName; title: string; body: string }[] = [
 
 /** Screen 17 · Become a companion. */
 export default function Apply() {
-  const { width } = useWindowDimensions();
+  const { width } = useAppWidth();
   return (
     <Screen footer={<Button label="Apply now" iconRight="arrowRight" onPress={() => router.push('/fellow/onboarding')} />}>
       <Header />

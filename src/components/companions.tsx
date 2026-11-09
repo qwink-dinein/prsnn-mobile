@@ -46,62 +46,73 @@ function Photo({ c, style }: { c: Companion; style: object }) {
 
 /** Tall card in the "Popular near you" rail (mock-up 6). */
 export function CompanionCard({ c, width }: { c: Companion; width: number }) {
+  const photoH = width * 1.05;
+  // The heart sits on top of the card as a sibling, not inside it: a button inside a
+  // button is invalid on the web and steals taps on some Android versions.
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}, from ${formatINR(fromPrice(c))}`}
-      onPress={() => router.push(`/companion/${c.id}`)}
-      style={({ pressed }) => [styles.card, { width }, pressed && { opacity: 0.9 }]}
-    >
-      <Photo c={c} style={[styles.cardPhoto, { height: width * 1.05 }]} />
-      <View style={styles.cardBody}>
-        <View style={styles.rowBetween}>
-          <Text variant="headline" numberOfLines={1} style={{ flex: 1 }}>
+    <View style={{ width }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}, from ${formatINR(fromPrice(c))}`}
+        onPress={() => router.push(`/companion/${c.id}`)}
+        style={({ pressed }) => [styles.card, { width }, pressed && { opacity: 0.9 }]}
+      >
+        <Photo c={c} style={[styles.cardPhoto, { height: photoH }]} />
+        <View style={styles.cardBody}>
+          <Text variant="headline" numberOfLines={1} style={{ paddingRight: 36 }}>
             {firstName(c.fullName)}
           </Text>
-          <HeartButton id={c.id} size={18} />
+          <Text variant="footnote" muted numberOfLines={1}>
+            {placeOf(c) || 'Nearby'}
+          </Text>
+          <Text variant="subhead" color={colors.moss}>
+            From {formatINR(fromPrice(c))}
+          </Text>
         </View>
-        <Text variant="footnote" muted numberOfLines={1}>
-          {placeOf(c) || 'Nearby'}
-        </Text>
-        <Text variant="subhead" color={colors.moss}>
-          From {formatINR(fromPrice(c))}
-        </Text>
+      </Pressable>
+      <View style={[styles.heartSlot, { top: photoH + space.md - 6, right: space.sm }]}>
+        <HeartButton id={c.id} size={18} />
       </View>
-    </Pressable>
+    </View>
   );
 }
 
 /** List row used in Search (mock-up 7) and Saved. */
 export function CompanionRow({ c }: { c: Companion }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}`}
-      onPress={() => router.push(`/companion/${c.id}`)}
-      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}
-    >
-      <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="headline" numberOfLines={1}>
-          {c.fullName ?? 'Companion'}
-        </Text>
-        <Text variant="footnote" muted numberOfLines={1}>
-          {placeOf(c) || 'Nearby'}
-        </Text>
-        {c.tags.length ? (
-          <Text variant="caption" color={colors.gray500} numberOfLines={1}>
-            {c.tags.slice(0, 3).join(' · ')}
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}`}
+        onPress={() => router.push(`/companion/${c.id}`)}
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}
+      >
+        <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="headline" numberOfLines={1}>
+            {c.fullName ?? 'Companion'}
           </Text>
-        ) : null}
-      </View>
-      <View style={{ alignItems: 'flex-end', gap: space.sm }}>
+          <Text variant="footnote" muted numberOfLines={1}>
+            {placeOf(c) || 'Nearby'}
+          </Text>
+          {c.tags.length ? (
+            <Text variant="caption" color={colors.gray500} numberOfLines={1}>
+              {c.tags.slice(0, 3).join(' · ')}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ alignItems: 'flex-end', gap: space.sm }}>
+          {/* Space for the heart, which sits on top of the row (see CompanionCard). */}
+          <View style={{ width: 32, height: 32 }} />
+          <Text variant="subhead" color={colors.moss}>
+            From {formatINR(fromPrice(c))}
+          </Text>
+        </View>
+      </Pressable>
+      <View style={[styles.heartSlot, { top: space.md, right: space.sm }]}>
         <HeartButton id={c.id} />
-        <Text variant="subhead" color={colors.moss}>
-          From {formatINR(fromPrice(c))}
-        </Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -112,6 +123,7 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.lg },
   heart: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  heartSlot: { position: 'absolute' },
   heartOnPhoto: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(250,249,246,0.92)' },
   photoFallback: { backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
   photoInitial: { fontFamily: 'Lora-SemiBold', fontSize: 48, color: colors.moss },

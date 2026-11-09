@@ -1,5 +1,6 @@
+import { useAppWidth } from '@/lib/layout';
 import { useMemo } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,11 +31,11 @@ export default function HomeTab() {
 
 function Discover() {
   const user = useSession((s) => s.user);
-  const { width } = useWindowDimensions();
+  const { width } = useAppWidth();
   const q = useQuery({ queryKey: qk.companions, queryFn: svc.companions });
   const notes = useQuery({ queryKey: qk.notifications, queryFn: svc.notifications });
   const unread = (notes.data ?? []).filter((n) => !n.isRead).length;
-  const cardW = Math.min((width - GUTTER * 2 - space.md) / 2, 200);
+  const cardW = Math.floor(Math.min((width - GUTTER * 2 - space.md) / 2, 200));
   const city = user?.city ?? q.data?.find((c) => c.city)?.city ?? 'Hyderabad';
   // Your city first, then everyone else you can see.
   const popular = useMemo(() => {
@@ -115,7 +116,7 @@ function Discover() {
               accessibilityRole="button"
               accessibilityLabel={`${p.label} companions`}
               onPress={() => router.push({ pathname: '/search', params: { category: p.category } })}
-              style={[styles.plan, { width: (width - GUTTER * 2 - space.md) / 2 }]}
+              style={[styles.plan, { width: Math.floor((width - GUTTER * 2 - space.md) / 2) }]}
             >
               <Image source={p.image} style={StyleSheet.absoluteFill} contentFit="cover" />
               <LinearGradient colors={['rgba(14,17,13,0)', 'rgba(14,17,13,0.65)']} style={StyleSheet.absoluteFill} />

@@ -29,6 +29,7 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, FieldProps>(
           ref={ref}
           placeholderTextColor={colors.gray400}
           accessibilityLabel={label ?? rest.placeholder}
+          maxFontSizeMultiplier={1.35}
           {...rest}
           multiline={multiline}
           onFocus={(e) => {

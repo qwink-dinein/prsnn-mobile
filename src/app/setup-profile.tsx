@@ -19,6 +19,7 @@ import { areasFor } from '@/data/india-areas';
 import { defaultVisibility, GENDER_OPTIONS, SEE_OPTIONS, VISIBILITY_COPY } from '@/domain/privacy';
 import type { Gender, SeeGender, Visibility } from '@/domain/types';
 import { useSession } from '@/state/session';
+import { isStaff } from '@/domain/admin';
 
 type Step = 'name' | 'gender' | 'see' | 'visibility' | 'city' | 'area';
 
@@ -32,7 +33,9 @@ export default function SetupProfile() {
   const user = useSession((s) => s.user);
   const updateUser = useSession((s) => s.updateUser);
   const isCompanion = user?.role === 'companion';
-  const steps: Step[] = isCompanion ? ['name', 'gender', 'visibility', 'city', 'area'] : ['name', 'gender', 'see', 'visibility', 'city', 'area'];
+  // Staff only need a name; gender, "show me" and visibility are for people who are listed or browse.
+  const staff = isStaff(user?.role);
+  const steps: Step[] = staff ? ['name'] : isCompanion ? ['name', 'gender', 'visibility', 'city', 'area'] : ['name', 'gender', 'see', 'visibility', 'city', 'area'];
   const [i, setI] = useState(0);
   const step = steps[i];
 
@@ -53,6 +56,21 @@ export default function SetupProfile() {
     setI((x) => Math.min(x + 1, steps.length - 1));
   };
   const back = () => (i > 0 ? (setError(null), setQ(''), setI(i - 1)) : undefined);
+
+  const finishStaff = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await svc.updateProfile({ fullName: name.trim() }, photo);
+      await updateUser({ fullName: name.trim(), profilePhoto: photo?.uri ?? user?.profilePhoto });
+      if (user?.phone && !user.hasPin) router.replace({ pathname: '/pin', params: { mode: 'set' } });
+      else goHome();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const finish = async (area: string) => {
     if (!gender || !visibility || !place || (!isCompanion && !see)) return;
@@ -126,10 +144,10 @@ export default function SetupProfile() {
             autoCapitalize="words"
             returnKeyType="next"
             autoFocus={!name}
-            onSubmitEditing={() => (name.trim().length >= 2 ? next() : setError('Please enter your name.'))}
+            onSubmitEditing={() => (name.trim().length >= 2 ? (staff ? finishStaff() : next()) : setError('Please enter your name.'))}
             error={error}
           />
-          <Button label="Next" iconRight="arrowRight" disabled={name.trim().length < 2} onPress={next} />
+          <Button label={staff ? 'Continue' : 'Next'} iconRight="arrowRight" loading={busy} disabled={name.trim().length < 2} onPress={staff ? finishStaff : next} />
         </View>
       ) : step === 'gender' ? (
         <Options

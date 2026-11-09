@@ -15,8 +15,9 @@ export function Text({ variant = 'body', color, center, muted, style, maxFontSiz
   return (
     <RNText
       {...rest}
-      // Grows with the person's text size; display titles are capped so they don't wrap into a wall.
-      maxFontSizeMultiplier={maxFontSizeMultiplier ?? (isDisplay ? 1.4 : 2)}
+      // Grows with the person's text size, up to a point the layouts hold (cards,
+      // price grids, the PIN pad). At 2× phones with large system fonts broke them.
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? (isDisplay ? 1.2 : 1.35)}
       style={[
         type[variant],
         { color: color ?? (muted ? colors.textMuted : colors.text) },

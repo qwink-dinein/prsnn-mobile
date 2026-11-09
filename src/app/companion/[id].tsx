@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useAppWidth } from '@/lib/layout';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ export default function CompanionProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const me = useSession((s) => s.user);
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width } = useAppWidth();
   const q = useQuery({ queryKey: qk.companion(id), queryFn: () => svc.companion(id) });
 
   if (q.isLoading) return <Loading />;

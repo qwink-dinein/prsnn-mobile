@@ -1,5 +1,6 @@
+import { useAppWidth } from '@/lib/layout';
 import { useEffect } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +14,7 @@ const PHOTOS = [require('../../assets/images/coffee.jpg'), require('../../assets
 /** Screen 1 · Splash: photo collage, wordmark, then on to onboarding. */
 export default function Splash() {
   const token = useSession((s) => s.token);
-  const { width } = useWindowDimensions();
+  const { width } = useAppWidth();
 
   useEffect(() => {
     if (token) return;

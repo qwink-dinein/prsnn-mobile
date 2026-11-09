@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { MAX_APP_WIDTH, useAppWidth } from '@/lib/layout';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -45,6 +47,7 @@ export default function RootLayout() {
     return () => setUnauthorizedHandler(null);
   }, []);
 
+  const { wide } = useAppWidth();
   const ready = hydrated && fontsReady;
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
@@ -53,7 +56,9 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.mist }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: wide ? colors.mistDeep : colors.mist }}>
+      {/* Tablets and desktop: a centred phone-width column instead of stretched screens. */}
+      <View style={[styles.column, wide && styles.columnWide]}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <ConfirmProvider>
@@ -69,6 +74,13 @@ export default function RootLayout() {
           </ConfirmProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
+      </View>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  column: { flex: 1, width: '100%', backgroundColor: colors.mist },
+  // A shadow, not a border: borders would eat into the width children measure from.
+  columnWide: { maxWidth: MAX_APP_WIDTH, alignSelf: 'center', overflow: 'hidden', shadowColor: colors.ink, shadowOpacity: 0.08, shadowRadius: 24, shadowOffset: { width: 0, height: 0 } },
+});

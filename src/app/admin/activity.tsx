@@ -30,6 +30,16 @@ const short = (o?: Record<string, unknown>) =>
         .slice(0, 240)
     : '';
 
+/** Only what changed in a pricing update: "1 h ₹449 → ₹399 · split 20% → 25%". */
+function priceDiff(before?: Record<string, unknown>, after?: Record<string, unknown>) {
+  const out: string[] = [];
+  const bp = (before?.packagePrices ?? {}) as Record<string, number>;
+  const ap = (after?.packagePrices ?? {}) as Record<string, number>;
+  for (const h of Object.keys(ap)) if (bp[h] !== ap[h]) out.push(`${h} h ₹${bp[h] ?? '—'} → ₹${ap[h]}`);
+  for (const k of Object.keys(after ?? {})) if (k !== 'packagePrices' && JSON.stringify(before?.[k]) !== JSON.stringify(after?.[k])) out.push(`${k} ${JSON.stringify(before?.[k])} → ${JSON.stringify(after?.[k])}`);
+  return out.join(' · ');
+}
+
 function Activity() {
   const q = useInfiniteQuery({
     queryKey: qk.admin.activity,
@@ -60,12 +70,13 @@ function Activity() {
           ListEmptyComponent={<EmptyState icon="doc" title="No admin activity yet" body="Every admin action is recorded here." />}
           ListFooterComponent={q.hasNextPage ? <Button label="Load more" variant="secondary" loading={q.isFetchingNextPage} onPress={() => void q.fetchNextPage()} /> : undefined}
           renderItem={({ item: e }) => {
-            const diff = [short(e.before) && `before ${short(e.before)}`, short(e.after) && `after ${short(e.after)}`].filter(Boolean).join('\n');
+            const diff = e.action === 'settings.pricing' ? priceDiff(e.before, e.after) : [short(e.before) && `before ${short(e.before)}`, short(e.after) && `after ${short(e.after)}`].filter(Boolean).join('\n');
+            const hasRef = (e.target?.kind === 'booking' || e.target?.kind === 'user') && e.target.id;
             return (
               <Pressable style={({ pressed }) => [styles.item, pressed && { opacity: 0.85 }]} accessibilityRole={e.target?.id ? 'button' : undefined} accessibilityLabel={`${e.actorName || roleLabel(e.role)} ${describeAction(e.action)}, ${ago(e.at)}`} onPress={() => open(e)}>
                 <Text variant="callout">
                   <Text variant="headline">{e.actorName || roleLabel(e.role)}</Text> {describeAction(e.action)}
-                  {e.target?.id ? ` · #${String(e.target.id).slice(-6).toUpperCase()}` : ''}
+                  {hasRef ? ` · #${String(e.target!.id).slice(-6).toUpperCase()}` : ''}
                 </Text>
                 {diff ? (
                   <Text variant="caption" muted numberOfLines={4}>

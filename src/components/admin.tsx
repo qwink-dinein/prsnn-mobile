@@ -58,7 +58,8 @@ export function AdminBookingRow({ b, onPress }: { b: AdminBooking; onPress?: () 
         <Text variant="subhead">{formatINR(b.amountPaid || b.packagePrice || 0)}</Text>
       </View>
       <Text variant="footnote" muted numberOfLines={1}>
-        {personName(b.requesterId, 'Member')} → {personName(companion, 'Finding companion')}
+        {personName(b.requesterId, typeof b.requesterId === 'string' ? 'Deleted account' : 'Member')} →{' '}
+        {personName(companion, companion ? 'Deleted account' : 'Finding companion')}
       </Text>
       <Text variant="footnote" muted>
         {adminWhen(b)} · {durationLabel(b.duration)}
@@ -89,7 +90,7 @@ export function KV({ k, v }: { k: string; v?: ReactNode }) {
   if (v === undefined || v === null || v === '') return null;
   return (
     <View style={styles.kv}>
-      <Text variant="footnote" muted style={{ width: 120 }}>
+      <Text variant="footnote" muted style={{ width: 96 }}>
         {k}
       </Text>
       {typeof v === 'string' || typeof v === 'number' ? (

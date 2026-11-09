@@ -28,8 +28,11 @@ export function CompanionDashboard() {
       <View style={styles.head}>
         <Avatar uri={user?.profilePhoto} name={user?.fullName} size={56} />
         <View style={{ flex: 1 }}>
+          <Text variant="caption" muted>
+            Welcome back
+          </Text>
           <Text variant="title2" numberOfLines={1}>
-            Welcome, {user?.fullName?.split(' ')[0] ?? 'there'}
+            {user?.fullName?.split(' ')[0] ?? 'there'}
           </Text>
           <View style={styles.status}>
             <View style={[styles.dot, { backgroundColor: live ? '#3FB950' : colors.clay }]} />

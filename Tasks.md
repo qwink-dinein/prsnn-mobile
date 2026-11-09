@@ -29,6 +29,9 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 ## Before the first real build
 
+- ✅ End-to-end tested locally (2026-11-09) against MongoDB 7 + the backend branch: OTP and PIN login, member and companion onboarding, admin verification, prepaid booking, simulated payment, offer/accept, chat (live, numbers masked), 85% cancellation refund, dispute handling, sub-admin limits, price change, suspend. Real WhatsApp delivery was not tested (needs the Waplify key, and this environment can't reach Waplify or Render).
+- 🔑 **Test logins for App Store / Play review**: set `OTP_TEST_NUMBERS=9000000009:<6 digits>` on Render and give that number and code to the reviewers. No message is sent for these numbers.
+
 - 🔑 **Waplify**: API key + Meta-approved *Authentication* template name (and `WAPLIFY_CODE_KEYS` if the code isn't `{{1}}`). Set these on Render.
 - 🔑 **MSG91** (optional SMS backup): auth key + DLT template id.
 - ⏸ **Razorpay**: deferred (owner, 2026-11-09). Payments are simulated until then; switching on Razorpay is a backend env change (`PAYMENT_MODE=razorpay` + keys), no app update.
@@ -74,5 +77,4 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ `searchCompanions` now escapes user input before building a RegExp.
 - `updateProfile` lets a user change `email` and `username` with no uniqueness check or re-verification.
 - `cancel_session` socket event broadcasts without checking the booking status or that the sender is a participant (it only needs to be in the room).
-- One existing test (`booking.test.js` "403 if the requester is not verified") fails because the check was removed on purpose. Update or delete the test.
 - In-memory caches (companions, pending OTPs) are per process. Move to Redis before running more than one instance.
