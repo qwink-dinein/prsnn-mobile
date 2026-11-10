@@ -12,17 +12,18 @@ import { LINKS } from '@/lib/config';
 import { useSession } from '@/state/session';
 
 const COPY: Record<string, { icon: IconName; title: string; body: string }> = {
-  pending: { icon: 'clock', title: 'Verification in progress', body: 'Our team is reviewing your ID and photos. This usually takes 24–48 hours. We’ll notify you when you’re live.' },
-  verified: { icon: 'badgeCheck', title: 'You’re verified', body: 'Your profile is live. Members can now find and book you.' },
-  rejected: { icon: 'info', title: 'We couldn’t verify you yet', body: 'Something in your documents needs another look. Contact support and we’ll help you sort it out.' },
-  not_submitted: { icon: 'idCard', title: 'Not submitted yet', body: 'Complete your companion profile to start verification.' },
+  id_required: { icon: 'sparkle', title: 'You’re live', body: 'Members in your city can find and book you. When your first booking arrives, we’ll ask for a photo ID and a selfie — about 2 minutes. You can also do it now.' },
+  pending: { icon: 'clock', title: 'ID check in progress', body: 'Our team is checking your ID. Bookings you accept meanwhile are held for you and confirmed as soon as it’s approved.' },
+  verified: { icon: 'badgeCheck', title: 'You’re verified', body: 'Your ID is approved. Every booking is one tap to accept.' },
+  rejected: { icon: 'info', title: 'Your ID needs another look', body: 'We couldn’t verify the photo you sent. Send a clearer one (good light, all corners visible) and you’ll be back in the listings once it’s approved.' },
+  not_submitted: { icon: 'idCard', title: 'Not live yet', body: 'Complete your companion profile to go live.' },
 };
 
 /** Screen 19 · Verification status for companions. */
 export default function Verification() {
   const updateUser = useSession((s) => s.updateUser);
   const q = useQuery({ queryKey: qk.profileCheck, queryFn: svc.checkProfile, refetchInterval: 60_000 });
-  const status = (q.data?.status === 'not_found' ? 'not_submitted' : q.data?.status) ?? 'pending';
+  const status = (q.data?.status === 'not_found' ? 'not_submitted' : q.data?.status) ?? 'id_required';
   const c = COPY[status] ?? COPY.pending;
 
   useEffect(() => {
@@ -37,14 +38,17 @@ export default function Verification() {
           <Button label="Go to dashboard" onPress={() => router.replace('/home')} />
         ) : status === 'not_submitted' ? (
           <Button label="Complete profile" onPress={() => router.replace('/fellow/onboarding')} />
-        ) : status === 'rejected' ? (
-          <Button label="Contact support" icon="mail" onPress={() => Linking.openURL(LINKS.support)} />
+        ) : status === 'rejected' || status === 'id_required' ? (
+          <View style={{ gap: space.xs }}>
+            <Button label={status === 'rejected' ? 'Send a new ID' : 'Verify my ID now'} icon="shieldCheck" onPress={() => router.push('/fellow/verify-id')} />
+            {status === 'rejected' ? <Button label="Contact support" variant="ghost" onPress={() => Linking.openURL(LINKS.support)} /> : <Button label="Later" variant="ghost" onPress={() => router.replace('/home')} />}
+          </View>
         ) : (
           <Button label="Back to home" variant="secondary" onPress={() => router.replace('/home')} />
         )
       }
     >
-      <Header title="Verification" onBack={() => router.replace('/home')} />
+      <Header title="ID check" onBack={() => router.replace('/home')} />
       <View style={styles.hero}>
         <View style={[styles.badge, status === 'rejected' && { backgroundColor: colors.warningSoft }]}>
           <Icon name={c.icon} size={36} color={status === 'rejected' ? colors.clay : colors.moss} />
@@ -58,10 +62,9 @@ export default function Verification() {
       </View>
       <Card style={{ gap: space.md }}>
         {[
-          ['Profile details', status !== 'not_submitted'],
-          ['Government ID', status !== 'not_submitted'],
-          ['Photo', status !== 'not_submitted'],
-          ['Team review', status === 'verified'],
+          ['Profile live', status !== 'not_submitted' && status !== 'rejected'],
+          ['Photo ID and selfie', status === 'pending' || status === 'verified'],
+          ['Safety check by our team', status === 'verified'],
         ].map(([label, done]) => (
           <View key={String(label)} style={styles.row}>
             <Icon name={done ? 'check' : 'clock'} size={18} color={done ? colors.moss : colors.gray400} />

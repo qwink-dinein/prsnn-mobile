@@ -67,6 +67,7 @@ export function adminBookingState(b: Pick<AdminBooking, 'status' | 'paymentStatu
   if (b.status === 'cancelled' || b.status === 'rejected') return { label: b.status === 'cancelled' ? 'Cancelled' : 'Declined', tone: 'neutral' };
   if (b.allocation?.state === 'awaiting_payment' || b.paymentStatus === 'pending') return { label: 'Awaiting payment', tone: 'warning' };
   if (b.allocation?.state === 'offering') return { label: 'Finding companion', tone: 'warning' };
+  if (b.allocation?.state === 'id_check') return { label: 'Held · companion ID check', tone: 'warning' };
   if (b.status === 'accepted') return { label: 'Confirmed', tone: 'success' };
   return { label: 'Pending', tone: 'neutral' };
 }

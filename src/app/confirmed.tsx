@@ -24,7 +24,7 @@ export default function Confirmed() {
     queryFn: () => svc.booking(bookingId),
     enabled: !!bookingId,
     // Prepaid: keep checking while a companion is being found.
-    refetchInterval: (query) => (query.state.data && stageOf(query.state.data) === 'finding' ? 5000 : false),
+    refetchInterval: (query) => (query.state.data && ['finding', 'checking'].includes(stageOf(query.state.data)) ? 5000 : false),
   });
   const b = q.data;
   const person = b ? companionOf(b) : null;

@@ -1,7 +1,8 @@
-import type { AppNotification, Booking, Companion, Gender, Policy, Profile, SessionUser } from '@/domain/types';
+import type { AppNotification, Booking, Companion, Gender, Policy, Profile, SessionUser, VerificationStatus } from '@/domain/types';
 import { amountDuePaise, refundIfCancelledNow, toDateKey } from '@/domain/booking';
 import { priceFor, pricing } from '@/domain/pricing';
 import { useSession } from '@/state/session';
+import { needsIdToAccept } from '@/domain/verification';
 import type { Backend, AuthResult } from './backend';
 import { demoAdmin, demoRoleFor } from './demoAdmin';
 
@@ -14,6 +15,12 @@ import { demoAdmin, demoRoleFor } from './demoAdmin';
 const wait = <T>(v: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(v), ms));
 const fail = (message: string) => new Promise<never>((_, j) => setTimeout(() => j(new Error(message)), 250));
 const allDays = { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true };
+
+/** Demo companions start live without an ID (checked at the first booking). */
+const companionStatus = (): VerificationStatus => {
+  const s = viewer()?.verification_status;
+  return s && s !== 'not_submitted' ? s : 'id_required';
+};
 
 type DemoCompanion = Companion & { gender: Gender; visibility: 'open' | 'locked' };
 
@@ -173,7 +180,13 @@ export const demo: Backend = {
   },
   acceptOffer: (id) => {
     const b = incoming.find((x) => x._id === id);
+    const status = companionStatus();
+    if (needsIdToAccept(status)) return fail('Verify your ID to accept this booking.');
     if (!b || b.myOffer?.status !== 'offered' || new Date(b.myOffer.expiresAt) < new Date()) return fail('This offer has expired or was already taken.');
+    if (status === 'pending') {
+      patch(id, { companionId: 'me', allocation: { state: 'id_check' }, myOffer: { ...b.myOffer, status: 'accepted' } });
+      return wait({ message: 'Accepted. The booking is held for you while we check your ID.', idCheck: true, booking: find(id)! });
+    }
     patch(id, { status: 'accepted', companionId: 'me', allocation: { state: 'assigned' }, myOffer: { ...b.myOffer, status: 'accepted' }, requesterId: { _id: 'u7', fullName: 'Karan Malhotra' } });
     return wait({ message: 'Booking confirmed. Chat is open.', booking: find(id)! });
   },
@@ -226,9 +239,23 @@ export const demo: Backend = {
     const u = viewer();
     return wait<Profile>({ id: 'me', role: u?.role ?? 'user', fullName: u?.fullName ?? 'Mukarram', phoneNumber: '9876543210', city: u?.city ?? 'Hyderabad', state: 'Telangana', area: 'Banjara Hills', verification_status: 'verified', is_verified: true, gender: u?.gender, seeGender: u?.seeGender, profileVisibility: u?.profileVisibility });
   },
-  checkProfile: () => wait({ hasProfile: true, status: 'verified' as const, is_verified: true, role: viewer()?.role ?? ('user' as const) }),
+  checkProfile: () => {
+    const status = viewer()?.role === 'companion' ? companionStatus() : ('verified' as const);
+    return wait({ hasProfile: true, status, is_verified: status === 'verified', role: viewer()?.role ?? ('user' as const) });
+  },
   onboardBasic: (f) => wait({ user: { id: 'me', role: 'user' as const, fullName: f.fullName, verification_status: 'verified' as const, is_verified: true } }),
-  onboardCompanion: () => wait({ message: 'Submitted' }),
+  onboardCompanion: () => wait({ message: 'You’re live.' }),
+  submitIdDocuments: () => {
+    void useSession.getState().updateUser({ verification_status: 'pending', is_verified: false });
+    // Demo only: the team approves a few seconds later and held bookings are confirmed.
+    setTimeout(() => {
+      void useSession.getState().updateUser({ verification_status: 'verified', is_verified: true });
+      for (const b of incoming.filter((x) => x.allocation?.state === 'id_check')) {
+        patch(b._id, { status: 'accepted', allocation: { state: 'assigned' }, requesterId: { _id: 'u7', fullName: 'Karan Malhotra' } });
+      }
+    }, 8000);
+    return wait({ message: 'ID sent. We’ll check it as soon as we can.' });
+  },
   updateIdentity: () => wait({ message: 'Updated' }),
   updateProfile: () => wait({ message: 'Updated' }),
   deleteAccount: () => wait({ message: 'Deleted' }),

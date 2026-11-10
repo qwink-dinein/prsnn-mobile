@@ -2,6 +2,7 @@
 // Uses the e2e test accounts (e2e-*@prsnn.test, email+password, created by SQL —
 // not phone users). The password is NOT in the repo:
 //   E2E_PASSWORD=… node scripts/e2e-supabase.mjs [image.png]
+// Reset the test accounts first: prsnn-backend/supabase/tests/e2e-reset.sql.
 // Delete these accounts before launch (prsnn-backend/supabase/README.md).
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
@@ -43,44 +44,56 @@ ok(r.data?.fullName === 'Riya Test', 'member saves profile', r);
 r = await rpc(mem, 'update_my_profile', { p: { profileVisibility: 'locked' } });
 ok(/confirm/.test(r.error ?? ''), 'visibility change needs consent', r);
 
-console.log('3. Companion applies (Storage + RLS)');
+console.log('3. Companion signs up: live without an ID');
 const up = async (c, bucket, name) => { const p = `${await id(c)}/${name}-${Date.now()}.png`; const { error } = await c.storage.from(bucket).upload(p, img, { contentType: 'image/png' }); return { p, error: error?.message }; };
 const photo = await up(comp, 'avatars', 'profile'); ok(!photo.error, 'photo uploaded', photo);
-const f = await up(comp, 'verification', 'id-front'); const b = await up(comp, 'verification', 'id-back');
-ok(!f.error && !b.error, 'ID documents uploaded (private bucket)', [f, b]);
 const bad = await comp.storage.from('avatars').upload(`${memId}/x.png`, img, { contentType: 'image/png' });
 ok(!!bad.error, 'cannot upload into someone else’s folder');
 r = await rpc(comp, 'submit_companion_application', { p: { fullName: 'Ananya Rao', gender: 'woman', profileVisibility: 'locked', visibilityConsent: true, city: 'Hyderabad', area: 'Gachibowli', description: 'Coffee and walks.', packages: [1, 2, 4], startTime: '09:00', endTime: '20:00', tags: ['Coffee'],
-  availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, photoPath: photo.p, idFrontPath: f.p, idBackPath: b.p } });
-ok(r.data?.verification_status === 'pending', 'application pending', r);
-{ const { data } = await mem2.storage.from('verification').createSignedUrl(f.p, 60); ok(!data?.signedUrl, 'other members cannot open ID documents'); }
+  availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, photoPath: photo.p } });
+ok(r.data?.verification_status === 'id_required', 'no ID at sign-up: live, ID at first booking', r);
+r = await rpc(mem, 'list_companions');
+let card = r.data?.find((c) => c.id === compId);
+ok(card && card.idVerified === false && card.locked && card.fullName === 'Ananya' && !card.profilePhoto, 'listed as new (not ID-verified), locked: first name, no photo', card);
 { const { data } = await mem2.from('profiles').select('id'); ok(data?.length === 1, 'members read only their own profile row', data?.length); }
 
-console.log('4. Admin verifies');
-r = await rpc(sup, 'admin_verifications');
-const cand = r.data?.find((u) => u.id === compId);
-ok(cand?.idFrontPath === f.p, 'pending companion listed', r);
-{ const { data } = await sup.storage.from('verification').createSignedUrls([f.p, b.p], 600); ok(data?.every((d) => d.signedUrl), 'staff can open ID documents'); }
-r = await rpc(sup, 'admin_decide_verification', { uid: compId, decision: 'verified', note: null }); ok(!r.error, 'verified', r);
-r = await rpc(mem, 'list_companions');
-const card = r.data?.find((c) => c.id === compId);
-ok(card && card.locked && card.fullName === 'Ananya' && !card.profilePhoto, 'listed, locked: first name, no photo', card);
-
-console.log('5. Book → pay → offer → accept');
+console.log('4. First booking asks for the ID; staff reject → re-offered/refunded');
 const key = `e2e-${Date.now()}`;
-r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '16:00', duration: '120', idempotencyKey: key, acceptTerms: true } });
-ok(r.data?.quote?.amount === 699, 'booked: ₹699', r);
-const bid = r.data?.booking?._id;
-r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '16:00', duration: '480', idempotencyKey: key + 'x', acceptTerms: true } });
-ok(/doesn’t offer 8-hour/.test(r.error ?? ''), 'duration not offered refused', r);
+const book = async (k, date, start, dur) => (await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: date, startTime: start, duration: dur, idempotencyKey: k, acceptTerms: true } }));
+r = await book(key + 'a', day(2), '12:00', '120'); const bidA = r.data?.booking?._id; ok(r.data?.quote?.amount === 699, 'booked a new companion: ₹699', r);
+r = await rpc(mem, 'simulate_payment', { bid: bidA, outcome: 'success' }); ok(r.data?.booking?.allocation?.state === 'offering', 'paid → offered to them', r);
+r = await rpc(comp, 'accept_offer', { bid: bidA }); ok(/Verify your ID/.test(r.error ?? ''), 'accept without an ID is refused', r);
+const f = await up(comp, 'verification', 'id-front'); const bk = await up(comp, 'verification', 'id-back'); const sf = await up(comp, 'verification', 'selfie');
+ok(!f.error && !bk.error && !sf.error, 'ID + selfie uploaded (private bucket)', [f, bk, sf]);
+r = await rpc(comp, 'submit_id_documents', { p: { idType: 'aadhaar', idFrontPath: f.p, selfiePath: sf.p } }); ok(/back/.test(r.error ?? ''), 'Aadhaar needs the back', r);
+r = await rpc(comp, 'submit_id_documents', { p: { idType: 'pan', idFrontPath: f.p } }); ok(/selfie/.test(r.error ?? ''), 'selfie required', r);
+r = await rpc(comp, 'submit_id_documents', { p: { idType: 'aadhaar', idFrontPath: f.p, idBackPath: bk.p, selfiePath: sf.p } }); ok(r.data?.verification_status === 'pending', 'ID sent → pending', r);
+r = await rpc(comp, 'accept_offer', { bid: bidA }); ok(r.data?.idCheck === true && r.data?.booking?.allocation?.state === 'id_check', 'accepted → held for ID check', r);
+r = await rpc(mem, 'get_booking', { bid: bidA }); ok(r.data?.status === 'pending' && r.data?.allocation?.state === 'id_check', 'member sees the safety check', r.data?.allocation);
+{ const { error } = await mem.from('messages').insert({ booking_id: bidA, sender_id: memId, content: 'hi' }); ok(!!error, 'no chat while the ID is checked'); }
+{ const { data } = await mem2.storage.from('verification').createSignedUrl(f.p, 60); ok(!data?.signedUrl, 'other members cannot open ID documents'); }
+r = await rpc(sup, 'admin_verifications');
+let cand = r.data?.find((u) => u.id === compId);
+ok(cand?.idFrontPath === f.p && cand.idType === 'aadhaar' && cand.heldBookings === 1 && cand.heldUntil, 'queue shows the held booking and its deadline', cand);
+{ const { data } = await sup.storage.from('verification').createSignedUrls([f.p, bk.p, sf.p], 600); ok(data?.every((d) => d.signedUrl), 'staff can open ID documents'); }
+r = await rpc(sup, 'admin_decide_verification', { uid: compId, decision: 'rejected', note: 'Photo is blurry' }); ok(/offered to others/.test(r.data?.message ?? ''), 'rejected: held booking re-offered', r);
+r = await rpc(mem, 'get_booking', { bid: bidA }); ok(r.data?.allocation?.state === 'failed' && r.data?.refund?.amount === 699, 'nobody else free → member refunded in full', r.data && { a: r.data.allocation, rf: r.data.refund });
+r = await rpc(mem, 'list_companions'); ok(!r.data?.some((c) => c.id === compId), 'rejected companion hidden');
+
+console.log('5. New ID → accept → staff approve → confirmed');
+const sf2 = await up(comp, 'verification', 'selfie');
+r = await rpc(comp, 'submit_id_documents', { p: { idType: 'pan', idFrontPath: f.p, selfiePath: sf2.p } }); ok(r.data?.verification_status === 'pending', 'PAN (front only) resubmitted → pending, listed again', r);
+r = await book(key, day(3), '16:00', '120'); const bid = r.data?.booking?._id; ok(!!bid, 'booked', r);
+r = await book(key + 'x', day(3), '16:00', '480'); ok(/doesn’t offer 8-hour/.test(r.error ?? ''), 'duration not offered refused', r);
 ok((await rpc(mem, 'payment_mode')).data === 'simulated', 'payment mode simulated');
 r = await rpc(mem, 'simulate_payment', { bid, outcome: 'success' }); ok(r.data?.booking?.allocation?.state === 'offering', 'paid → offering', r);
 r = await rpc(comp, 'incoming_bookings'); const offer = r.data?.find((x) => x._id === bid);
 ok(offer?.myOffer?.status === 'offered' && offer.companionShare === 559, 'companion sees offer, earns ₹559', offer);
 r = await rpc(mem2, 'get_booking', { bid }); ok(!!r.error, 'other members cannot see the booking');
-{ const { error } = await mem.from('messages').insert({ booking_id: bid, sender_id: memId, content: 'hi' }); ok(!!error, 'no chat before acceptance'); }
-r = await rpc(comp, 'accept_offer', { bid }); ok(r.data?.message?.startsWith('Booking confirmed'), 'accepted', r);
-r = await rpc(mem, 'get_booking', { bid }); ok(r.data?.companionId?.fullName === 'Ananya Rao' && !r.data.companionId.locked, 'confirmed: full name unlocked', r.data?.companionId);
+r = await rpc(comp, 'accept_offer', { bid }); ok(r.data?.booking?.allocation?.state === 'id_check', 'ID in review: accept holds the booking (no second ID prompt)', r);
+r = await rpc(sup, 'admin_decide_verification', { uid: compId, decision: 'verified', note: null }); ok(/1 held booking\(s\) confirmed/.test(r.data?.message ?? ''), 'verified: held booking confirmed', r);
+r = await rpc(mem, 'get_booking', { bid }); ok(r.data?.status === 'accepted' && r.data?.companionId?.fullName === 'Ananya Rao' && !r.data.companionId.locked, 'confirmed: full name unlocked', r.data?.companionId);
+r = await rpc(mem, 'list_companions'); card = r.data?.find((c) => c.id === compId); ok(card?.idVerified === true, 'listed as ID-verified', card);
 
 console.log('6. Realtime chat');
 const got = new Promise((resolve) => {
@@ -102,7 +115,7 @@ r = await rpc(sub, 'admin_reply_dispute', { bid, msg: 'Looking into it.' }); ok(
 r = await rpc(sup, 'admin_refund', { bid, amount: 200, reason: 'Late start' }); ok(r.data?.result === 'processed', 'superadmin partial refund ₹200', r);
 ok(/already/.test((await rpc(sup, 'admin_refund', { bid, amount: 50, reason: 'x' })).error ?? ''), 'no second refund');
 r = await rpc(sup, 'admin_close_dispute', { bid, resolution: 'Refunded ₹200.' }); ok(!r.error, 'dispute closed', r);
-r = await rpc(sup, 'admin_overview'); ok(r.data?.money?.collected === 699, 'overview money', r.data?.money);
+r = await rpc(sup, 'admin_overview'); ok(r.data?.money?.collected === 699 * 2 && r.data.money.refunded === 699 + 200, 'overview money (one refunded in full, one partly)', r.data?.money);
 r = await rpc(sup, 'admin_activity', { before_at: null }); ok(r.data?.length >= 5, `activity log: ${r.data?.length} entries`);
 
 console.log('8. Cancel policy, push, broadcast');

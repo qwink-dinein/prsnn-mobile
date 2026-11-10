@@ -141,6 +141,7 @@ export type Stage =
   | 'pay' // request flow: accepted, customer must pay
   | 'paying' // prepaid: booking created, payment not finished
   | 'finding' // prepaid: paid, offering to companions
+  | 'checking' // prepaid: a new companion accepted; held while their ID is checked
   | 'confirmed'
   | 'completed'
   | 'declined'
@@ -158,6 +159,8 @@ export function stageOf(b: Pick<Booking, 'status' | 'paymentStatus'> & Partial<P
         return 'paying';
       case 'offering':
         return 'finding';
+      case 'id_check':
+        return 'checking';
       case 'failed':
         return 'unfulfilled';
       case 'cancelled':

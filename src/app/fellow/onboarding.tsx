@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { Image } from 'expo-image';
 import { useQueryClient } from '@tanstack/react-query';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
 import { Screen, Header, Chip } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -19,20 +18,23 @@ import { TextField } from '@/components/ui/forms';
 import { AvailabilityEditor, emptyAvailability, type AvailabilityValue } from '@/components/fellow/AvailabilityEditor';
 import { svc, qk } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
-import { pickImage } from '@/lib/pickImage';
 import { useSession } from '@/state/session';
+import { IdLaterNotice, Upload } from '@/components/fellow/IdParts';
 
 const STEPS: { title: string; sub: string; icon: IconName }[] = [
   { title: 'Basic information', sub: 'Name, gender, city, privacy, about you', icon: 'user' },
-  { title: 'Identity verification', sub: 'Government ID, front and back', icon: 'idCard' },
-  { title: 'Photos', sub: 'A clear photo of your face', icon: 'camera' },
+  { title: 'Photo', sub: 'A clear photo of your face', icon: 'camera' },
   { title: 'Packages & availability', sub: 'Durations you offer, days and hours', icon: 'clock' },
-  { title: 'Go live', sub: 'Review and submit', icon: 'sparkle' },
+  { title: 'Go live', sub: 'Review, and one thing before your first booking', icon: 'sparkle' },
 ];
 
 const EXTRA_TAGS = ['Hindi', 'Urdu', 'Telugu', 'English', 'Books', 'Movies', 'Music', 'Cricket', 'Yoga', 'Shopping'];
 
-/** Screen 18 · Companion onboarding (multi-step) → POST /profile/onboard-companion. */
+/**
+ * Screen 18 · Companion onboarding → submit_companion_application. Companions go
+ * live at the end; the photo ID is asked for when their first booking arrives
+ * (fellow/verify-id), so sign-up stays short.
+ */
 export default function CompanionOnboarding() {
   const user = useSession((s) => s.user);
   const updateUser = useSession((s) => s.updateUser);
@@ -41,10 +43,7 @@ export default function CompanionOnboarding() {
   const [basic, setBasic] = useState({ fullName: user?.fullName ?? '', city: user?.city ?? '', state: stateOf(user?.city) ?? '', area: '', description: '' });
   const [identity, setIdentity] = useState<IdentityValue>({ gender: user?.gender, seeGender: user?.seeGender, visibility: user?.profileVisibility, consent: !!user?.profileVisibility });
   const [tags, setTags] = useState<string[]>([]);
-  const [idFront, setIdFront] = useState<UploadFile | null>(null);
-  const [idBack, setIdBack] = useState<UploadFile | null>(null);
   const [photo, setPhoto] = useState<UploadFile | null>(null);
-  const [selfie, setSelfie] = useState<UploadFile | null>(null);
   const [packages, setPackages] = useState<number[]>(() => pricing().headlineHours);
   const [avail, setAvail] = useState<AvailabilityValue>(emptyAvailability());
   const [error, setError] = useState<string | null>(null);
@@ -61,9 +60,8 @@ export default function CompanionOnboarding() {
       if (basic.description.trim().length < 30) return 'Write at least a couple of sentences about yourself (30+ characters).';
       if (!tags.length) return 'Pick at least one thing you enjoy doing.';
     }
-    if (s === 1 && (!idFront || !idBack)) return 'Add both sides of your ID.';
-    if (s === 2 && !photo) return 'Add a profile photo.';
-    if (s === 3) {
+    if (s === 1 && !photo) return 'Add a profile photo.';
+    if (s === 2) {
       if (!packages.length) return 'Choose at least one duration you offer.';
       if (!Object.values(avail.days).some(Boolean)) return 'Choose at least one day.';
     }
@@ -92,11 +90,8 @@ export default function CompanionOnboarding() {
         tags,
         days: avail.days,
         profilePhoto: photo,
-        idProofFront: idFront,
-        idProofBack: idBack,
-        backupPhoto: selfie,
       });
-      await updateUser({ role: 'companion', verification_status: 'pending', is_verified: false, fullName: basic.fullName.trim(), profilePhoto: photo?.uri, gender: identity.gender, profileVisibility: identity.visibility, city: basic.city });
+      await updateUser({ role: 'companion', verification_status: 'id_required', is_verified: false, fullName: basic.fullName.trim(), profilePhoto: photo?.uri, gender: identity.gender, profileVisibility: identity.visibility, city: basic.city });
       qc.invalidateQueries({ queryKey: qk.profileCheck });
       router.replace('/fellow/verification');
     } catch (e) {
@@ -115,7 +110,7 @@ export default function CompanionOnboarding() {
               {error}
             </Text>
           ) : null}
-          <Button label={step === STEPS.length - 1 ? 'Submit for verification' : 'Continue'} onPress={next} loading={busy} />
+          <Button label={step === STEPS.length - 1 ? 'Got it, go live' : 'Continue'} onPress={next} loading={busy} />
         </View>
       }
     >
@@ -139,20 +134,11 @@ export default function CompanionOnboarding() {
       ) : step === 1 ? (
         <View style={styles.form}>
           <Text variant="callout" muted>
-            Aadhaar, PAN, driving licence or passport. Only the <Brand /> verification team sees these, never other members.
-          </Text>
-          <Upload label="Front of ID" file={idFront} onPick={setIdFront} />
-          <Upload label="Back of ID" file={idBack} onPick={setIdBack} />
-        </View>
-      ) : step === 2 ? (
-        <View style={styles.form}>
-          <Text variant="callout" muted>
             A recent, well-lit photo of your face. This is what members see first.
           </Text>
           <Upload label="Profile photo" file={photo} onPick={setPhoto} square />
-          <Upload label="Selfie for verification (optional)" file={selfie} onPick={setSelfie} camera square />
         </View>
-      ) : step === 3 ? (
+      ) : step === 2 ? (
         <View style={styles.form}>
           <View style={{ gap: space.xs }}>
             <Text variant="headline">Durations you offer</Text>
@@ -176,9 +162,9 @@ export default function CompanionOnboarding() {
               .map(([d]) => d.slice(0, 3))
               .join(', ')} · ${avail.startTime}–${avail.endTime}`}
           />
-          <Review label="Documents" value={`ID front ✓  ID back ✓  Photo ✓${selfie ? '  Selfie ✓' : ''}`} />
+          <IdLaterNotice />
           <Text variant="footnote" muted>
-            By submitting you agree to the <Brand /> Code of Conduct and Fellow Training Manual. We review applications within 24–48 hours.
+            By going live you agree to the <Brand /> Code of Conduct and Fellow Training Manual.
           </Text>
         </View>
       )}
@@ -212,29 +198,6 @@ function Steps({ current }: { current: number }) {
   );
 }
 
-function Upload({ label, file, onPick, square, camera }: { label: string; file: UploadFile | null; onPick: (f: UploadFile | null) => void; square?: boolean; camera?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={file ? `${label}, added. Tap to replace.` : `Add ${label}`}
-      onPress={async () => {
-        const f = await pickImage({ camera, aspect: square ? [1, 1] : undefined });
-        if (f) onPick(f);
-      }}
-      style={[styles.upload, file && styles.uploadDone]}
-    >
-      {file ? <Image source={{ uri: file.uri }} style={styles.thumb} contentFit="cover" /> : <Icon name={camera ? 'camera' : 'image'} size={24} color={colors.moss} />}
-      <View style={{ flex: 1 }}>
-        <Text variant="callout">{label}</Text>
-        <Text variant="caption" muted>
-          {file ? 'Added · tap to replace' : camera ? 'Take a photo' : 'Choose from your photos'}
-        </Text>
-      </View>
-      <Icon name={file ? 'check' : 'plus'} size={20} color={colors.moss} />
-    </Pressable>
-  );
-}
-
 function Review({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.review}>
@@ -253,8 +216,5 @@ const styles = StyleSheet.create({
   numOn: { backgroundColor: colors.moss },
   form: { gap: space.lg },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  upload: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, padding: space.md, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.gray300, backgroundColor: colors.paper },
-  uploadDone: { borderStyle: 'solid', borderColor: colors.mossSoft },
-  thumb: { width: 48, height: 48, borderRadius: radius.sm },
   review: { gap: 2, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
 });

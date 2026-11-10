@@ -21,7 +21,7 @@ export default function BookingDetail() {
   const q = useQuery({
     queryKey: qk.booking(id),
     queryFn: () => svc.booking(id),
-    refetchInterval: (query) => (query.state.data && stageOf(query.state.data) === 'finding' ? 10_000 : false),
+    refetchInterval: (query) => (query.state.data && ['finding', 'checking'].includes(stageOf(query.state.data)) ? 10_000 : false),
   });
   const cancel = useMutation({
     mutationFn: () => svc.cancelBooking(id),

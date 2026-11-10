@@ -2,7 +2,7 @@ import type { UploadFile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
 import { useSession } from '@/state/session';
-import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus } from '@/domain/types';
+import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus, IdType } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
 
@@ -31,6 +31,7 @@ export function normaliseCompanion(raw: Record<string, any>): Companion {
     availability: raw.availability,
     startTime: raw.startTime ?? raw.start_time,
     endTime: raw.endTime ?? raw.end_time,
+    idVerified: raw.idVerified !== false,
   };
 }
 
@@ -65,9 +66,14 @@ export interface CompanionForm {
   gender?: string;
   profileVisibility?: string;
   profilePhoto: UploadFile | null;
-  idProofFront: UploadFile | null;
-  idProofBack: UploadFile | null;
-  backupPhoto?: UploadFile | null;
+}
+
+/** Photo ID + selfie, asked for when a companion accepts their first booking. */
+export interface IdForm {
+  idType: IdType;
+  front: UploadFile;
+  back?: UploadFile | null;
+  selfie: UploadFile;
 }
 
 // ───────── helpers ─────────
@@ -224,7 +230,7 @@ export const backend = {
   policy: () => rpc<Policy>('booking_policy'),
   createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
-  acceptOffer: (id: string) => rpc<{ message: string; booking: Booking }>('accept_offer', { bid: id }),
+  acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),
   declineOffer: (id: string) => rpc<{ message: string }>('decline_offer', { bid: id }),
   openDispute: (id: string, reason: string) => rpc<{ message: string; booking: Booking }>('open_dispute', { bid: id, reason }),
 
@@ -269,23 +275,29 @@ export const backend = {
     await rpc('update_my_profile', { p: { fullName: f.fullName, city: f.city, area: f.area, ...(photoPath ? { photoPath } : {}) } });
     return { user: await backend.profile() };
   },
+  /** Companion profile → live straight away. The ID is asked for at the first booking. */
   onboardCompanion: async (f: CompanionForm) => {
-    if (!f.profilePhoto || !f.idProofFront || !f.idProofBack) throw new Error('Add your photo and both sides of your ID.');
-    const [photoPath, idFrontPath, idBackPath, selfiePath] = await Promise.all([
-      upload('avatars', 'profile', f.profilePhoto),
-      upload('verification', 'id-front', f.idProofFront),
-      upload('verification', 'id-back', f.idProofBack),
-      f.backupPhoto ? upload('verification', 'selfie', f.backupPhoto) : Promise.resolve(undefined),
-    ]);
+    if (!f.profilePhoto) throw new Error('Add a profile photo.');
+    const photoPath = await upload('avatars', 'profile', f.profilePhoto);
     await rpc('submit_companion_application', {
       p: {
         fullName: f.fullName, city: f.city, state: f.state, area: f.area, description: f.description, packages: f.packages,
         startTime: f.startTime, endTime: f.endTime, tags: f.tags, availability: f.days, gender: f.gender,
         ...(f.profileVisibility ? { profileVisibility: f.profileVisibility, visibilityConsent: true } : {}),
-        photoPath, idFrontPath, idBackPath, ...(selfiePath ? { selfiePath } : {}),
+        photoPath,
       },
     });
-    return { message: 'Companion profile submitted. Your account is under review.' };
+    return { message: 'You’re live. Members in your city can now book you.' };
+  },
+  /** Send the ID for review (status → pending). Stored in the private verification bucket. */
+  submitIdDocuments: async (f: IdForm) => {
+    const [idFrontPath, idBackPath, selfiePath] = await Promise.all([
+      upload('verification', 'id-front', f.front),
+      f.back ? upload('verification', 'id-back', f.back) : Promise.resolve(undefined),
+      upload('verification', 'selfie', f.selfie),
+    ]);
+    await rpc('submit_id_documents', { p: { idType: f.idType, idFrontPath, ...(idBackPath ? { idBackPath } : {}), selfiePath } });
+    return { message: 'ID sent. We’ll check it as soon as we can.' };
   },
   /** Gender, who to see, profile lock (consent required when changing it), city/state/area. */
   updateIdentity: async (f: { gender?: string; seeGender?: string; profileVisibility?: string; visibilityConsent?: boolean; city?: string; state?: string; area?: string }) => {

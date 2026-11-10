@@ -8,7 +8,9 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ Screens 1–21 (see design.md screen map), plus About you, booking details, saved, edit profile, availability and delete account
 - ✅ Phone OTP + PIN login, and email login for web accounts
 - ✅ Booking request → accept → Razorpay payment → chat, matching the backend rules
-- ✅ Companion onboarding (5 steps, ID upload), verification status, dashboard, requests and earnings
+- ✅ Companion onboarding (4 steps, live at the end), dashboard, requests and earnings
+- ✅ **ID check at the first booking** (2026-11-10): sign-up only tells companions an ID will be needed; the first offer opens “Verify ID & accept” (Aadhaar / PAN / DL / passport / voter ID + selfie); the booking is held until staff approve; members see “New on prsnn” and a safety-check step; reject → re-offered or refunded; deadline → refund. Tested in the database (rolled back); re-run `scripts/e2e-supabase.mjs` after `prsnn-backend/supabase/tests/e2e-reset.sql`
+- 💡 Instant ID approval via DigiLocker or an ID-check provider (needs an account and key)
 - ✅ Demo mode with sample data; web preview checked at 375pt and 440pt
 - ✅ Unit tests for pricing, slots, stages, earnings, search, phone and time
 - ✅ Backend: phone OTP (Waplify, with MSG91 backup), PIN, self-delete, security fixes, migration script, tests

@@ -11,6 +11,7 @@ import { RequestCard } from './RequestCard';
 import { awaitingAnswer, earningsFor, formatINR } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { useSession } from '@/state/session';
+import { companionStatusLine, isLiveCompanion } from '@/domain/verification';
 
 /** Screen 20 · Companion dashboard. */
 export function CompanionDashboard() {
@@ -20,8 +21,9 @@ export function CompanionDashboard() {
   const now = new Date();
   const month = useMemo(() => earningsFor(q.data ?? [], now.getFullYear(), now.getMonth()), [q.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const pending = (q.data ?? []).filter((b) => awaitingAnswer(b));
-  const status = check.data?.status ?? user?.verification_status;
-  const live = status === 'verified';
+  const status = check.data && check.data.status !== 'not_found' ? check.data.status : user?.verification_status;
+  const live = isLiveCompanion(status);
+  const verified = status === 'verified';
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { q.refetch(); check.refetch(); }} tintColor={colors.moss} />}>
@@ -37,20 +39,30 @@ export function CompanionDashboard() {
           <View style={styles.status}>
             <View style={[styles.dot, { backgroundColor: live ? '#3FB950' : colors.clay }]} />
             <Text variant="footnote" muted>
-              {live ? 'Live · accepting bookings' : status === 'pending' ? 'Verification in progress' : status === 'rejected' ? 'Verification needs attention' : 'Not live yet'}
+              {companionStatusLine(status)}
             </Text>
           </View>
         </View>
         <IconButton name="bell" label="Notifications" onPress={() => router.push('/notifications')} />
       </View>
 
-      {!live ? (
-        <Card style={styles.banner} onPress={() => router.push(status === 'not_submitted' ? '/fellow/onboarding' : '/fellow/verification')} accessibilityLabel="Verification status">
+      {!verified ? (
+        <Card style={styles.banner} onPress={() => router.push(status === 'not_submitted' ? '/fellow/onboarding' : '/fellow/verification')} accessibilityLabel="ID check status">
           <Icon name="shieldCheck" size={24} color={colors.moss} />
           <View style={{ flex: 1 }}>
-            <Text variant="headline">{status === 'not_submitted' ? 'Finish your profile' : 'Verification'}</Text>
+            <Text variant="headline">
+              {status === 'not_submitted' ? 'Finish your profile' : status === 'id_required' && pending.length ? 'Your first booking is here' : status === 'id_required' ? 'You’re live' : status === 'pending' ? 'ID check in progress' : 'Your ID needs another look'}
+            </Text>
             <Text variant="footnote" muted>
-              {status === 'not_submitted' ? 'Complete onboarding to start receiving bookings.' : status === 'rejected' ? 'Your documents need another look. Tap for details.' : 'We usually review within 24–48 hours.'}
+              {status === 'not_submitted'
+                ? 'Complete your profile to go live.'
+                : status === 'id_required'
+                  ? pending.length
+                    ? 'Verify your ID to accept it. About 2 minutes.'
+                    : 'We’ll ask for a photo ID when your first booking arrives.'
+                  : status === 'pending'
+                    ? 'Bookings you accept are held for you until it’s approved.'
+                    : 'You’re hidden from members until a new ID is approved. Tap to send one.'}
             </Text>
           </View>
           <Icon name="chevronRight" size={18} color={colors.gray400} />

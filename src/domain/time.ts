@@ -7,3 +7,10 @@ export function ago(iso: string, now = Date.now()): string {
   const d = Math.floor(s / 86400);
   return d === 1 ? 'yesterday' : `${d} days ago`;
 }
+
+/** "Sat 15 Nov, 3:00 PM" in the device's locale/time zone. */
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+}

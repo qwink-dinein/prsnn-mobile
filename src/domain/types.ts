@@ -1,7 +1,13 @@
 /** Shapes returned by prsnn-backend (see API.md). Keep in sync with src/models/*.js there. */
 
 export type Role = 'user' | 'companion' | 'admin' | 'subadmin' | 'superadmin';
-export type VerificationStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
+/**
+ * Companion ID check (asked at the first booking, not at sign-up):
+ *  not_submitted — profile not finished; id_required — live, no ID yet;
+ *  pending — ID under review; verified; rejected — hidden until a new ID is approved.
+ */
+export type VerificationStatus = 'not_submitted' | 'id_required' | 'pending' | 'verified' | 'rejected';
+export type IdType = 'aadhaar' | 'pan' | 'driving_licence' | 'passport' | 'voter_id';
 
 export type Gender = 'woman' | 'man' | 'nonbinary';
 export type SeeGender = Gender | 'everyone';
@@ -46,6 +52,8 @@ export interface Companion {
   availability?: Availability;
   startTime?: string; // "HH:MM"
   endTime?: string;
+  /** False for new companions whose ID is checked at their first booking. */
+  idVerified?: boolean;
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
@@ -62,7 +70,8 @@ export interface PersonRef {
   locked?: boolean;
 }
 
-export type AllocationState = 'awaiting_payment' | 'offering' | 'assigned' | 'failed' | 'cancelled';
+/** id_check: a new companion accepted; held while staff check their ID. */
+export type AllocationState = 'awaiting_payment' | 'offering' | 'id_check' | 'assigned' | 'failed' | 'cancelled';
 export type RefundStatus = 'none' | 'pending' | 'processed' | 'failed';
 
 export interface Booking {
@@ -225,9 +234,13 @@ export interface AdminUser {
   idProofFrontUrl?: string;
   idProofBackUrl?: string;
   /** Storage paths of the ID documents (private bucket; the app signs links). */
+  idType?: IdType;
   idFrontPath?: string;
   idBackPath?: string;
   selfiePath?: string;
+  /** Verification queue: earliest deadline of bookings held for this companion's ID check. */
+  heldUntil?: string | null;
+  heldBookings?: number;
   description?: string;
   tags: string[];
   packages?: number[];

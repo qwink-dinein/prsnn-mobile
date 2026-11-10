@@ -13,6 +13,7 @@ export const STAGE_LABEL: Record<Stage, { label: string; tone: 'neutral' | 'succ
   pay: { label: 'Accepted · pay to confirm', tone: 'warning' },
   paying: { label: 'Payment not finished', tone: 'warning' },
   finding: { label: 'Paid · awaiting companion', tone: 'warning' },
+  checking: { label: 'Accepted · safety check', tone: 'warning' },
   unfulfilled: { label: 'No companion · refunded', tone: 'danger' },
   confirmed: { label: 'Confirmed', tone: 'success' },
   completed: { label: 'Completed', tone: 'neutral' },
@@ -63,6 +64,7 @@ export function BookingCard({ b }: { b: Booking }) {
       {stage === 'finding' ? (
         <MetaLine icon="users" text={assigned ? 'Confirmed' : `Waiting for ${b.offerSummary?.tried && b.offerSummary.tried > 1 ? 'a similar companion' : person?.fullName?.split(' ')[0] ?? 'your companion'}${left ? ` · ${formatMinutes(left)} left to answer` : ''}`} />
       ) : null}
+      {stage === 'checking' ? <MetaLine icon="shieldCheck" text={`${person?.fullName?.split(' ')[0] ?? 'Your companion'} accepted. We’re checking their ID before confirming.`} /> : null}
       {stage === 'pay' || stage === 'paying' ? (
         <Button label={stage === 'paying' ? `Finish payment · ${formatINR(totalOf(b))}` : `Pay ${formatINR(totalOf(b))}`} onPress={() => router.push(`/pay/${b._id}`)} compact />
       ) : null}
@@ -101,6 +103,9 @@ export function PrepaidStatus({ b }: { b: Booking }) {
       // Cancelled before anyone accepted: matching never finished.
       state: stage === 'finding' ? 'now' : stage === 'paying' ? 'todo' : stage === 'unfulfilled' ? 'stop' : stage === 'cancelled' && !b.companionId ? 'todo' : 'done',
     },
+    ...(stage === 'checking'
+      ? [{ label: `Safety check of ${companionOf(b)?.fullName?.split(' ')[0] ?? 'your companion'}’s ID`, detail: 'They’re new on prsnn. Nobody meets anyone before their ID is checked. If it doesn’t pass, we offer your booking to another companion or refund you in full.', state: 'now' as const }]
+      : []),
     failed
       ? { label: stage === 'unfulfilled' ? 'Cancelled · refunded' : 'Cancelled', detail: b.refund && b.refund.status !== 'none' ? paymentLabel(b) : undefined, state: 'stop' }
       : { label: stage === 'completed' ? 'Completed' : 'Confirmed', detail: stage === 'confirmed' ? 'Chat is open' : undefined, state: stage === 'confirmed' || stage === 'completed' ? 'done' : 'todo' },

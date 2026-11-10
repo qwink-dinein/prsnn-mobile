@@ -94,7 +94,7 @@ function Discover() {
         ) : q.isError ? (
           <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : popular.length === 0 ? (
-          <EmptyState icon="users" title="No companions yet" body="New companions are being verified. Check back soon." />
+          <EmptyState icon="users" title="No companions yet" body="New companions are joining your city. Check back soon." />
         ) : null}
       </Section>
       {popular.length ? (

@@ -138,7 +138,7 @@ export default function Checkout() {
       <Card style={{ gap: space.md }}>
         <Step n={1} text="You pay now. Payment reserves your booking; it’s confirmed when a companion accepts. It shows “Paid — awaiting companion” until then." />
         <Step n={2} text={`${first} gets between 15 minutes and 5 hours to accept, depending on how far away your session is.`} />
-        <Step n={3} text="If they can’t, we offer it to up to 2 similar verified companions (same city, your “show me” choice, available for this duration) — one at a time." />
+        <Step n={3} text="If they can’t, we offer it to up to 2 similar companions (same city, your “show me” choice, available for this duration) — one at a time." />
         <Step n={4} text="Nobody accepts by 1 hour before the session? It’s cancelled and you get a full refund automatically." />
       </Card>
 

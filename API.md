@@ -26,9 +26,20 @@ Session user: `{ id, role, phone, fullName, is_verified, verification_status, pr
 |---|---|---|
 | `me()` / `my_profile()` | | session shape / full own row |
 | `update_my_profile(p)` | `fullName, city, state, area, description, gender, seeGender, profileVisibility (+ visibilityConsent: true), tags, packages (1–12), availability {monday…}, startTime, endTime, photoPath` | whitelisted; times inside the day window |
-| `submit_companion_application(p)` | above + `photoPath, idFrontPath, idBackPath, selfiePath?` | → `pending`; staff accounts refused |
+| `submit_companion_application(p)` | above + `photoPath` (no ID) | → `id_required`: live straight away; staff accounts refused |
+| `submit_id_documents(p)` | `idType` (`aadhaar`, `pan`, `driving_licence`, `passport`, `voter_id`), `idFrontPath`, `idBackPath` (Aadhaar, DL, voter ID), `selfiePath` — all in `verification/<uid>/` | → `pending`; companions only; refused once verified |
 | `save_push_token(token)` | Expo token or null | a token moving to another account is removed from the old one |
 | `delete_my_account()` | | refused while a paid booking is open; keeps a `deleted_accounts` row |
+
+**Companion ID check — at the first booking, not at sign-up.** `verification_status`:
+`not_submitted` (profile not finished) → `id_required` (live, listed, can be offered bookings) →
+`pending` (ID sent) → `verified` | `rejected` (hidden from members until a new ID is approved).
+`accept_offer` refuses with “Verify your ID to accept this booking.” until an ID is on file. A
+`pending` companion who accepts **holds** the booking (`allocation.state = 'id_check'`,
+`status` stays `pending`): no chat, no unlocked photos, no payout. Staff approval confirms every
+held booking (chat opens); rejection re-offers each one to the next companion (or refunds in
+full). A held booking still past its deadline (start − 1 h) is cancelled and refunded in full by
+the sweeper. Cards carry `idVerified` so members see “New on prsnn” instead of the verified badge.
 
 **Storage.** `avatars/<uid>/…` (public) and `verification/<uid>/…` (private: owner + staff, signed links).
 You can only write your own folder. JPG/PNG/WebP/HEIC, 8 MB.
@@ -37,7 +48,7 @@ You can only write your own folder. JPG/PNG/WebP/HEIC, 8 MB.
 
 | RPC | |
 |---|---|
-| `list_companions(see?)` | verified, not suspended, filtered by the viewer's “show me”; locked profiles → first name, no photo, `locked: true` until a confirmed, paid booking together |
+| `list_companions(see?)` | live (`id_required`, `pending` or `verified`; ID-verified first), not suspended, filtered by the viewer's “show me”; locked profiles → first name, no photo, `locked: true` until a confirmed, paid booking together |
 | `get_companion(cid)` | same rules; “Companion not found.” otherwise |
 
 ## Prepaid bookings
@@ -95,7 +106,7 @@ Server config (`private.config`, SQL editor): `payment_mode`, `max_offers` (3), 
 | `booking_policy()` | anyone | fees, matching and refund terms from the prices in force |
 | `create_prepaid_booking(p)` | member | `{ companionId, scheduledDate, startTime, duration: '60'…'720', idempotencyKey, acceptTerms: true, message?, city?, area? }` → `{ booking, quote, policy, replayed? }` |
 | `payment_mode()` / `simulate_payment(bid, outcome)` | member | `simulated` until Razorpay is wired (`private.config`) |
-| `accept_offer(bid)` / `decline_offer(bid)` | companion | atomic; clash with another confirmed booking refused |
+| `accept_offer(bid)` / `decline_offer(bid)` | companion | atomic; clash with another confirmed or held booking refused; needs an ID on file; a companion whose ID is in review gets `{ idCheck: true }` and the booking is held (`id_check`) |
 | `cancel_booking(bid)` | either party | policy below |
 | `complete_booking(bid)` | companion | after the session has started |
 | `open_dispute(bid, reason)` | either party | paid bookings |
@@ -132,7 +143,7 @@ from listings, search and offers.
 
 | RPC | Who |
 |---|---|
-| `admin_overview()` (money for superadmin), `admin_verifications()`, `admin_decide_verification(uid, decision, note)` | staff |
+| `admin_overview()` (money for superadmin), `admin_verifications()` (companions holding a booking first, with `heldBookings` and `heldUntil`), `admin_decide_verification(uid, decision, note)` (approve → held bookings confirmed; reject → re-offered) | staff |
 | `admin_users(q, role_filter)`, `admin_user(uid)`, `admin_update_user(uid, p)`, `admin_suspend_user(uid, on_off, reason)`, `admin_delete_user(uid)` | staff (staff targets: superadmin only) |
 | `admin_bookings(tab)`, `admin_booking(bid)`, `admin_booking_messages(bid)` (disputes only, logged), `admin_update_booking(bid, p)`, `admin_cancel_booking(bid, reason, refund_amount)`, `admin_reassign_booking(bid, cid)` | staff; a sub-admin cancel flags the refund for a superadmin |
 | `admin_disputes(st)`, `admin_reply_dispute(bid, msg, to_whom)`, `admin_close_dispute(bid, resolution)` | staff |

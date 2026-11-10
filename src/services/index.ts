@@ -5,7 +5,7 @@ import { demo } from './demo';
 /** One entry point for all server calls. Demo mode swaps in sample data. */
 export const svc = DEMO ? demo : backend;
 
-export type { AuthResult, PaymentIntent, CompanionForm } from './backend';
+export type { AuthResult, PaymentIntent, CompanionForm, IdForm } from './backend';
 
 /** React Query keys, in one place so invalidation stays consistent. */
 export const qk = {

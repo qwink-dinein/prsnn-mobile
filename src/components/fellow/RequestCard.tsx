@@ -13,6 +13,8 @@ import { companionShareOf } from '@/domain/pricing';
 import type { Booking, BookingStatus } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
+import { useSession } from '@/state/session';
+import { needsIdToAccept } from '@/domain/verification';
 
 /** Re-render every 30 s so offer countdowns stay current. */
 function useNow(intervalMs = 30_000) {
@@ -35,6 +37,8 @@ export function RequestCard({ b }: { b: Booking }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const now = useNow();
+  const idFirst = needsIdToAccept(useSession((s) => s.user?.verification_status));
+  const verifyAndAccept = () => router.push({ pathname: '/fellow/verify-id', params: { booking: b._id } });
   const who = personOf(b.requesterId);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: qk.incoming });
@@ -50,6 +54,7 @@ export function RequestCard({ b }: { b: Booking }) {
     onSuccess: refresh,
     onError: (e) => {
       refresh();
+      if (/verify your id/i.test(errorMessage(e))) return verifyAndAccept();
       confirm({ title: 'Couldn’t accept', message: errorMessage(e) });
     },
   });
@@ -65,7 +70,9 @@ export function RequestCard({ b }: { b: Booking }) {
     ? offerLive
       ? { label: `Paid offer · ${formatMinutes(left)} left`, tone: 'warning' as const }
       : offer.status === 'accepted'
-        ? b.status === 'completed'
+        ? b.allocation?.state === 'id_check'
+          ? { label: 'Held · ID check in progress', tone: 'warning' as const }
+          : b.status === 'completed'
           ? { label: 'Completed', tone: 'neutral' as const }
           : b.status === 'cancelled'
             ? { label: 'Cancelled', tone: 'danger' as const }
@@ -109,7 +116,7 @@ export function RequestCard({ b }: { b: Booking }) {
       {offer && offerLive ? (
         <>
           <Text variant="footnote" color={colors.gray600}>
-            Already paid by the customer. Accept within {formatMinutes(left)} or it goes to someone else.
+            Already paid by the customer. Accept within {formatMinutes(left)} or it goes to someone else.{idFirst ? ' Your first booking: a quick ID check (about 2 minutes) and it’s yours.' : ''}
           </Text>
           <View style={styles.actions}>
             <Button
@@ -122,9 +129,17 @@ export function RequestCard({ b }: { b: Booking }) {
                 if (await confirm({ title: 'Decline this booking?', message: 'We’ll offer it to another companion.', confirmLabel: 'Decline', destructive: true })) decline.mutate();
               }}
             />
-            <Button label="Accept" compact style={{ flex: 1 }} haptic loading={accept.isPending} onPress={() => accept.mutate()} />
+            {idFirst ? (
+              <Button label="Verify ID & accept" icon="shieldCheck" compact style={{ flex: 2 }} haptic onPress={verifyAndAccept} />
+            ) : (
+              <Button label="Accept" compact style={{ flex: 1 }} haptic loading={accept.isPending} onPress={() => accept.mutate()} />
+            )}
           </View>
         </>
+      ) : offer?.status === 'accepted' && b.allocation?.state === 'id_check' ? (
+        <Text variant="footnote" color={colors.gray600}>
+          Held for you while our team checks your ID. Chat opens and the booking is confirmed as soon as it’s approved.
+        </Text>
       ) : !offer && b.status === 'pending' ? (
         <View style={styles.actions}>
           <Button

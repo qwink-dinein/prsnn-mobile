@@ -80,7 +80,7 @@ export function UserRow({ u, onPress }: { u: AdminUser; onPress?: () => void }) 
           {[roleLabel(u.role), u.phone ? displayPhone(u.phone) : null, u.city].filter(Boolean).join(' · ')}
         </Text>
       </View>
-      {u.suspended ? <Pill label="Suspended" tone="danger" /> : u.role === 'companion' && u.verificationStatus !== 'verified' ? <Pill label={u.verificationStatus === 'pending' ? 'To verify' : u.verificationStatus} tone="warning" /> : null}
+      {u.suspended ? <Pill label="Suspended" tone="danger" /> : u.role === 'companion' && u.verificationStatus !== 'verified' ? <Pill label={u.verificationStatus === 'pending' ? 'To verify' : u.verificationStatus === 'id_required' ? 'Live · no ID yet' : u.verificationStatus === 'rejected' ? 'ID rejected' : u.verificationStatus} tone={u.verificationStatus === 'rejected' ? 'danger' : 'warning'} /> : null}
     </Card>
   );
 }

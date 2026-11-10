@@ -11,7 +11,7 @@ import { useSession } from '@/state/session';
 type R = 'user' | 'companion';
 
 const OPTIONS: { role: R; title: string; body: string; image: number }[] = [
-  { role: 'user', title: 'Find a companion', body: 'Book verified companions for walks, coffee, events and more.', image: require('../../assets/images/walks.jpg') },
+  { role: 'user', title: 'Find a companion', body: 'Book ID-checked companions for walks, coffee, events and more.', image: require('../../assets/images/walks.jpg') },
   { role: 'companion', title: 'Become a companion', body: 'Spend time with people and earn on your own terms.', image: require('../../assets/images/together.jpg') },
 ];
 

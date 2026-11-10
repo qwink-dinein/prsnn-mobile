@@ -83,12 +83,21 @@ export default function CompanionProfile() {
               </Text>
             </View>
           ) : null}
-          <View style={styles.meta}>
-            <Icon name="shieldCheck" size={16} color={colors.moss} />
-            <Text variant="footnote" color={colors.moss}>
-              ID verified by <Brand /> · public places only
-            </Text>
-          </View>
+          {c.idVerified === false ? (
+            <View style={styles.meta}>
+              <Pill label="New on prsnn" />
+              <Text variant="footnote" color={colors.moss} style={{ flex: 1 }}>
+                ID checked by our team before you meet. If it doesn’t pass, you get another companion or a full refund.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.meta}>
+              <Icon name="shieldCheck" size={16} color={colors.moss} />
+              <Text variant="footnote" color={colors.moss}>
+                ID verified by <Brand /> · public places only
+              </Text>
+            </View>
+          )}
 
           {cats.length || c.tags.length ? (
             <View style={styles.tags}>

@@ -9,6 +9,7 @@ import { LINKS } from '@/lib/config';
 import { displayPhone } from '@/lib/flow';
 import { queryClient } from '@/lib/queryClient';
 import { useSession } from '@/state/session';
+import { companionStatusLine, idCheckValue } from '@/domain/verification';
 import { seeLabel } from '@/domain/privacy';
 import { isStaff, roleLabel } from '@/domain/admin';
 import { unregisterPush } from '@/lib/push';
@@ -46,11 +47,11 @@ export default function ProfileTab() {
             <View style={styles.verified}>
               <Icon name="badgeCheck" size={16} color={colors.moss} />
               <Text variant="footnote" color={colors.moss}>
-                Verified member
+                {isCompanion ? 'ID verified' : 'Verified member'}
               </Text>
             </View>
           ) : (
-            <Pill label={user?.verification_status === 'pending' ? 'Verification pending' : 'Not verified yet'} tone="warning" />
+            <Pill label={isCompanion ? companionStatusLine(user?.verification_status) : 'Not verified yet'} tone="warning" />
           )}
           {user?.phone ? (
             <Text variant="footnote" muted>
@@ -70,7 +71,7 @@ export default function ProfileTab() {
         <View style={styles.group}>
           <ListRow icon="chart" label="Companion dashboard" onPress={() => router.push('/home')} />
           <ListRow icon="wallet" label="Earnings" onPress={() => router.push('/fellow/earnings')} />
-          <ListRow icon="shieldCheck" label="Verification status" value={user?.verification_status} onPress={() => router.push('/fellow/verification')} last />
+          <ListRow icon="shieldCheck" label="ID check" value={idCheckValue(user?.verification_status)} onPress={() => router.push('/fellow/verification')} last />
         </View>
       ) : (
         <View style={styles.group}>
