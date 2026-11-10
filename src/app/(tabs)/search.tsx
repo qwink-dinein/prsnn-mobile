@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useLiveCompanions } from '@/components/ui/states';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
@@ -11,7 +11,6 @@ import { Icon } from '@/components/ui/Icon';
 import { CompanionRow } from '@/components/companions';
 import { CATEGORIES, type CategoryKey } from '@/domain/categories';
 import { filterCompanions, SORTS, type Sort } from '@/domain/search';
-import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { CitySheet } from '@/components/PlacePicker';
 import { areasFor } from '@/data/india-areas';
@@ -21,7 +20,7 @@ import { useSession } from '@/state/session';
 /** Screen 7 · Search & filters (filters run on the device over the verified list). */
 export default function SearchTab() {
   const params = useLocalSearchParams<{ category?: string }>();
-  const q = useQuery({ queryKey: qk.companions, queryFn: svc.companions });
+  const q = useLiveCompanions();
   const [text, setText] = useState('');
   const [category, setCategory] = useState<CategoryKey | 'all'>('all');
   const [area, setArea] = useState<string | 'all'>('all');

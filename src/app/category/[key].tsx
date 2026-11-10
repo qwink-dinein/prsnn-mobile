@@ -4,18 +4,18 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
+import { useLiveCompanions , Skeleton } from '@/components/ui/states';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
 import { EmptyState, ErrorState, IconButton, Section } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Enter, PressScale } from '@/components/ui/motion';
-import { Skeleton } from '@/components/ui/states';
 import { CompanionRow } from '@/components/companions';
 import { CATEGORIES, categoryOf, offersCategory } from '@/domain/categories';
 import { formatINR } from '@/domain/booking';
 import { durationLine, hourlyFor, priceFor, savingFor, savingPercent } from '@/domain/pricing';
-import { svc, qk } from '@/services';
+import { svc } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
 
@@ -25,7 +25,7 @@ export default function CategoryPage() {
   const c = categoryOf(key);
   const user = useSession((s) => s.user);
   const city = user?.city ?? '';
-  const q = useQuery({ queryKey: qk.companions, queryFn: svc.companions });
+  const q = useLiveCompanions();
   const plans = useQuery({ queryKey: ['cityPlans', city], queryFn: () => svc.cityPlans(city), enabled: !!city, staleTime: 10 * 60_000 });
   const list = useMemo(() => {
     const all = (q.data ?? []).filter((x) => offersCategory(x.categories, c?.key));

@@ -5,10 +5,10 @@ import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
+import { useLiveCompanions , Notice, Skeleton } from '@/components/ui/states';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
 import { Screen, Section, Logo, IconButton, EmptyState, ErrorState } from '@/components/ui/layout';
 import { Enter, PressScale } from '@/components/ui/motion';
-import { Notice, Skeleton } from '@/components/ui/states';
 import { CategoryCard } from '@/components/CategoryTiles';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
@@ -30,7 +30,7 @@ export default function HomeTab() {
 function Discover() {
   const user = useSession((s) => s.user);
   const { width } = useAppWidth();
-  const q = useQuery({ queryKey: qk.companions, queryFn: svc.companions });
+  const q = useLiveCompanions();
   const notes = useQuery({ queryKey: qk.notifications, queryFn: svc.notifications });
   const unread = (notes.data ?? []).filter((n) => !n.isRead).length;
   const cardW = Math.floor(Math.min((width - GUTTER * 2 - space.md) / 2, 200));

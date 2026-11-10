@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { svc, qk } from '@/services';
+import { StyleSheet, View , AppState, Platform } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import NetInfo from '@react-native-community/netinfo';
-import { onlineManager } from '@tanstack/react-query';
+import { focusManager, onlineManager, useQuery } from '@tanstack/react-query';
+import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, space } from '@/theme/tokens';
@@ -13,8 +15,17 @@ import { EASE_OUT_CSS } from './motion';
 
 // ───────── Connectivity ─────────
 
-/** Wire React Query to the device's connection: queries pause offline and refetch when it's back. */
+/**
+ * Wire React Query to the device: queries pause offline and refetch when the
+ * connection is back, and "focus" means the app came back to the foreground
+ * (so live lists refresh when someone reopens the app).
+ */
 export function connectOnlineManager() {
+  focusManager.setEventListener((setFocused) => {
+    if (Platform.OS === 'web') return undefined;
+    const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
+    return () => sub.remove();
+  });
   onlineManager.setEventListener((setOnline) =>
     NetInfo.addEventListener((s) => setOnline(s.isConnected !== false && s.isInternetReachable !== false)),
   );
@@ -214,3 +225,27 @@ const styles = StyleSheet.create({
   okCircle: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center' },
   notice: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
 });
+
+// ───────── Live lists ─────────
+
+/** How often live lists (companions on Home, Search, categories) reload while open. */
+export const LIVE_INTERVAL = 60_000;
+
+/**
+ * The companion list, kept fresh: reloads every 60 s while the screen is open,
+ * when the app returns to the foreground, and when you come back to the screen.
+ */
+export function useLiveCompanions() {
+  const q = useQuery({ queryKey: qk.companions, queryFn: svc.companions, refetchInterval: LIVE_INTERVAL, refetchOnWindowFocus: true, staleTime: 15_000 });
+  const first = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (first.current) {
+        first.current = false;
+        return;
+      }
+      void q.refetch();
+    }, [q.refetch]), // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  return q;
+}
