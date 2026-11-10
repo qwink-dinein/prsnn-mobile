@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { router } from 'expo-router';
 import { svc } from '@/services';
 import { DEMO } from './config';
 
@@ -21,11 +22,15 @@ export async function registerForPush(): Promise<string | null> {
 
     const Notifications = await import('expo-notifications');
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+      handleNotification: async (n) => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: n.request.content.data?.type === 'panic', shouldSetBadge: false }),
     });
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', { name: 'prsnn', importance: Notifications.AndroidImportance.DEFAULT });
+      // Panic alerts to staff: loud, heads-up, vibrating.
+      await Notifications.setNotificationChannelAsync('panic', { name: 'Safety alerts', importance: Notifications.AndroidImportance.MAX, vibrationPattern: [0, 400, 200, 400], sound: 'default', lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC, bypassDnd: true });
     }
+    // Tapping a push opens the right screen.
+    Notifications.addNotificationResponseReceivedListener((r) => openFromPush(r.notification.request.content.data as { type?: string }));
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== 'granted') return null;
@@ -36,6 +41,13 @@ export async function registerForPush(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+function openFromPush(data: { type?: string } | undefined) {
+  const t = data?.type;
+  if (t === 'panic') router.push('/admin/panics');
+  else if (t === 'booking_offer') router.push('/bookings');
+  else if (t) router.push('/notifications');
 }
 
 /** On sign-out: stop pushes to this device for the old account. */

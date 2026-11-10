@@ -3,6 +3,7 @@ import type { SessionUser } from '@/domain/types';
 import type { AuthResult } from '@/services';
 import { useSession } from '@/state/session';
 import { svc } from '@/services';
+import { needsSetup } from '@/domain/setup';
 import { hasIdentity } from '@/domain/privacy';
 import { isStaff } from '@/domain/admin';
 import { displayPhone as displayPhoneOf } from '@/domain/phone';
@@ -20,14 +21,7 @@ export function goHome(user: SessionUser | null = useSession.getState().user) {
   router.replace('/home');
 }
 
-/** Setup still has unanswered questions (staff only need a name; companions answer the rest in companion sign-up). */
-export function needsSetup(u: SessionUser | null | undefined): boolean {
-  if (!u) return false;
-  if (!u.fullName) return true;
-  if (isStaff(u.role) || u.role === 'companion') return false;
-  if (!u.phone && !u.contactPhone) return true; // email sign-ups give a mobile for updates and safety alerts
-  return !hasIdentity(u) || !u.city || !u.categories?.length || !u.photoStatus || u.photoStatus === 'none';
-}
+export { needsSetup } from '@/domain/setup';
 
 /** After the PIN is set (or skipped): finish setup, else home. */
 export function afterPin(user: SessionUser | null = useSession.getState().user) {

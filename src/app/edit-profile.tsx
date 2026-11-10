@@ -12,6 +12,10 @@ import { svc, qk } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
 import type { Profile } from '@/domain/types';
 import { pickImage } from '@/lib/pickImage';
+import { LocationFields, type LocationValue } from '@/components/LocationFields';
+import { CategoryTiles } from '@/components/CategoryTiles';
+import { Notice } from '@/components/ui/states';
+import { stateOf } from '@/domain/places';
 import { useSession } from '@/state/session';
 
 /** Personal information. Companions also edit their bio and hourly rate here. */
@@ -24,30 +28,39 @@ export default function EditProfile() {
 function EditForm({ p }: { p?: Profile }) {
   const qc = useQueryClient();
   const updateUser = useSession((s) => s.updateUser);
-  const [form, setForm] = useState({ fullName: p?.fullName ?? '', city: p?.city ?? '', area: p?.area ?? '', description: p?.description ?? '' });
+  const user = useSession((s) => s.user);
+  const [form, setForm] = useState({ fullName: p?.fullName ?? '', description: p?.description ?? '', categories: (user?.categories ?? []) as string[] });
+  const [place, setPlace] = useState<LocationValue>({ state: p?.state ?? stateOf(p?.city) ?? '', city: p?.city ?? '', area: p?.area ?? '' });
+  const [done, setDone] = useState(false);
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isCompanion = p?.role === 'companion';
 
-  const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: 'fullName' | 'description') => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const nameError = form.fullName.trim().length < 2 ? 'Please enter your name.' : null;
 
   const save = async () => {
+    if (nameError) return setError(nameError);
     setBusy(true);
     setError(null);
     try {
-      await svc.updateProfile(
+      const fresh = await svc.saveProfile(
         {
           fullName: form.fullName.trim(),
-          city: form.city.trim(),
-          area: form.area.trim(),
+          state: place.state,
+          city: place.city,
+          area: place.area,
+          ...(form.categories.length ? { categories: form.categories } : {}),
           ...(isCompanion ? { description: form.description.trim() } : {}),
         },
         photo,
       );
-      await updateUser({ fullName: form.fullName.trim(), ...(photo ? { profilePhoto: photo.uri } : {}) });
+      await updateUser({ ...fresh, hasPin: user?.hasPin });
       qc.invalidateQueries({ queryKey: qk.profile });
-      router.back();
+      qc.invalidateQueries({ queryKey: qk.companions });
+      setDone(true);
+      setTimeout(() => router.back(), 900);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -65,9 +78,10 @@ function EditForm({ p }: { p?: Profile }) {
         </View>
       </Pressable>
       <View style={{ gap: space.lg }}>
-        <TextField label="Full name" value={form.fullName} onChangeText={set('fullName')} textContentType="name" autoCapitalize="words" />
-        <TextField label="City" value={form.city} onChangeText={set('city')} />
-        <TextField label="Area" value={form.area} onChangeText={set('area')} />
+        <TextField label="Full name" value={form.fullName} onChangeText={set('fullName')} textContentType="name" autoCapitalize="words" error={nameError} />
+        <LocationFields value={place} onChange={setPlace} />
+        <Text variant="subhead">{isCompanion ? 'What you offer' : 'What you’re interested in'}</Text>
+        <CategoryTiles audience={isCompanion ? 'companion' : 'member'} selected={form.categories} onToggle={(k) => setForm((f) => ({ ...f, categories: f.categories.includes(k) ? f.categories.filter((x) => x !== k) : [...f.categories, k] }))} />
         {isCompanion ? (
           <>
             <TextField label="About you" value={form.description} onChangeText={set('description')} multiline maxLength={600} />
@@ -77,11 +91,9 @@ function EditForm({ p }: { p?: Profile }) {
           </>
         ) : null}
         {p?.phoneNumber ? <TextField label="Mobile number" value={`+91 ${p.phoneNumber}`} editable={false} hint="Your number is never shown to other members." /> : null}
-        {error ? (
-          <Text variant="footnote" color={colors.danger}>
-            {error}
-          </Text>
-        ) : null}
+        {photo ? <Notice text="A new photo is reviewed by our team before others see it." /> : null}
+        {error ? <Notice tone="danger" text={`${error} Nothing was lost — try again.`} /> : null}
+        {done ? <Notice tone="success" text="Saved." /> : null}
       </View>
     </Screen>
   );

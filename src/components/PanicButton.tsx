@@ -9,21 +9,13 @@ import { fonts } from '@/theme/fonts';
 import { Text } from './ui/Text';
 import { Icon } from './ui/Icon';
 import { useConfirm } from './ui/confirm';
-import { formatTime, startsAt } from '@/domain/booking';
+import { formatTime } from '@/domain/booking';
+import { panicWindow } from '@/domain/safety';
 import type { Booking } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 
 const HOLD_MS = 3000;
-const AFTER_END_MS = 60 * 60_000;
-
-/** When the panic button is on: from the session start until 1 hour after it ends (confirmed, paid bookings). */
-export function panicWindow(b: Pick<Booking, 'scheduledDate' | 'startTime' | 'duration' | 'status' | 'paymentStatus'>, now = Date.now()) {
-  const start = startsAt(b).getTime();
-  const end = start + Number(b.duration) * 60_000 + AFTER_END_MS;
-  const eligible = (b.status === 'accepted' || b.status === 'completed') && b.paymentStatus === 'paid';
-  return { start, end, eligible, on: eligible && now >= start && now <= end, before: eligible && now < start, after: now > end };
-}
 
 /**
  * The panic button on a booking. Off (and says when it turns on) before the

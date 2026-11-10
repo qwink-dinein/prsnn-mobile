@@ -18,15 +18,17 @@ export function CompanionDashboard() {
   const user = useSession((s) => s.user);
   const q = useQuery({ queryKey: qk.incoming, queryFn: svc.incomingBookings });
   const check = useQuery({ queryKey: qk.profileCheck, queryFn: svc.checkProfile });
+  const meQ = useQuery({ queryKey: ['me'], queryFn: svc.me, refetchInterval: 60_000 });
+  const approval = meQ.data?.approvalStatus ?? user?.approvalStatus ?? 'approved';
   const now = new Date();
   const month = useMemo(() => earningsFor(q.data ?? [], now.getFullYear(), now.getMonth()), [q.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const pending = (q.data ?? []).filter((b) => awaitingAnswer(b));
   const status = check.data && check.data.status !== 'not_found' ? check.data.status : user?.verification_status;
-  const live = isLiveCompanion(status);
+  const live = approval === 'approved' && isLiveCompanion(status);
   const verified = status === 'verified';
 
   return (
-    <Screen refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { q.refetch(); check.refetch(); }} tintColor={colors.moss} />}>
+    <Screen refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { q.refetch(); check.refetch(); meQ.refetch(); }} tintColor={colors.moss} />}>
       <View style={styles.head}>
         <Avatar uri={user?.profilePhoto} name={user?.fullName} size={56} />
         <View style={{ flex: 1 }}>
@@ -39,14 +41,25 @@ export function CompanionDashboard() {
           <View style={styles.status}>
             <View style={[styles.dot, { backgroundColor: live ? '#3FB950' : colors.clay }]} />
             <Text variant="footnote" muted>
-              {companionStatusLine(status)}
+              {approval === 'pending' ? 'Waiting for approval' : approval === 'changes_requested' ? 'Changes requested' : approval === 'rejected' ? 'Not approved' : companionStatusLine(status)}
             </Text>
           </View>
         </View>
         <IconButton name="bell" label="Notifications" onPress={() => router.push('/notifications')} />
       </View>
 
-      {!verified ? (
+      {approval !== 'approved' ? (
+        <Card style={[styles.banner, approval !== 'pending' && { backgroundColor: colors.warningSoft }]} onPress={() => router.push(approval === 'draft' ? '/fellow/onboarding' : approval === 'pending' ? '/fellow/verification' : { pathname: '/fix', params: { target: 'profile' } })} accessibilityLabel="Profile approval status">
+          <Icon name={approval === 'pending' ? 'clock' : 'edit'} size={24} color={approval === 'pending' ? colors.moss : colors.clay} />
+          <View style={{ flex: 1 }}>
+            <Text variant="headline">{approval === 'pending' ? 'Your profile is being reviewed' : approval === 'draft' ? 'Finish your profile' : approval === 'rejected' ? 'Your profile wasn’t approved' : 'A few changes, please'}</Text>
+            <Text variant="footnote" muted>
+              {approval === 'pending' ? 'Usually within 24 hours. You go live as soon as it’s approved.' : approval === 'draft' ? 'Complete companion sign-up to go live.' : `“${meQ.data?.approvalNote ?? user?.approvalNote ?? 'See the note from our team.'}” Tap to fix and resubmit.`}
+            </Text>
+          </View>
+          <Icon name="chevronRight" size={18} color={colors.gray400} />
+        </Card>
+      ) : !verified ? (
         <Card style={styles.banner} onPress={() => router.push(status === 'not_submitted' ? '/fellow/onboarding' : '/fellow/verification')} accessibilityLabel="ID check status">
           <Icon name="shieldCheck" size={24} color={colors.moss} />
           <View style={{ flex: 1 }}>
