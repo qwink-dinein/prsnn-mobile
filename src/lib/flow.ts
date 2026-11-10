@@ -4,7 +4,6 @@ import type { AuthResult } from '@/services';
 import { useSession } from '@/state/session';
 import { svc } from '@/services';
 import { needsSetup } from '@/domain/setup';
-import { hasIdentity } from '@/domain/privacy';
 import { isStaff } from '@/domain/admin';
 import { displayPhone as displayPhoneOf } from '@/domain/phone';
 

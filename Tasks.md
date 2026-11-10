@@ -29,6 +29,11 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ Prices, split, cancellation fee and offer/day windows live in a `Settings` document; the app reads them from the API with the bundled table as fallback
 - ✅ Push token saved at login (`expo-notifications`); superadmin push broadcasts via Expo
 
+- ✅ **Round 2** (2026-11-10): PIN right after verification · email sign-up for visitors from abroad · all-India state → city → area dropdowns (India Post, 156,912 localities) · five categories · new price cards · photo required and approved by staff · every companion approved before going live · change requests in the bell with "Fix and resubmit" · booking for someone else (incl. Other) · meeting place on every booking · chat safety reminder · panic button (session start → end + 1 h, hold 3 s) with WhatsApp + push to every admin every 5 min until resolved · admin approvals, panic alerts and city plans · offline banner, slow-network progress, drafts kept through session expiry, success states
+- 🔑 **Supabase email OTP** (visitors from abroad): Authentication → Providers → Email on, "Confirm email" on; Email Templates → Magic Link: put `{{ .Token }}` in the body; set up custom SMTP (the built-in sender allows only a few emails an hour)
+- 🔑 **WhatsApp `prsnn_panic_alert`**: submit in Waplify, then set the secret `WAPLIFY_TPL_PANIC_ALERT`
+- 💡 Weekly plans for a loved one and gift bookings (designed, not built: need series payments and gift codes)
+
 ## Before the first real build
 
 - ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.

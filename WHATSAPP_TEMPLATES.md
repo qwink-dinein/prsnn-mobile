@@ -1,6 +1,6 @@
 # WhatsApp templates for prsnn (Waplify → Meta)
 
-Four templates cover login and the booking flow. Submit them in Waplify →
+Seven templates cover login, the booking flow and safety alerts. Submit them in Waplify →
 Templates (language **English**), then put the approved names in the backend
 env on Render.
 
@@ -10,6 +10,9 @@ env on Render.
 | 2 | `prsnn_booking_request` | Utility | companion | a member sends a booking request | `WAPLIFY_TPL_BOOKING_REQUEST` |
 | 3 | `prsnn_booking_accepted` | Utility | member | companion accepts → please pay | `WAPLIFY_TPL_BOOKING_ACCEPTED` |
 | 4 | `prsnn_payment_received` | Utility | companion | member has paid → chat is open | `WAPLIFY_TPL_PAYMENT_RECEIVED` |
+| 5 | `prsnn_booking_confirmed` | Utility | member | companion accepted a paid booking | `WAPLIFY_TPL_BOOKING_CONFIRMED` |
+| 6 | `prsnn_booking_unfulfilled` | Utility | member | nobody accepted → full refund | `WAPLIFY_TPL_BOOKING_UNFULFILLED` |
+| 7 | `prsnn_panic_alert` | Utility | **every admin** | panic button pressed; repeats every 5 min until resolved | `WAPLIFY_TPL_PANIC_ALERT` |
 
 > **Why #1 is "Authentication", not "Utility".** Meta only allows one-time
 > codes in Authentication templates. A Utility template containing a code
@@ -207,3 +210,51 @@ Booking reference: {{6}}
 Your full refund has been started to your original payment method. You can book again in the app anytime.
 ```
 Samples: {{1}} Karan · {{2}} prsnn · {{3}} Sun, 15 Nov · {{4}} 4:00 PM · {{5}} 1,299 · {{6}} ABC9F1
+
+---
+
+## 7 · `prsnn_panic_alert` (Utility → every admin) · env `WAPLIFY_TPL_PANIC_ALERT`
+
+Sent when a member or companion holds the **panic button** during a session
+(it is on from the start time until 1 hour after the end). It goes to every
+admin number at once — every staff account (sub-admins and superadmins) and
+every number in the superadmin list — and **again every 5 minutes** until an
+admin marks it resolved in the app, or the person who pressed it stops it with
+their PIN. Admins also get a loud push ("Safety alerts" channel on Android).
+
+Category **Utility** (it is about an existing booking and is not promotional).
+No header, no footer, no buttons. Language English.
+
+**Body**
+```
+Safety alert from {{1}}: {{2}} pressed the panic button during booking {{3}}.
+
+Date: {{4}}
+Time: {{5}}
+Member: {{6}}, {{7}}
+Companion: {{8}}, {{9}}
+Meeting place: {{10}}
+
+Please call them now. This alert repeats every 5 minutes until it is marked resolved in the admin app.
+```
+
+| Var | Meaning | Sample to enter in Waplify |
+|---|---|---|
+| {{1}} | brand | prsnn |
+| {{2}} | who pressed it, with their role | Rahul Mehta (member) |
+| {{3}} | booking reference | #A6F7ED |
+| {{4}} | date | Sat 15 Nov 2026 |
+| {{5}} | session time | 4:00 PM – 8:00 PM |
+| {{6}} | member's full name | Rahul Mehta |
+| {{7}} | member's mobile | +91 98765 43210 |
+| {{8}} | companion's full name | Priya Nair |
+| {{9}} | companion's mobile | +91 90000 11111 |
+| {{10}} | the agreed public place (and who they're meeting, for bookings made for someone else) | Starbucks, Inorbit Mall, Madhapur, Hyderabad |
+
+After Meta approves it, add the secret **`WAPLIFY_TPL_PANIC_ALERT` = `prsnn_panic_alert`**
+(Supabase → Edge Functions → Secrets). Until then admins still get the push and the
+in-app alert; the WhatsApp message starts as soon as the secret is set.
+
+> Admins must have a number on their account (phone login, or the mobile with
+> country code that email sign-ups give) to receive it. Numbers in the superadmin
+> list always receive it.

@@ -155,3 +155,38 @@ from listings, search and offers.
 ## Owner setup
 
 See `prsnn-backend/supabase/README.md` (phone provider, Send SMS hook, secrets, superadmin numbers, test numbers).
+
+
+## Round 2 (2026-11-10)
+
+**Sign-in.** Indian numbers: WhatsApp OTP as before. Visitors from abroad: `supabase.auth.signInWithOtp({ email })` →
+`verifyOtp({ email, token, type: 'email' })` (Supabase Auth email OTP; the email template must contain `{{ .Token }}`).
+The PIN is set straight after verification; email accounts key the PIN on the email. Setup then asks email sign-ups for
+`contactPhone` (with country code) and `country`.
+
+| RPC | Who | |
+|---|---|---|
+| `me()` | signed in | session shape + `email, photoStatus, photoNote, approvalStatus, approvalNote, state, area, categories, contactPhone, country` |
+| `save_profile(p)` | signed in | `update_my_profile` keys + `categories` (subset of the five), `contactPhone`, `country`; a new `photoPath` → `photoStatus: pending` |
+| `submit_companion_application(p)` | companion | needs a photo and ≥1 category; → `approvalStatus: pending` (staff notified); no ID |
+| `resubmit_for_review()` | signed in | after changes were requested → `pending` again |
+| `search_localities(state_name, q, city_name)` | anyone | India Post localities (156,912) in a state, by name or PIN; the city's district first; max 40 |
+| `city_plans_for(city_name)` | anyone | staff-curated "Popular in <city>" plans |
+| `create_prepaid_booking(p)` | member | + `category`, `meetingPlace` (required), `recipient { relation, name, phone, city, state }` |
+| `raise_panic(bid)` | either party | from the session start to 1 h after the end, confirmed + paid only; alerts every admin now and every 5 min (sweeper) |
+| `resolve_panic(aid, note)` | staff, or whoever pressed it | stops the repeats |
+| `admin_approval_counts()`, `admin_approvals('companions' \| 'photos')` | staff | the approval queues |
+| `admin_decide_profile(uid, 'approve' \| 'reject', note)` | staff | approve → live (photo approved too) |
+| `admin_decide_photo(uid)` | staff | approve a photo |
+| `admin_request_changes(uid, 'photo' \| 'profile', reasons[], note)` | staff | → `action_needed` notification with `{ kind: 'fix', target }` |
+| `admin_panics(open_only)` | staff | alerts with names, numbers, time and place |
+| `admin_city_plans(city)`, `admin_save_city_plan(p)`, `admin_delete_city_plan(id)` | staff | edit "Popular in <city>" |
+
+**Listing.** A companion is listed only when `approvalStatus = approved` (and not suspended, ID not rejected). Photos are
+shown to others only when `photoStatus = approved`. Cards carry `categories` and `idVerified`.
+
+**Notifications** carry `action` (`fix`, `rejected`, `approved`, `photo_approved`, `review`, `panic`, `panic_resolved`);
+types `action_needed`, `approval`, `panic`. Panic pushes use the Android channel `panic` with high priority.
+
+**WhatsApp.** Panic alerts go through `private.whatsapp_outbox` → `claim_whatsapp()` → the `notify` edge function, template
+`WAPLIFY_TPL_PANIC_ALERT` (WHATSAPP_TEMPLATES.md #7), to every staff number and the superadmin list.
