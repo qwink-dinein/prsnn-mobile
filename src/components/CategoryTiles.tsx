@@ -33,7 +33,7 @@ export function CategoryTiles({
   );
 }
 
-export function CategoryCard({ c, on, onPress, audience = 'member', wide, selectable, showPrice }: { c: Category; on?: boolean; onPress: () => void; audience?: 'member' | 'companion'; wide?: boolean; selectable?: boolean; showPrice?: boolean }) {
+export function CategoryCard({ c, on, onPress, audience = 'member', wide, selectable, showPrice, fill }: { c: Category; on?: boolean; onPress: () => void; audience?: 'member' | 'companion'; wide?: boolean; selectable?: boolean; showPrice?: boolean; fill?: boolean }) {
   const line = audience === 'companion' ? c.companionLine : c.line;
   return (
     <PressScale
@@ -42,7 +42,7 @@ export function CategoryCard({ c, on, onPress, audience = 'member', wide, select
       accessibilityLabel={`${c.title}. ${line}${showPrice ? `. From ${formatINR(priceFor(c.hours) ?? 0)} for ${c.hours} hours` : ''}`}
       onPress={onPress}
       scaleTo={0.97}
-      style={wide ? styles.wide : styles.cell}
+      style={fill || wide ? styles.wide : styles.cell}
       innerStyle={[styles.card, on && styles.cardOn]}
     >
       <View>

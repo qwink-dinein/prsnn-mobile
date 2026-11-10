@@ -93,7 +93,7 @@ function Discover() {
         <View style={styles.cats}>
           {CATEGORIES.map((c, i) => (
             <Enter key={c.key} index={i + 1} style={i === 0 ? { width: '100%' } : styles.catCell}>
-              <CategoryCard c={c} showPrice wide={i === 0} onPress={() => router.push(`/category/${c.key}`)} />
+              <CategoryCard c={c} showPrice fill wide={i === 0} onPress={() => router.push(`/category/${c.key}`)} />
             </Enter>
           ))}
         </View>

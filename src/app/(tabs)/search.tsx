@@ -143,6 +143,6 @@ const styles = StyleSheet.create({
   title: { paddingHorizontal: GUTTER, paddingTop: space.sm },
   search: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginHorizontal: GUTTER, marginTop: space.md, minHeight: 50, paddingLeft: space.lg, paddingRight: space.xs, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.ink, paddingVertical: 12 },
-  chipRow: { flexGrow: 0 },
+  chipRow: { flexGrow: 0, flexShrink: 0, minHeight: 54 },
   chips: { paddingHorizontal: GUTTER, gap: space.sm, paddingTop: space.md },
 });
