@@ -63,13 +63,16 @@ export function OfflineBanner() {
 
 /** true once `active` has lasted longer than `ms` (default 6 s). */
 export function useSlow(active: boolean, ms = 6000) {
-  const [slow, setSlow] = useState(false);
+  const [since, setSince] = useState<number | null>(null);
   useEffect(() => {
-    if (!active) return setSlow(false);
-    const t = setTimeout(() => setSlow(true), ms);
-    return () => clearTimeout(t);
+    if (!active) return;
+    const t = setTimeout(() => setSince(Date.now()), ms);
+    return () => {
+      clearTimeout(t);
+      setSince(null);
+    };
   }, [active, ms]);
-  return slow;
+  return active && since !== null;
 }
 
 /** Indeterminate progress bar (a moving segment), not a frozen spinner. */

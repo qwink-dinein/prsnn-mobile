@@ -18,7 +18,7 @@ const BOOK_AHEAD_DAYS = 60;
 
 /** Screen 9 · Choose your time (package), day and start time. */
 export default function SelectDateTime() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, category } = useLocalSearchParams<{ id: string; category?: string }>();
   const q = useQuery({ queryKey: qk.companion(id), queryFn: () => svc.companion(id) });
   const today = useMemo(() => {
     const d = new Date();
@@ -53,7 +53,7 @@ export default function SelectDateTime() {
         <Button
           label={hours ? `Continue · ${formatINR(priceFor(hours) ?? 0)}` : 'Continue'}
           disabled={!date || !time || !duration}
-          onPress={() => router.push({ pathname: '/book/review', params: { id: c.id, date: toDateKey(date!), time: time!, duration: duration! } })}
+          onPress={() => router.push({ pathname: '/book/review', params: { id: c.id, date: toDateKey(date!), time: time!, duration: duration!, ...(category ? { category } : {}) } })}
         />
       }
     >

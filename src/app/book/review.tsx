@@ -3,7 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
-import { Screen, Header, Avatar, Card, Loading, ErrorState } from '@/components/ui/layout';
+import { Screen, Header, Avatar, Card, Loading, ErrorState, Chip } from '@/components/ui/layout';
+import { Notice, useDraft } from '@/components/ui/states';
+import { CATEGORIES, offersCategory } from '@/domain/categories';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -12,9 +14,18 @@ import { MetaLine, formatDate } from '@/components/bookings';
 import { placeOf } from '@/components/companions';
 import { amountDuePaise, durationLabel, endTimeOf, formatINR, formatTime, rupees } from '@/domain/booking';
 import { hourlyFor, hoursLabel, priceFor, savingFor } from '@/domain/pricing';
-import type { Duration } from '@/domain/types';
+import type { Duration, Relation } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
+
+const RELATIONS: { value: Relation; label: string }[] = [
+  { value: 'mother', label: 'Mother' },
+  { value: 'father', label: 'Father' },
+  { value: 'grandparent', label: 'Grandparent' },
+  { value: 'relative', label: 'Relative' },
+  { value: 'friend', label: 'Friend' },
+  { value: 'other', label: 'Other' },
+];
 
 /** Random key for this checkout: retries reuse it, so the server never creates a second booking. */
 const newKey = () => `bk_${Date.now().toString(36)}_${Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('')}`;
@@ -25,13 +36,34 @@ const newKey = () => `bk_${Date.now().toString(36)}_${Array.from({ length: 16 },
  * customer agrees, then pays. The booking is created once (idempotency key).
  */
 export default function Checkout() {
-  const p = useLocalSearchParams<{ id: string; date: string; time: string; duration: Duration }>();
+  const p = useLocalSearchParams<{ id: string; date: string; time: string; duration: Duration; category?: string }>();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: qk.companion(p.id), queryFn: () => svc.companion(p.id) });
   const policy = useQuery({ queryKey: ['policy'], queryFn: svc.policy, staleTime: 3600_000 });
-  const [note, setNote] = useState('');
+  const [d, setD, clearDraft] = useDraft(`checkout.${p.id}.${p.date}.${p.time}`, {
+    note: '',
+    category: (p.category ?? '') as string,
+    place: '',
+    forWho: 'me' as 'me' | 'other',
+    relation: '' as Relation | '',
+    relationOther: '',
+    rName: '',
+    rPhone: '',
+    rCity: '',
+  });
+  const set = (x: Partial<typeof d>) => setD((cur) => ({ ...cur, ...x }));
   const [agree, setAgree] = useState(false);
+  const [tried, setTried] = useState(false);
   const [key] = useState(newKey);
+
+  const rDigits = d.rPhone.replace(/\D/g, '');
+  const errors = {
+    place: d.place.trim().length < 3 ? 'Add a public place to meet, like a café, a mall or a park entrance.' : null,
+    relation: d.forWho === 'other' && !d.relation ? 'Choose who the booking is for.' : d.forWho === 'other' && d.relation === 'other' && d.relationOther.trim().length < 2 ? 'Tell us who they are to you.' : null,
+    rName: d.forWho === 'other' && d.rName.trim().length < 2 ? 'Add their name.' : null,
+    rPhone: d.forWho === 'other' && !(rDigits.length === 10 || (rDigits.length >= 11 && rDigits.length <= 15)) ? 'Add their 10-digit mobile number.' : null,
+  };
+  const firstError = Object.values(errors).find(Boolean) ?? null;
 
   const create = useMutation({
     mutationFn: () =>
@@ -40,17 +72,25 @@ export default function Checkout() {
         scheduledDate: p.date,
         startTime: p.time,
         duration: p.duration,
-        message: note.trim() || undefined,
+        message: [d.forWho === 'other' && d.relation === 'other' ? `For my ${d.relationOther.trim()}.` : '', d.note.trim()].filter(Boolean).join(' ') || undefined,
         idempotencyKey: key,
         acceptTerms: true,
         city: q.data?.city,
         area: q.data?.area,
+        category: d.category || null,
+        meetingPlace: d.place.trim(),
+        recipient: d.forWho === 'other' ? { relation: d.relation as Relation, name: d.rName.trim(), phone: rDigits, city: d.rCity.trim() || q.data?.city || null, state: q.data?.state ?? null } : null,
       }),
     onSuccess: ({ booking }) => {
+      clearDraft();
       qc.invalidateQueries({ queryKey: qk.myBookings });
       router.push(`/pay/${booking._id}`);
     },
   });
+  const pay = () => {
+    setTried(true);
+    if (!firstError) create.mutate();
+  };
 
   if (q.isLoading) return <Loading />;
   if (q.isError || !q.data) return <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />;
@@ -67,8 +107,12 @@ export default function Checkout() {
             <Text variant="footnote" color={colors.danger} center accessibilityLiveRegion="polite">
               {errorMessage(create.error)}
             </Text>
+          ) : tried && firstError ? (
+            <Text variant="footnote" color={colors.danger} center accessibilityLiveRegion="polite">
+              {firstError}
+            </Text>
           ) : null}
-          <Button label={`Continue to pay ${formatINR(total)}`} icon="lock" onPress={() => create.mutate()} loading={create.isPending} disabled={!agree} haptic />
+          <Button label={`Continue to pay ${formatINR(total)}`} icon="lock" onPress={pay} loading={create.isPending} disabled={!agree} haptic />
           {!agree ? (
             <Text variant="caption" muted center>
               Tick the box above to agree to the terms.
@@ -91,11 +135,64 @@ export default function Checkout() {
       <Card style={styles.block}>
         <MetaLine icon="calendar" text={formatDate(p.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} />
         <MetaLine icon="clock" text={`${formatTime(p.time)} – ${formatTime(endTimeOf(p.time, p.duration))} (${durationLabel(p.duration)})`} />
-        <MetaLine icon="mapPin" text={`A public place you agree on in chat${c.area ? `, near ${c.area}` : ''}`} />
       </Card>
 
+      <Text variant="title3" style={styles.h}>
+        What’s it for?
+      </Text>
+      <View style={styles.chips}>
+        {CATEGORIES.filter((k) => offersCategory(c.categories, k.key)).map((k) => (
+          <Chip key={k.key} label={k.title} selected={d.category === k.key} onPress={() => set({ category: d.category === k.key ? '' : k.key })} />
+        ))}
+      </View>
+
+      <Text variant="title3" style={styles.h}>
+        Where will you meet?
+      </Text>
+      <TextField
+        label="A public place"
+        value={d.place}
+        onChangeText={(v) => set({ place: v })}
+        placeholder={`e.g. a café or mall${c.area ? ` near ${c.area}` : ''}`}
+        maxLength={120}
+        error={tried ? errors.place : null}
+        hint="Public places only — cafés, malls, parks. You can fine-tune it in chat."
+      />
+
+      <Text variant="title3" style={styles.h}>
+        Who is this for?
+      </Text>
+      <View style={styles.seg}>
+        {(['me', 'other'] as const).map((w) => (
+          <Pressable key={w} accessibilityRole="radio" accessibilityState={{ checked: d.forWho === w }} onPress={() => set({ forWho: w })} style={[styles.segItem, d.forWho === w && styles.segOn]}>
+            <Text variant="subhead" color={d.forWho === w ? colors.onMoss : colors.ink}>
+              {w === 'me' ? 'Me' : 'Someone else'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {d.forWho === 'other' ? (
+        <View style={{ gap: space.md, marginTop: space.md }}>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {RELATIONS.map((r) => (
+              <Chip key={r.value} label={r.label} selected={d.relation === r.value} onPress={() => set({ relation: r.value })} />
+            ))}
+          </View>
+          {tried && errors.relation && d.relation !== 'other' ? (
+            <Text variant="footnote" color={colors.danger}>
+              {errors.relation}
+            </Text>
+          ) : null}
+          {d.relation === 'other' ? <TextField label="Who are they to you?" value={d.relationOther} onChangeText={(v) => set({ relationOther: v })} placeholder="e.g. my neighbour, my aunt" maxLength={40} error={tried ? errors.relation : null} /> : null}
+          <TextField label="Their name" value={d.rName} onChangeText={(v) => set({ rName: v })} autoCapitalize="words" error={tried ? errors.rName : null} />
+          <TextField label="Their mobile" prefix="🇮🇳  +91" value={d.rPhone} onChangeText={(v) => set({ rPhone: v.replace(/[^\d ]/g, '') })} keyboardType="phone-pad" maxLength={14} error={tried ? errors.rPhone : null} hint="Kept private: only our team sees it, for safety. The companion never does." />
+          <TextField label="Their city (if not the same)" value={d.rCity} onChangeText={(v) => set({ rCity: v })} placeholder={c.city ?? ''} autoCapitalize="words" />
+          <Notice text={`You pay and get every update. They meet ${first} in a public place. Companionship only — no medical or care services.`} />
+        </View>
+      ) : null}
+
       <View style={{ marginTop: space.lg }}>
-        <TextField label="Message (optional)" value={note} onChangeText={setNote} placeholder="Say what you’d like to do — coffee, a walk, an event…" multiline maxLength={300} />
+        <TextField label="Anything else? (optional)" value={d.note} onChangeText={(v) => set({ note: v })} placeholder="Say what you’d like to do" multiline maxLength={300} />
       </View>
 
       <Text variant="title3" style={styles.h}>
@@ -202,6 +299,10 @@ const styles = StyleSheet.create({
   total: { paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.lineStrong, borderRadius: radius.sm },
   bullet: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   num: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  seg: { flexDirection: 'row', backgroundColor: colors.mistDeep, borderRadius: radius.md, padding: 4, gap: 4 },
+  segItem: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
+  segOn: { backgroundColor: colors.moss },
   agree: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, marginTop: space.lg, padding: space.md, borderRadius: radius.md, backgroundColor: colors.mistDeep, minHeight: 48 },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.gray400, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   boxOn: { backgroundColor: colors.moss, borderColor: colors.moss },
