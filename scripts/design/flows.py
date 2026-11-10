@@ -82,6 +82,22 @@ CSS = '''
 .upl{border:1.5px dashed var(--g4);border-radius:14px;height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--muted);background:var(--paper)}.upl.done{border:1.5px solid var(--moss);background-size:cover;background-position:center;color:#fff}
 .foot{flex:none;padding:10px 16px 16px;background:var(--mist);border-top:1px solid var(--line)}
 .note{max-width:1500px;margin:0 auto;padding:18px 16px 50px;color:var(--muted);font-size:14px;line-height:1.55}.note b{color:var(--ink)}
+.pk2{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:10px 11px 9px;position:relative;box-shadow:0 1px 0 rgba(14,17,13,.03);transition:transform .2s}
+.pk2.on{border:2px solid var(--moss);background:linear-gradient(180deg,#F2F6F1,#FAF9F6);box-shadow:0 8px 20px rgba(47,74,52,.16);transform:translateY(-2px)}
+.pk2 .du{font:600 22px/1 Lora;color:var(--ink)}.pk2 .du small{font:500 11px 'DM Sans';color:var(--muted)}
+.pk2 .tk{width:18px;height:18px;border-radius:9px;background:var(--moss);display:inline-flex;align-items:center;justify-content:center}.pk2 .tk.off{background:transparent;border:1.5px solid var(--g4)}
+.pk2 .pr{font-weight:700;font-size:19px;margin-top:6px;letter-spacing:-.3px}.pk2 .per{font-size:11px;color:var(--muted);font-weight:500}.pk2 .per s{opacity:.6}
+.pk2 .sv2{display:inline-block;white-space:nowrap;margin-top:5px;font-size:10px;font-weight:700;color:var(--moss);background:var(--mossSoft);padding:2px 7px;border-radius:999px}.pk2 .sv2.n{background:var(--mistDeep);color:#4A473F}
+.pk2 .vb{height:4px;border-radius:2px;background:var(--mistDeep);margin-top:7px;overflow:hidden}.pk2 .vb i{display:block;height:100%;background:linear-gradient(90deg,var(--moss),#5E8A63);border-radius:2px}
+.pk2 .ft{font-size:10.5px;color:#4A473F;margin-top:6px;line-height:1.25}.pk2 .get{margin-top:5px;font-size:12px;color:var(--moss);background:var(--green50);border:1px solid var(--mossSoft);border-radius:9px;padding:4px 7px}.pk2 .get b{font-size:14px}
+.pk2 .rib{position:absolute;top:-9px;right:10px;font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,var(--clay),#D9793F);padding:3px 8px;border-radius:999px;box-shadow:0 3px 8px rgba(196,92,42,.3);background-size:200% 100%;animation:shine 2.4s linear infinite}
+@keyframes shine{0%{background-position:0 0}100%{background-position:200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(179,38,30,.55)}70%{box-shadow:0 0 0 18px rgba(179,38,30,0)}100%{box-shadow:0 0 0 0 rgba(179,38,30,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
+.ph .s>.pad>*,.ph .s>.sheet>*{animation:rise .5s both}.ph .s>.pad>*:nth-child(2),.ph .s>.sheet>*:nth-child(2){animation-delay:.06s}.ph .s>.pad>*:nth-child(3),.ph .s>.sheet>*:nth-child(3){animation-delay:.12s}.ph .s>.pad>*:nth-child(4),.ph .s>.sheet>*:nth-child(4){animation-delay:.18s}
+.pad>*,.sheet>*{flex-shrink:0}
 @media (max-width:360px){.ph,.cap{width:100%}}
 '''
 
@@ -126,16 +142,32 @@ def setup(img, line, sub, n, of, title, body, kind='Member'):
 def opts(items, on):
     return '<div class="col" style="gap:8px">' + ''.join(f'<div class="opt{" on" if t == on else ""}"><div><div class="h3">{t}</div>{"<div class=sm style=color:var(--muted)>" + d + "</div>" if d else ""}</div><div class="rd"></div></div>' for t, d in items) + '</div>'
 def keypad(): return '<div class="keys">' + ''.join(f'<span>{k}</span>' for k in '123456789') + '<span></span><span>0</span><span>⌫</span></div>'
+FITS = {1: '☕ Coffee or a walk', 2: '🍽️ Lunch and a long chat', 3: '🎬 A movie and dinner', 4: '🧭 Explore an area', 5: '🛍️ Shopping, then food', 6: '🌳 Half a day out', 8: '🚗 A full day out', 12: '🏞️ A day trip'}
 def pk(h, on=False, comp=False):
-    p = PRICES[h]
-    sub = f'<span class="sm" style="color:var(--moss);font-weight:600">You get {inr(share(p))}</span>' if comp else f'<span class="xs mut">{inr(round(p / h))}/hour</span>' + (f'<div class="sv">Save {inr(399 * h - p)}</div>' if h > 1 else '')
-    tag = '<span class="pill" style="position:absolute;top:-9px;left:9px;font-size:10px">Popular choice</span>' if h == 4 and not comp else ''
-    return f'<div class="pk{" on" if on else ""}">{tag}<div class="xs mut">{h} {"hour" if h == 1 else "hours"}</div><b>{inr(p)}</b>{sub}</div>'
+    """Price card: duration, total, per-hour vs ₹399, saving %, value bar, what it fits."""
+    p = PRICES[h]; per = round(p / h); save = 399 * h - p; pct = round(save * 100 / (399 * h))
+    tag = '<span class="rib">Suggested</span>' if h == 4 and not comp else ''
+    tick = f'<span class="tk">{ic("check", "#fff", 11, 3.2)}</span>' if on else '<span class="tk off"></span>'
+    head = f'<div class="row between"><span class="du">{h}<small>{" hr" if h == 1 else " hrs"}</small></span>{tick}</div>'
+    if comp:
+        body = f'<div class="pr">{inr(p)}</div><div class="get">You get <b>{inr(share(p))}</b></div><div class="ft">{FITS[h]}</div>'
+    else:
+        body = (f'<div class="pr">{inr(p)}</div><div class="per">{inr(per)}/hr' + (f' <s>₹399</s>' if h > 1 else '') + '</div>'
+                + (f'<div class="sv2">Save {inr(save)} ({pct}%)</div>' if h > 1 else '<div class="sv2 n">Try it out</div>')
+                + f'<div class="vb"><i style="width:{max(12, min(100, pct * 4))}%"></i></div><div class="ft">{FITS[h]}</div>')
+    return f'<div class="pk2{" on" if on else ""}">{tag}{head}{body}</div>'
+def pkrow(h, on=False):
+    """Wide price row for lists of long bookings."""
+    p = PRICES[h]; save = 399 * h - p; pct = round(save * 100 / (399 * h))
+    tick = f'<span class="tk">{ic("check", "#fff", 11, 3.2)}</span>' if on else '<span class="tk off"></span>'
+    return (f'<div class="pk2 row{" on" if on else ""}" style="align-items:center;gap:10px"><span class="du">{h}<small> hrs</small></span>'
+            f'<div style="flex:1"><div class="pr" style="font-size:17px">{inr(p)} <span class="per">{inr(round(p / h))}/hr</span></div><div class="ft" style="margin:0">{FITS[h]}</div></div>'
+            f'<div style="text-align:right"><div class="sv2">−{pct}%</div>{tick}</div></div>')
 def chat_screen(name, initials, msgs, img=None, when='Sat 15 Nov · 4:00–6:00 PM'):
     av = f'<div class="av {"i-" + img if img else ""}" style="width:34px;height:34px">{"" if img else initials}</div>'
     bubbles = ''.join(f'<div class="bub {w}">{t}<div class="xs" style="opacity:.6;margin-top:3px;text-align:right">{tm}</div></div>' for w, t, tm in msgs)
     return (f'<div class="bar" style="gap:10px">{ic("back", "#0E110D", 22)}{av}<div style="flex:1"><div class="h3">{name}</div><div class="xs mut">{when}</div></div></div>'
-            f'<div class="pad" style="padding-top:6px;gap:8px"><div class="card sm mut" style="background:var(--green50);border-color:var(--mossSoft);text-align:center">{ic("shield", "#2F4A34", 14)} Meet in public places. Phone numbers are hidden for both of you.</div>{bubbles}</div>'
+            f'<div class="pad" style="padding-top:6px;gap:8px"><div class="card sm mut" style="background:var(--green50);border-color:var(--mossSoft);text-align:center">{ic("shield", "#2F4A34", 14)} Meet in public places. Don’t share phone numbers, addresses or other personal details, and keep politics and religion out of it — keep it about the plan. Numbers are hidden automatically.</div>{bubbles}</div>'
             f'<div class="foot row"><div class="field" style="flex:1;height:42px"><span class="mut sm">Type a message…</span></div><div class="av" style="background:var(--moss);color:#fff">{ic("send", "#fff", 18)}</div></div>')
 
 # ───────── MEMBERS ─────────
