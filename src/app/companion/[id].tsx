@@ -20,7 +20,7 @@ import { useSession } from '@/state/session';
 
 /** Screen 8 · Companion profile. */
 export default function CompanionProfile() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, category } = useLocalSearchParams<{ id: string; category?: string }>();
   const me = useSession((s) => s.user);
   const insets = useSafeAreaInsets();
   const { width } = useAppWidth();
@@ -165,7 +165,7 @@ export default function CompanionProfile() {
         <Button
           label={isMe ? 'This is you' : 'Book now'}
           disabled={isMe || !days.length}
-          onPress={() => router.push(`/book/${c.id}`)}
+          onPress={() => router.push({ pathname: '/book/[id]', params: { id: c.id, ...(category ? { category } : {}) } })}
           style={{ flex: 1.6 }}
         />
       </View>

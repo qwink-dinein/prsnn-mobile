@@ -9,7 +9,7 @@ import { Chip, EmptyState, ErrorState, Loading, IconButton } from '@/components/
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { CompanionRow } from '@/components/companions';
-import { CATEGORIES, type CategoryKey } from '@/domain/booking';
+import { CATEGORIES, type CategoryKey } from '@/domain/categories';
 import { filterCompanions, SORTS, type Sort } from '@/domain/search';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -56,7 +56,7 @@ export default function SearchTab() {
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder="Try ‘coffee’, ‘walks’, ‘Banjara Hills’"
+          placeholder="Try a name, an area or ‘coffee’"
           placeholderTextColor={colors.gray400}
           style={styles.input}
           returnKeyType="search"
@@ -97,7 +97,7 @@ export default function SearchTab() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
         <Chip label="All" selected={category === 'all'} onPress={() => setCategory('all')} />
         {CATEGORIES.map((c) => (
-          <Chip key={c.key} label={c.label} selected={category === c.key} onPress={() => setCategory(category === c.key ? 'all' : c.key)} />
+          <Chip key={c.key} label={c.title} selected={category === c.key} onPress={() => setCategory(category === c.key ? 'all' : c.key)} />
         ))}
       </ScrollView>
 
@@ -120,8 +120,8 @@ export default function SearchTab() {
           ListEmptyComponent={
             <EmptyState
               icon="search"
-              title="No matches"
-              body="Try another word or clear the filters."
+              title={text ? `No one matches “${text}”` : 'No one matches these filters'}
+              body={city ? `Try another word, all areas of ${city}, or another category. New companions join every week.` : 'Try another word or another category. New companions join every week.'}
               action="Clear filters"
               onAction={() => {
                 setText('');

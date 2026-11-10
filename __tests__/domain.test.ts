@@ -143,9 +143,9 @@ describe('earnings', () => {
 
 describe('search', () => {
   const list: Companion[] = [
-    { id: 'a', fullName: 'Ayesha', area: 'Banjara Hills', pricePerHour: 600, tags: ['Coffee', 'Walks'] },
-    { id: 'b', fullName: 'Rohan', area: 'Jubilee Hills', pricePerHour: 400, tags: ['Events'] },
-    { id: 'c', fullName: 'Fatima', area: 'Tolichowki', pricePerHour: 500, tags: ['Study'] },
+    { id: 'a', fullName: 'Ayesha', area: 'Banjara Hills', pricePerHour: 600, tags: ['Coffee', 'Walks'], categories: ['new_in_town'] },
+    { id: 'b', fullName: 'Rohan', area: 'Jubilee Hills', pricePerHour: 400, tags: ['Events'], categories: ['dont_go_alone'] },
+    { id: 'c', fullName: 'Fatima', area: 'Tolichowki', pricePerHour: 500, tags: ['Study'], categories: ['work_study'] },
   ];
   it('matches categories through tags', () => {
     expect(matchesCategory(['Café hopping'], 'coffee')).toBe(true);
@@ -153,7 +153,7 @@ describe('search', () => {
   });
   it('filters by text, category and area, and sorts by price', () => {
     expect(filterCompanions(list, 'banjara', 'all', 'all', 'recommended').map((c) => c.id)).toEqual(['a']);
-    expect(filterCompanions(list, '', 'events', 'all', 'recommended').map((c) => c.id)).toEqual(['b']);
+    expect(filterCompanions(list, '', 'dont_go_alone', 'all', 'recommended').map((c) => c.id)).toEqual(['b']);
     expect(filterCompanions(list, '', 'all', 'Tolichowki', 'recommended').map((c) => c.id)).toEqual(['c']);
     expect(filterCompanions(list, '', 'all', 'all', 'priceLow').map((c) => c.id)).toEqual(['b', 'c', 'a']);
   });

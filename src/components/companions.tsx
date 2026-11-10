@@ -44,6 +44,19 @@ function Photo({ c, style }: { c: Companion; style: object }) {
   );
 }
 
+/** "ID verified" only after a real check; new companions are labelled honestly. */
+export function TrustBadge({ c }: { c: Pick<Companion, 'idVerified'> }) {
+  const ok = c.idVerified !== false;
+  return (
+    <View style={[styles.badge, !ok && styles.badgeNew]}>
+      {ok ? <Icon name="shieldCheck" size={12} color={colors.moss} /> : null}
+      <Text variant="caption" color={ok ? colors.moss : colors.gray600}>
+        {ok ? 'ID verified' : 'New on prsnn'}
+      </Text>
+    </View>
+  );
+}
+
 /** Tall card in the "Popular near you" rail (mock-up 6). */
 export function CompanionCard({ c, width }: { c: Companion; width: number }) {
   const photoH = width * 1.05;
@@ -68,6 +81,7 @@ export function CompanionCard({ c, width }: { c: Companion; width: number }) {
           <Text variant="subhead" color={colors.moss}>
             From {formatINR(fromPrice(c))}
           </Text>
+          <TrustBadge c={c} />
         </View>
       </Pressable>
       <View style={[styles.heartSlot, { top: photoH + space.md - 6, right: space.sm }]}>
@@ -78,13 +92,13 @@ export function CompanionCard({ c, width }: { c: Companion; width: number }) {
 }
 
 /** List row used in Search (mock-up 7) and Saved. */
-export function CompanionRow({ c }: { c: Companion }) {
+export function CompanionRow({ c, onPress }: { c: Companion; onPress?: () => void }) {
   return (
     <View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${c.fullName ?? 'Companion'}, ${placeOf(c)}`}
-        onPress={() => router.push(`/companion/${c.id}`)}
+        onPress={onPress ?? (() => router.push(`/companion/${c.id}`))}
         style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}
       >
         <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
@@ -100,6 +114,7 @@ export function CompanionRow({ c }: { c: Companion }) {
               {c.tags.slice(0, 3).join(' · ')}
             </Text>
           ) : null}
+          <TrustBadge c={c} />
         </View>
         <View style={{ alignItems: 'flex-end', gap: space.sm }}>
           {/* Space for the heart, which sits on top of the row (see CompanionCard). */}
@@ -125,6 +140,8 @@ const styles = StyleSheet.create({
   heart: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   heartSlot: { position: 'absolute' },
   heartOnPhoto: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(250,249,246,0.92)' },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.mossSoft, marginTop: 2 },
+  badgeNew: { backgroundColor: colors.mistDeep },
   photoFallback: { backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
   photoInitial: { fontFamily: 'Lora-SemiBold', fontSize: 48, color: colors.moss },
 });

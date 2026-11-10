@@ -11,6 +11,8 @@ import { canChat, companionOf, durationLabel, formatINR, idOf, paymentLabel, per
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
+import { PanicButton } from '@/components/PanicButton';
+import { categoryTitle } from '@/domain/categories';
 
 /** Booking details for either side: status, payment, and the actions the policy allows. */
 export default function BookingDetail() {
@@ -21,7 +23,7 @@ export default function BookingDetail() {
   const q = useQuery({
     queryKey: qk.booking(id),
     queryFn: () => svc.booking(id),
-    refetchInterval: (query) => (query.state.data && ['finding', 'checking'].includes(stageOf(query.state.data)) ? 10_000 : false),
+    refetchInterval: (query) => (query.state.data && (['finding', 'checking'].includes(stageOf(query.state.data)) || query.state.data.panic) ? 10_000 : 60_000),
   });
   const cancel = useMutation({
     mutationFn: () => svc.cancelBooking(id),
@@ -78,6 +80,16 @@ export default function BookingDetail() {
         <MetaLine icon="info" text={`Booking #${b._id.slice(-6).toUpperCase()}`} />
       </Card>
 
+      <PanicButton b={b} />
+
+      {b.meetingPlace || b.recipient ? (
+        <Card style={{ gap: space.sm, marginTop: space.lg }}>
+          {b.meetingPlace ? <MetaLine icon="mapPin" text={`Meeting place: ${b.meetingPlace}`} /> : null}
+          {b.recipient ? <MetaLine icon="users" text={`For ${b.recipient.name} (${b.recipient.relation})${!isCompanion && b.recipient.phone ? ` · +${b.recipient.phone}` : ''}`} /> : null}
+          {b.category ? <MetaLine icon="sparkle" text={categoryTitle(b.category)} /> : null}
+        </Card>
+      ) : null}
+
       {prepaid && !isCompanion ? (
         <Card style={{ marginTop: space.lg }}>
           <Text variant="subhead" muted style={{ marginBottom: space.md }}>
@@ -105,7 +117,7 @@ export default function BookingDetail() {
         </Card>
       ) : null}
       <Text variant="footnote" muted style={{ marginTop: space.lg }}>
-        Meet only in public places. Phone numbers are hidden in chat for your safety.
+        Meet only in public places. Phone numbers are hidden in chat for your safety. During the session, the panic button alerts our team at once.
       </Text>
       {cancel.isSuccess ? (
         <Text variant="footnote" color={colors.moss} style={{ marginTop: space.sm }} accessibilityLiveRegion="polite">

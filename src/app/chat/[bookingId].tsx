@@ -62,11 +62,16 @@ export default function Chat() {
           keyExtractor={(m) => m._id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
-            <View style={styles.safety}>
+            <View style={styles.safety} accessibilityRole="summary">
               <Icon name="shieldCheck" size={16} color={colors.moss} />
-              <Text variant="caption" color={colors.gray600} style={{ flex: 1 }}>
-                Meet in public places. Phone numbers are hidden in chat for both of you.
-              </Text>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="caption" color={colors.ink} style={{ fontWeight: '600' }}>
+                  Keep it safe and about the plan
+                </Text>
+                <Text variant="caption" color={colors.gray600}>
+                  Don’t share mobile numbers, addresses, social handles or other personal details, and keep politics and religion out of the chat. Meet only in public places. Numbers are hidden automatically, and you can report anything from the booking.
+                </Text>
+              </View>
             </View>
           }
           renderItem={({ item }) => {
