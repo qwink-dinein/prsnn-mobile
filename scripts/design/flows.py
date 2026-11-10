@@ -286,6 +286,7 @@ companions_html = page('prsnn for companions — every screen',
    ('c-work', 'Getting booked', 'Dashboard, offers, requests, chat, earnings, availability, profile', cwork)],
   '<b>What sells more:</b> payouts are shown from the very first screen and again right before the ID upload (where people usually drop off); the dashboard puts the paid offer and its countdown on top so offers get accepted fast. Earnings figures in the mock-ups are illustrations. Tell me what to change, or “approve companions”.')
 
-(ROOT / 'preview/flow-members.html').write_text(members_html)
-(ROOT / 'preview/flow-companions.html').write_text(companions_html)
-print('members', len(members_html), 'companions', len(companions_html))
+if __name__ == '__main__':
+    (ROOT / 'preview/flow-members.html').write_text(members_html)
+    (ROOT / 'preview/flow-companions.html').write_text(companions_html)
+    print('members', len(members_html), 'companions', len(companions_html))
