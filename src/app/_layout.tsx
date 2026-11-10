@@ -16,16 +16,27 @@ import { setUnauthorizedHandler } from '@/lib/api';
 import { ConfirmProvider } from '@/components/ui/confirm';
 import { usePricingSync } from '@/lib/pricing';
 import { registerForPush } from '@/lib/push';
+import { OfflineBanner, connectOnlineManager } from '@/components/ui/states';
 
 /** App-wide background work that needs React Query: live prices, push token after sign-in. */
 function AppEffects() {
   usePricingSync();
   const token = useSession((s) => s.token);
+  const expired = useSession((s) => s.expired);
   useEffect(() => {
     if (token) void registerForPush();
   }, [token]);
+  // The session ended by itself: say so on the login screen. Forms keep their drafts on the device.
+  useEffect(() => {
+    if (!expired) return;
+    useSession.setState({ expired: false });
+    queryClient.clear();
+    router.replace({ pathname: '/login', params: { expired: '1' } });
+  }, [expired]);
   return null;
 }
+
+connectOnlineManager();
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -42,7 +53,7 @@ export default function RootLayout() {
     setUnauthorizedHandler(() => {
       useSession.getState().signOut();
       queryClient.clear();
-      router.replace('/login');
+      router.replace({ pathname: '/login', params: { expired: '1' } });
     });
     return () => setUnauthorizedHandler(null);
   }, []);
@@ -64,12 +75,14 @@ export default function RootLayout() {
           <ConfirmProvider>
           <AppEffects />
           <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist }, animation: 'default' }}>
+          <OfflineBanner />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist }, animation: 'slide_from_right', animationDuration: 280 }}>
             <Stack.Screen name="index" options={{ animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen name="pay/[bookingId]" options={{ presentation: 'card' }} />
             <Stack.Screen name="confirmed" options={{ gestureEnabled: false, animation: 'fade' }} />
             <Stack.Screen name="admin" />
+            <Stack.Screen name="panic/[bookingId]" options={{ gestureEnabled: false, animation: 'fade' }} />
           </Stack>
           </ConfirmProvider>
         </QueryClientProvider>

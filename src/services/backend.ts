@@ -2,7 +2,7 @@ import type { UploadFile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
 import { useSession } from '@/state/session';
-import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, Companion, Duration, Policy, Profile, ProfileCheck, Quote, SessionUser, BookingStatus, IdType } from '@/domain/types';
+import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
 
@@ -65,6 +65,8 @@ export interface CompanionForm {
   state?: string;
   gender?: string;
   profileVisibility?: string;
+  categories: string[];
+  /** Null when a photo was already uploaded earlier in setup. */
   profilePhoto: UploadFile | null;
 }
 
@@ -105,8 +107,11 @@ async function upload(bucket: 'avatars' | 'verification', kind: string, file: Up
   return path;
 }
 
+/** Who a PIN belongs to on this device: the mobile number, or the email for email sign-ups. */
+export const loginIdOf = (u: Pick<SessionUser, 'phone' | 'email'> | null | undefined) => u?.phone || u?.email || null;
+
 async function sessionUser(user: SessionUser): Promise<SessionUser> {
-  return { ...user, hasPin: await hasLocalPin(user.phone) };
+  return { ...user, hasPin: await hasLocalPin(loginIdOf(user)) };
 }
 
 const toPlus = (phone: string) => `+${phone.replace(/\D/g, '')}`;
@@ -184,19 +189,39 @@ export const backend = {
   setPin: async (pin: string) => {
     if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be 4 digits.');
     if (WEAK_PINS.has(pin)) throw new Error('That PIN is too easy to guess. Try another.');
-    const phone = useSession.getState().user?.phone;
-    if (!phone) throw new Error('Verify your mobile number before setting a PIN.');
-    await setLocalPin(phone, pin);
+    const id = loginIdOf(useSession.getState().user);
+    if (!id) throw new Error('Verify your number or email before setting a PIN.');
+    await setLocalPin(id, pin);
     return { message: 'PIN set.' };
   },
-  pinLogin: async (phone: string, pin: string): Promise<AuthResult> => {
-    if (!(await checkLocalPin(phone, pin))) throw new Error('Incorrect PIN.');
+  /** `id` is the mobile number or, for email sign-ups, the email. */
+  pinLogin: async (id: string, pin: string): Promise<AuthResult> => {
+    if (!(await checkLocalPin(id, pin))) throw new Error('Incorrect PIN.');
     const { data } = await supabase.auth.refreshSession();
-    const same = data.session?.user.phone?.replace(/\D/g, '').slice(-10) === phone.replace(/\D/g, '').slice(-10);
-    if (!data.session || !same) throw new Error('Your session on this phone has ended. Log in with OTP.');
+    const u = data.session?.user;
+    const same = id.includes('@') ? u?.email?.toLowerCase() === id.toLowerCase() : u?.phone?.replace(/\D/g, '').slice(-10) === id.replace(/\D/g, '').slice(-10);
+    if (!data.session || !same) throw new Error('Your session on this device has ended. Log in with a code again.');
     const user = await sessionUser(await rpc<SessionUser>('sync_my_role'));
     return { token: data.session.access_token, user };
   },
+  /** Visitors from abroad: a 6-digit code by email (Supabase Auth email OTP). */
+  sendEmailOtp: async (email: string) => {
+    const role = useSession.getState().prefs.intendedRole === 'companion' ? 'companion' : 'user';
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true, data: { role } } });
+    if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : /rate|seconds/i.test(error.message) ? 'Please wait a minute before asking for another code.' : error.message);
+    return { message: 'Code sent by email.' };
+  },
+  verifyEmailOtp: async (email: string, otp: string): Promise<AuthResult> => {
+    const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: otp, type: 'email' });
+    if (error || !data.session) {
+      const m = error?.message ?? '';
+      throw new Error(/expired|invalid/i.test(m) ? 'That code isn’t right or has expired. Check it, or ask for a new one.' : /fetch|network/i.test(m) ? NETWORK : m || 'Could not verify the code.');
+    }
+    const user = await sessionUser(await rpc<SessionUser>('sync_my_role'));
+    return { token: data.session.access_token, user, isNewUser: !user.fullName };
+  },
+  /** The signed-in person, fresh from the server (photo and approval status included). */
+  me: async () => sessionUser(await rpc<SessionUser>('me')),
   // Web email accounts didn't move to Supabase: everyone uses their mobile number.
   emailLogin: async (_email: string, _password: string): Promise<AuthResult> => {
     throw new Error('Email login has moved. Log in with your mobile number.');
@@ -228,11 +253,19 @@ export const backend = {
 
   // ── Prepaid booking (pay first, then companion offers) ──
   policy: () => rpc<Policy>('booking_policy'),
-  createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string }) =>
+  createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; recipient?: Recipient | null }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
   acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),
   declineOffer: (id: string) => rpc<{ message: string }>('decline_offer', { bid: id }),
   openDispute: (id: string, reason: string) => rpc<{ message: string; booking: Booking }>('open_dispute', { bid: id, reason }),
+
+  // ── Safety: panic button (session start → 1 h after the end) ──
+  raisePanic: (bookingId: string) => rpc<PanicAlert>('raise_panic', { bid: bookingId }),
+  resolvePanic: (alertId: string, note?: string) => rpc<PanicAlert>('resolve_panic', { aid: alertId, note: note ?? null }),
+
+  // ── Places: every India Post locality, and staff-curated plans per city ──
+  searchLocalities: (state: string, q: string, city?: string | null) => rpc<Locality[]>('search_localities', { state_name: state, q, city_name: city ?? null }),
+  cityPlans: (city: string) => rpc<CityPlan[]>('city_plans_for', { city_name: city }),
 
   // ── Payments ──
   createPaymentIntent: async (bookingId: string): Promise<PaymentIntent> => {
@@ -253,9 +286,14 @@ export const backend = {
 
   // ── Notifications ──
   notifications: async (): Promise<AppNotification[]> => {
-    const { data, error } = await supabase.from('notifications').select('id, type, message, is_read, created_at').order('created_at', { ascending: false }).limit(100);
+    const { data, error } = await supabase.from('notifications').select('id, type, message, is_read, created_at, action').order('created_at', { ascending: false }).limit(100);
+    if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : error.message);
+    return (data ?? []).map((n) => ({ _id: n.id, type: n.type, message: n.message, isRead: n.is_read, createdAt: n.created_at, action: n.action }));
+  },
+  markNotificationsRead: async () => {
+    const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', await uid()).eq('is_read', false);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((n) => ({ _id: n.id, type: n.type, message: n.message, isRead: n.is_read, createdAt: n.created_at }));
+    return { message: 'Read' };
   },
   clearNotifications: async () => {
     const { error } = await supabase.from('notifications').delete().eq('user_id', await uid());
@@ -277,17 +315,16 @@ export const backend = {
   },
   /** Companion profile → live straight away. The ID is asked for at the first booking. */
   onboardCompanion: async (f: CompanionForm) => {
-    if (!f.profilePhoto) throw new Error('Add a profile photo.');
-    const photoPath = await upload('avatars', 'profile', f.profilePhoto);
-    await rpc('submit_companion_application', {
+    const photoPath = f.profilePhoto ? await upload('avatars', 'profile', f.profilePhoto) : undefined;
+    const me = await rpc<SessionUser>('submit_companion_application', {
       p: {
         fullName: f.fullName, city: f.city, state: f.state, area: f.area, description: f.description, packages: f.packages,
-        startTime: f.startTime, endTime: f.endTime, tags: f.tags, availability: f.days, gender: f.gender,
+        startTime: f.startTime, endTime: f.endTime, tags: f.tags, availability: f.days, gender: f.gender, categories: f.categories,
         ...(f.profileVisibility ? { profileVisibility: f.profileVisibility, visibilityConsent: true } : {}),
-        photoPath,
+        ...(photoPath ? { photoPath } : {}),
       },
     });
-    return { message: 'You’re live. Members in your city can now book you.' };
+    return { message: 'Sent for approval.', user: await sessionUser(me) };
   },
   /** Send the ID for review (status → pending). Stored in the private verification bucket. */
   submitIdDocuments: async (f: IdForm) => {
@@ -306,9 +343,16 @@ export const backend = {
   },
   updateProfile: async (fields: Record<string, unknown>, photo?: UploadFile | null) => {
     const photoPath = photo ? await upload('avatars', 'profile', photo) : undefined;
-    await rpc('update_my_profile', { p: { ...profilePatch(fields), ...(photoPath ? { photoPath } : {}) } });
+    await rpc('save_profile', { p: { ...profilePatch(fields), ...(photoPath ? { photoPath } : {}) } });
     return { message: 'Saved' };
   },
+  /** Profile fields incl. categories, contact phone and country; a new photo goes to review. Returns the fresh session user. */
+  saveProfile: async (fields: Record<string, unknown>, photo?: UploadFile | null) => {
+    const photoPath = photo ? await upload('avatars', 'profile', photo) : undefined;
+    return sessionUser(await rpc<SessionUser>('save_profile', { p: { ...profilePatch(fields), ...(photoPath ? { photoPath } : {}) } }));
+  },
+  /** After fixing what our team asked for (a new photo is resubmitted by uploading it). */
+  resubmitForReview: async () => sessionUser(await rpc<SessionUser>('resubmit_for_review')),
   deleteAccount: async () => {
     const r = await rpc<{ message: string }>('delete_my_account');
     await supabase.auth.signOut().catch(() => {});
@@ -375,6 +419,16 @@ export const backend = {
       return (data ?? []).map((b) => ({ _id: b.id, audience: b.audience, title: b.title, body: b.body, recipients: b.recipients, sent: b.sent, failed: b.failed, createdAt: b.created_at }));
     },
     activity: (before?: string) => rpc<AuditEntry[]>('admin_activity', { before_at: before ?? null }),
+    approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),
+    approvals: async (kind: 'companions' | 'photos') => withDocLinks(await rpc<Record<string, any>[]>('admin_approvals', { kind })),
+    decideProfile: (id: string, decision: 'approve' | 'reject', note?: string) => rpc<{ message: string; user: AdminUser }>('admin_decide_profile', { uid: id, decision, note: note ?? null }),
+    approvePhoto: (id: string) => rpc<{ message: string; user: AdminUser }>('admin_decide_photo', { uid: id }),
+    requestChanges: (id: string, target: 'photo' | 'profile', reasons: string[], note: string) => rpc<{ message: string; user: AdminUser }>('admin_request_changes', { uid: id, target, reasons, note }),
+    panics: (openOnly = true) => rpc<PanicAlert[]>('admin_panics', { open_only: openOnly }),
+    resolvePanic: (alertId: string, note?: string) => rpc<PanicAlert>('resolve_panic', { aid: alertId, note: note ?? null }),
+    cityPlans: (city?: string) => rpc<CityPlan[]>('admin_city_plans', { city_name: city ?? null }),
+    saveCityPlan: (p: Partial<CityPlan>) => rpc<CityPlan>('admin_save_city_plan', { p }),
+    deleteCityPlan: (id: string) => rpc<{ message: string }>('admin_delete_city_plan', { pid: id }),
   },
 };
 

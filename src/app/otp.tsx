@@ -15,7 +15,8 @@ const RESEND_AFTER = 30;
 
 /** Verify the 6-digit code sent on WhatsApp (or SMS). */
 export default function Otp() {
-  const { phone = '', reset } = useLocalSearchParams<{ phone: string; reset?: string }>();
+  const { phone = '', email = '', reset } = useLocalSearchParams<{ phone?: string; email?: string; reset?: string }>();
+  const byEmail = !!email;
   const role = useSession((s) => s.prefs.intendedRole);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function Otp() {
     setBusy(true);
     setError(null);
     try {
-      await afterAuth(await svc.verifyOtp(phone, value, role), { resetPin: reset === '1' });
+      await afterAuth(byEmail ? await svc.verifyEmailOtp(email, value) : await svc.verifyOtp(phone, value, role), { resetPin: reset === '1' });
     } catch (e) {
       setError(errorMessage(e));
       setCode('');
@@ -47,9 +48,10 @@ export default function Otp() {
     setError(null);
     setNotice(null);
     try {
-      await svc.sendOtp(phone, channel);
+      if (byEmail) await svc.sendEmailOtp(email);
+      else await svc.sendOtp(phone, channel);
       setWait(RESEND_AFTER);
-      setNotice(channel === 'sms' ? 'We sent a new code by SMS.' : 'We sent a new code on WhatsApp.');
+      setNotice(byEmail ? 'We sent a new code to your email.' : channel === 'sms' ? 'We sent a new code by SMS.' : 'We sent a new code on WhatsApp.');
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -61,7 +63,7 @@ export default function Otp() {
       <View style={{ gap: space.sm, marginTop: space.lg, marginBottom: space.xxl }}>
         <Text variant="title1">Enter the code</Text>
         <Text variant="callout" muted>
-          We sent a 6-digit code to {displayPhone(phone)} on WhatsApp.
+          {byEmail ? `We sent a 6-digit code to ${email}. Check spam if you don’t see it.` : `We sent a 6-digit code to ${displayPhone(phone)} on WhatsApp.`}
         </Text>
       </View>
       <CodeBoxes
@@ -88,10 +90,14 @@ export default function Otp() {
             Resend code in {wait}s
           </Text>
         ) : (
-          <>
-            <Button label="Resend on WhatsApp" variant="ghost" onPress={() => resend('whatsapp')} compact />
-            <Button label="Send by SMS instead" variant="ghost" onPress={() => resend('sms')} compact />
-          </>
+          byEmail ? (
+            <Button label="Email me a new code" variant="ghost" onPress={() => resend('whatsapp')} compact />
+          ) : (
+            <>
+              <Button label="Resend on WhatsApp" variant="ghost" onPress={() => resend('whatsapp')} compact />
+              <Button label="Send by SMS instead" variant="ghost" onPress={() => resend('sms')} compact />
+            </>
+          )
         )}
       </View>
     </Screen>

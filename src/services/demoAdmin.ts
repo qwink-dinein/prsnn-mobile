@@ -1,4 +1,4 @@
-import type { AdminBooking, AdminUser, AuditEntry, BroadcastRecord, Role } from '@/domain/types';
+import type { AdminBooking, AdminUser, AuditEntry, BroadcastRecord, CityPlan, PanicAlert, Role } from '@/domain/types';
 import { applyPricing, pricing, priceCurveError } from '@/domain/pricing';
 import { toDateKey } from '@/domain/booking';
 import { useSession } from '@/state/session';
@@ -42,7 +42,7 @@ let users: AdminUser[] = [
   u('u3', 'Imran Shaikh', 'user', { area: 'Tolichowki' }),
   u('c1', 'Ayesha Khan', 'companion', { area: 'Banjara Hills', packages: [1, 2, 4, 6], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'Cafés, walks and good conversation.', tags: ['Coffee', 'Walks'] }),
   u('c2', 'Rohan Mehta', 'companion', { area: 'Jubilee Hills', availability: allDays, startTime: '09:00', endTime: '21:00', tags: ['Events'] }),
-  u('c3', 'Sana Mirza', 'companion', { verificationStatus: 'pending', area: 'Kondapur', description: 'Book-club regular, happy to be your study buddy.', tags: ['Study', 'Coffee'], profilePhotoUrl: undefined }),
+  u('c3', 'Sana Mirza', 'companion', { verificationStatus: 'pending', approvalStatus: 'pending', categories: ['work_study', 'new_in_town'], area: 'Kondapur', description: 'Book-club regular, happy to be your study buddy.', tags: ['Study', 'Coffee'], profilePhotoUrl: undefined }),
   u('c4', 'Vikram Rao', 'companion', { verificationStatus: 'pending', area: 'Kukatpally', description: 'Cricket, street food and long walks.', tags: ['Walks', 'Food'] }),
   u('s1', 'Farah (ops)', 'subadmin'),
 ];
@@ -278,7 +278,41 @@ export const demoAdmin: Backend['admin'] = {
   },
   broadcasts: () => superOnly() ?? wait(broadcasts),
   activity: () => superOnly() ?? wait(activity),
+  approvalCounts: () => wait({ companions: users.filter((x) => x.role === 'companion' && x.approvalStatus === 'pending').length, photos: users.filter((x) => x.photoStatus === 'pending').length, idChecks: users.filter((x) => x.verificationStatus === 'pending').length, panics: panics.filter((a) => !a.resolvedAt).length }),
+  approvals: (kind) => wait(kind === 'companions' ? users.filter((x) => x.role === 'companion' && x.approvalStatus === 'pending') : users.filter((x) => x.photoStatus === 'pending' && x.role !== 'companion')),
+  decideProfile: (id, decision, note) => {
+    log(`approval.${decision}`, { kind: 'user', id }, { note });
+    return wait({ message: decision === 'approve' ? 'Approved. They’re live.' : 'Rejected. They’ve been told why.', user: putU(id, { approvalStatus: decision === 'approve' ? 'approved' : 'rejected', approvalNote: note ?? null, photoStatus: decision === 'approve' ? 'approved' : undefined }) });
+  },
+  approvePhoto: (id) => wait({ message: 'Photo approved.', user: putU(id, { photoStatus: 'approved' }) }),
+  requestChanges: (id, target, _reasons, note) => {
+    log('approval.request_changes', { kind: 'user', id }, { target, note });
+    return wait({ message: 'Sent. It’s in their notifications.', user: putU(id, target === 'photo' ? { photoStatus: 'changes_requested', photoNote: note } : { approvalStatus: 'changes_requested', approvalNote: note }) });
+  },
+  panics: (openOnly = true) => wait(panics.filter((a) => !openOnly || !a.resolvedAt)),
+  resolvePanic: (aid) => {
+    panics = panics.map((a) => (a.id === aid ? { ...a, resolvedAt: new Date().toISOString(), resolvedBy: 'You' } : a));
+    return wait(panics.find((a) => a.id === aid)!);
+  },
+  cityPlans: () => wait(plans),
+  saveCityPlan: (p) => {
+    const next = { id: p.id ?? `cp${Date.now()}`, state: p.state ?? 'Telangana', city: p.city ?? 'Hyderabad', category: p.category ?? 'explore', title: p.title ?? 'New plan', details: p.details ?? null, hours: p.hours ?? 2, active: p.active ?? true } as CityPlan;
+    plans = p.id ? plans.map((x) => (x.id === p.id ? next : x)) : [...plans, next];
+    return wait(next);
+  },
+  deleteCityPlan: (id) => {
+    plans = plans.filter((x) => x.id !== id);
+    return wait({ message: 'Removed.' });
+  },
 };
+
+let panics: PanicAlert[] = [
+  { id: 'pa1', bookingId: 'ab1', ref: 'A6F7ED', raisedRole: 'member', raisedAt: inMin(-7), sends: 2, lastSentAt: inMin(-2), scheduledDate: day(0).slice(0, 10), startTime: '16:00', duration: 240, meetingPlace: 'Starbucks, Inorbit Mall', city: 'Hyderabad', area: 'Madhapur', member: { id: 'm1', name: 'Rahul Mehta', phone: '919876543210' }, companion: { id: 'c1', name: 'Ayesha Khan', phone: '919000011111' } },
+];
+let plans: CityPlan[] = [
+  { id: 'cp1', state: 'Telangana', city: 'Hyderabad', category: 'explore', title: 'Fort and heritage walk', details: 'Golconda Fort and the Qutb Shahi Tombs', hours: 6, active: true },
+  { id: 'cp2', state: 'Telangana', city: 'Hyderabad', category: 'new_in_town', title: 'Café hopping', details: 'A few cafés and the streets around them', hours: 2, active: true },
+];
 
 /** Demo logins for the admin roles. */
 export const demoRoleFor = (phone: string): Role | null => (phone.endsWith('9000000000') ? 'superadmin' : phone.endsWith('9000000001') ? 'subadmin' : null);

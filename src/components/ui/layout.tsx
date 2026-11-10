@@ -9,6 +9,7 @@ import { Icon, type IconName } from './Icon';
 import { Button } from './Button';
 import { Wordmark } from './Brand';
 import { LockedPhoto } from '../LockedPhoto';
+import { ProgressBar, useOnline, useSlow } from './states';
 
 /** Every screen: mist background, safe areas, optional scroll and a footer pinned above the home indicator. */
 export function Screen({
@@ -218,10 +219,22 @@ export function Section({ title, action, onAction, children, style }: { title: s
   );
 }
 
+/** Loading: a spinner first; after 6 s a moving bar and an honest "slow connection" line. */
 export function Loading({ label = 'Loading…' }: { label?: string }) {
+  const slow = useSlow(true);
+  const online = useOnline();
   return (
     <View style={styles.center} accessibilityLabel={label} accessibilityRole="progressbar">
-      <ActivityIndicator color={colors.moss} />
+      {slow ? <ProgressBar /> : <ActivityIndicator color={colors.moss} />}
+      {online === false ? (
+        <Text variant="footnote" muted center style={{ marginTop: space.md, maxWidth: 280 }}>
+          You’re offline. This will load as soon as you’re connected.
+        </Text>
+      ) : slow ? (
+        <Text variant="footnote" muted center style={{ marginTop: space.md, maxWidth: 280 }}>
+          Still working — your connection seems slow. Hang on, it’s on its way.
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -245,8 +258,13 @@ export function EmptyState({ icon = 'sparkle', title, body, action, onAction }: 
   );
 }
 
+/** Says what went wrong and how to fix it. Offline gets its own words (and retries by itself on reconnect). */
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
-  return <EmptyState icon="info" title="Something went wrong" body={message ?? 'Check your connection and try again.'} action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
+  const online = useOnline();
+  if (online === false || /no connection|network|fetch/i.test(message ?? '')) {
+    return <EmptyState icon="info" title="You’re offline" body="Check Wi-Fi or mobile data. We’ll load this as soon as you’re back online." action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
+  }
+  return <EmptyState icon="info" title="That didn’t load" body={`${message ?? 'Something went wrong on our side.'} Try again in a moment — if it keeps happening, contact support.`} action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
 }
 
 /** The italic "prsnn." wordmark with the clay full stop (see Brand.tsx). */

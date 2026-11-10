@@ -31,7 +31,22 @@ export interface SessionUser {
   seeGender?: SeeGender;
   profileVisibility?: Visibility;
   city?: string;
+  state?: string;
+  area?: string;
+  /** Email sign-ups (visitors from abroad) use contactPhone for updates and safety alerts. */
+  contactPhone?: string | null;
+  country?: string | null;
+  /** Every photo is approved by staff before others see it. */
+  photoStatus?: PhotoStatus;
+  photoNote?: string | null;
+  /** Companions: profile approval before going live. */
+  approvalStatus?: ApprovalStatus;
+  approvalNote?: string | null;
+  categories?: string[];
 }
+
+export type PhotoStatus = 'none' | 'pending' | 'approved' | 'changes_requested';
+export type ApprovalStatus = 'draft' | 'pending' | 'approved' | 'changes_requested' | 'rejected';
 
 export interface Companion {
   id: string;
@@ -54,6 +69,7 @@ export interface Companion {
   endTime?: string;
   /** False for new companions whose ID is checked at their first booking. */
   idVerified?: boolean;
+  categories?: string[];
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
@@ -68,6 +84,7 @@ export interface PersonRef {
   pricePerHour?: number;
   phoneNumber?: string;
   locked?: boolean;
+  idVerified?: boolean;
 }
 
 /** id_check: a new companion accepted; held while staff check their ID. */
@@ -117,9 +134,75 @@ export interface Booking {
   scheduledDate: string; // ISO
   amountPaid?: number;
   createdAt: string;
+  category?: string | null;
+  /** The public place both people agreed to meet. */
+  meetingPlace?: string | null;
+  /** Booked for someone else: who they are. The companion never sees the number. */
+  recipient?: Recipient | null;
+  /** An open panic alert on this booking, if any. */
+  panic?: { id: string; raisedAt: string; mine: boolean; sends: number; lastSentAt?: string | null } | null;
 }
 
-export type NotificationType = 'booking_request' | 'booking_accepted' | 'payment_completed' | 'booking_offer' | 'booking_confirmed' | 'booking_cancelled' | 'refund' | 'dispute' | 'other';
+export type Relation = 'mother' | 'father' | 'grandparent' | 'relative' | 'friend' | 'other';
+export interface Recipient {
+  relation: Relation;
+  name: string;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+export interface PanicAlert {
+  id: string;
+  bookingId: string;
+  ref: string;
+  raisedRole: 'member' | 'companion';
+  raisedAt: string;
+  sends: number;
+  lastSentAt?: string | null;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  resolvedNote?: string | null;
+  scheduledDate: string;
+  startTime: string;
+  duration: number;
+  meetingPlace?: string | null;
+  city?: string | null;
+  area?: string | null;
+  recipient?: { name: string; relation: string; phone?: string | null } | null;
+  member: { id: string; name: string; phone?: string | null };
+  companion: { id: string; name: string; phone?: string | null };
+}
+
+export interface CityPlan {
+  id: string;
+  state: string;
+  city: string;
+  category: string;
+  title: string;
+  details?: string | null;
+  hours: number;
+  sort?: number;
+  active?: boolean;
+}
+
+export interface Locality {
+  name: string;
+  district: string;
+  pincode: string;
+}
+
+export type NotificationType = 'booking_request' | 'booking_accepted' | 'payment_completed' | 'booking_offer' | 'booking_confirmed' | 'booking_cancelled' | 'refund' | 'dispute' | 'other' | 'action_needed' | 'approval' | 'panic';
+
+/** What tapping a notification does (staff change requests, approvals, panic alerts). */
+export interface NotificationAction {
+  kind: 'fix' | 'rejected' | 'approved' | 'photo_approved' | 'review' | 'panic' | 'panic_resolved';
+  target?: 'photo' | 'profile';
+  reasons?: string[];
+  uid?: string;
+  alertId?: string;
+  bookingId?: string;
+}
 
 export interface AppNotification {
   _id: string;
@@ -127,6 +210,7 @@ export interface AppNotification {
   message: string;
   isRead: boolean;
   createdAt: string;
+  action?: NotificationAction | null;
 }
 
 export interface ChatMessage {
@@ -238,6 +322,13 @@ export interface AdminUser {
   idFrontPath?: string;
   idBackPath?: string;
   selfiePath?: string;
+  country?: string | null;
+  photoStatus?: PhotoStatus;
+  photoNote?: string | null;
+  approvalStatus?: ApprovalStatus;
+  approvalNote?: string | null;
+  categories?: string[];
+  updatedAt?: string;
   /** Verification queue: earliest deadline of bookings held for this companion's ID check. */
   heldUntil?: string | null;
   heldBookings?: number;

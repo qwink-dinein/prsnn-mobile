@@ -25,15 +25,15 @@ const companionStatus = (): VerificationStatus => {
 type DemoCompanion = Companion & { gender: Gender; visibility: 'open' | 'locked' };
 
 const people: DemoCompanion[] = [
-  { id: 'c1', packages: [1, 2, 4, 6], fullName: 'Ayesha Khan', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Banjara Hills', pricePerHour: 399, tags: ['Coffee', 'Walks', 'Books', 'Hindi'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'I love exploring new cafés, long walks and meaningful chats. Available for coffee meetups and city walks. Public places only, for safety.' },
-  { id: 'c2', fullName: 'Rohan Mehta', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Jubilee Hills', pricePerHour: 399, tags: ['Walks', 'Events', 'Cricket'], availability: { ...allDays, monday: false }, startTime: '09:00', endTime: '21:00', description: 'Weekend explorer and live-music regular. Happy to come along to an event so you don’t go alone.' },
-  { id: 'c3', fullName: 'Fatima Siddiqui', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Tolichowki', pricePerHour: 399, tags: ['Study', 'Coffee', 'Urdu'], availability: allDays, startTime: '11:00', endTime: '19:00', description: 'Study partner and quiet café company. I keep you on task and the coffee coming.' },
-  { id: 'c4', packages: [2, 4, 8, 12], fullName: 'Arjun Reddy', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', pricePerHour: 399, tags: ['Events', 'Food', 'Telugu'], availability: allDays, startTime: '12:00', endTime: '21:00', description: 'Foodie who knows every biryani spot worth the queue. Good company for dinners and shows.' },
-  { id: 'c5', fullName: 'Neha Sharma', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Madhapur', pricePerHour: 399, tags: ['Walks', 'Study', 'Yoga'], availability: { ...allDays, sunday: false }, startTime: '09:00', endTime: '18:00', description: 'Morning walks at KBR Park, slow mornings, honest conversation.' },
-  { id: 'c6', fullName: 'Sameer Ali', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Old City', pricePerHour: 399, tags: ['Walks', 'Food', 'History'], availability: allDays, startTime: '15:00', endTime: '21:00', description: 'Old City walks: Charminar, Laad Bazaar and the best Irani chai. Let me show you around.' },
-  { id: 'c7', fullName: 'Priya Iyer', gender: 'woman', visibility: 'locked', city: 'Bengaluru', state: 'Karnataka', area: 'Indiranagar', pricePerHour: 399, tags: ['Coffee', 'Events', 'Kannada'], availability: allDays, startTime: '10:00', endTime: '21:00', description: 'Indiranagar cafés and weekend gigs. Calm, curious, a good listener.' },
-  { id: 'c8', fullName: 'Kabir Das', gender: 'nonbinary', visibility: 'locked', city: 'Mumbai', state: 'Maharashtra', area: 'Bandra West', pricePerHour: 399, tags: ['Walks', 'Food', 'Art'], availability: allDays, startTime: '11:00', endTime: '21:00', description: 'Bandra sea-face walks, galleries and street food.' },
-  { id: 'c9', fullName: 'Zoya Ansari', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Kondapur', pricePerHour: 399, tags: ['Coffee', 'Study', 'Urdu'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'Book-club regular and coffee snob. Happy to be your study buddy.' },
+  { id: 'c1', categories: ['new_in_town', 'work_study'], idVerified: true, packages: [1, 2, 4, 6], fullName: 'Ayesha Khan', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Banjara Hills', pricePerHour: 399, tags: ['Coffee', 'Walks', 'Books', 'Hindi'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'I love exploring new cafés, long walks and meaningful chats. Available for coffee meetups and city walks. Public places only, for safety.' },
+  { id: 'c2', categories: ['dont_go_alone', 'explore'], idVerified: true, fullName: 'Rohan Mehta', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Jubilee Hills', pricePerHour: 399, tags: ['Walks', 'Events', 'Cricket'], availability: { ...allDays, monday: false }, startTime: '09:00', endTime: '21:00', description: 'Weekend explorer and live-music regular. Happy to come along to an event so you don’t go alone.' },
+  { id: 'c3', categories: ['work_study'], idVerified: true, fullName: 'Fatima Siddiqui', gender: 'woman', visibility: 'locked', city: 'Hyderabad', state: 'Telangana', area: 'Tolichowki', pricePerHour: 399, tags: ['Study', 'Coffee', 'Urdu'], availability: allDays, startTime: '11:00', endTime: '19:00', description: 'Study partner and quiet café company. I keep you on task and the coffee coming.' },
+  { id: 'c4', categories: ['dont_go_alone', 'explore'], idVerified: true, packages: [2, 4, 8, 12], fullName: 'Arjun Reddy', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', pricePerHour: 399, tags: ['Events', 'Food', 'Telugu'], availability: allDays, startTime: '12:00', endTime: '21:00', description: 'Foodie who knows every biryani spot worth the queue. Good company for dinners and shows.' },
+  { id: 'c5', categories: ['new_in_town', 'loved_one'], idVerified: false, fullName: 'Neha Sharma', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Madhapur', pricePerHour: 399, tags: ['Walks', 'Study', 'Yoga'], availability: { ...allDays, sunday: false }, startTime: '09:00', endTime: '18:00', description: 'Morning walks at KBR Park, slow mornings, honest conversation.' },
+  { id: 'c6', categories: ['explore', 'new_in_town'], idVerified: true, fullName: 'Sameer Ali', gender: 'man', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Old City', pricePerHour: 399, tags: ['Walks', 'Food', 'History'], availability: allDays, startTime: '15:00', endTime: '21:00', description: 'Old City walks: Charminar, Laad Bazaar and the best Irani chai. Let me show you around.' },
+  { id: 'c7', categories: ['dont_go_alone', 'new_in_town'], idVerified: true, fullName: 'Priya Iyer', gender: 'woman', visibility: 'locked', city: 'Bengaluru', state: 'Karnataka', area: 'Indiranagar', pricePerHour: 399, tags: ['Coffee', 'Events', 'Kannada'], availability: allDays, startTime: '10:00', endTime: '21:00', description: 'Indiranagar cafés and weekend gigs. Calm, curious, a good listener.' },
+  { id: 'c8', categories: ['explore'], idVerified: true, fullName: 'Kabir Das', gender: 'nonbinary', visibility: 'locked', city: 'Mumbai', state: 'Maharashtra', area: 'Bandra West', pricePerHour: 399, tags: ['Walks', 'Food', 'Art'], availability: allDays, startTime: '11:00', endTime: '21:00', description: 'Bandra sea-face walks, galleries and street food.' },
+  { id: 'c9', categories: ['work_study', 'loved_one'], idVerified: false, fullName: 'Zoya Ansari', gender: 'woman', visibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Kondapur', pricePerHour: 399, tags: ['Coffee', 'Study', 'Urdu'], availability: allDays, startTime: '10:00', endTime: '20:00', description: 'Book-club regular and coffee snob. Happy to be your study buddy.' },
 ];
 
 const POLICY: Policy = {
@@ -94,9 +94,10 @@ let notifications: AppNotification[] = [
   { _id: 'n2', type: 'payment_completed', message: 'Payment received for booking #P1. We’re confirming your companion.', isRead: false, createdAt: inMin(-20) },
   { _id: 'n3', type: 'refund', message: 'We couldn’t find an available companion for booking #P2. Your full payment of ₹399 was refunded.', isRead: true, createdAt: inMin(-26 * 60) },
   { _id: 'n4', type: 'other', message: 'New companions near you in Banjara Hills.', isRead: true, createdAt: inMin(-3 * 24 * 60) },
+  { _id: 'n5', type: 'action_needed', message: 'Your photo is a bit dark. Please upload one in daylight with your face clearly visible.', isRead: false, createdAt: inMin(-5), action: { kind: 'fix', target: 'photo', reasons: ['photo'] } },
 ];
 
-const me: SessionUser = { id: 'me', role: 'user', is_verified: true, verification_status: 'verified', fullName: 'Mukarram', phone: '919876543210', hasPin: true, gender: 'man', seeGender: 'everyone', profileVisibility: 'open', city: 'Hyderabad' };
+const me: SessionUser = { id: 'me', role: 'user', is_verified: true, verification_status: 'verified', fullName: 'Rahul Mehta', phone: '919876543210', hasPin: true, gender: 'man', seeGender: 'everyone', profileVisibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', photoStatus: 'approved', approvalStatus: 'draft', categories: ['new_in_town', 'dont_go_alone'] };
 const auth = (u: SessionUser = me): AuthResult => ({ token: 'demo-token', user: u });
 const keys = new Map<string, string>(); // idempotencyKey → booking id
 const find = (id: string) => [...bookings, ...incoming].find((b) => b._id === id);
@@ -118,6 +119,49 @@ export const demo: Backend = {
   pinLogin: (phone) => wait(auth({ ...me, phone, role: demoRoleFor(phone) ?? me.role })),
   emailLogin: () => wait(auth()),
   verifyEmail: () => wait(auth()),
+  sendEmailOtp: () => wait({ message: 'Code sent by email.' }),
+  verifyEmailOtp: (email) => wait({ ...auth({ ...me, phone: undefined, email, contactPhone: null, hasPin: false, fullName: undefined, gender: undefined, seeGender: undefined, profileVisibility: undefined }), isNewUser: true }),
+  me: () => wait({ ...me, ...viewer() } as SessionUser),
+  raisePanic: (id) => {
+    const b = find(id);
+    if (!b) return fail('Booking not found.');
+    const alert = { id: `pa${Date.now()}`, bookingId: id, ref: id.toUpperCase(), raisedRole: 'member' as const, raisedAt: new Date().toISOString(), sends: 1, lastSentAt: new Date().toISOString(), scheduledDate: b.scheduledDate.slice(0, 10), startTime: b.startTime, duration: Number(b.duration), meetingPlace: b.meetingPlace ?? 'Starbucks, Inorbit Mall', member: { id: 'me', name: 'Rahul Mehta', phone: '919876543210' }, companion: { id: 'c1', name: 'Ayesha Khan', phone: '919000011111' } };
+    patch(id, { panic: { id: alert.id, raisedAt: alert.raisedAt, mine: true, sends: 1, lastSentAt: alert.lastSentAt } });
+    return wait(alert);
+  },
+  resolvePanic: (aid) => {
+    const b = [...bookings, ...incoming].find((x) => x.panic?.id === aid);
+    if (b) patch(b._id, { panic: null });
+    return wait({ id: aid, bookingId: b?._id ?? '', ref: '', raisedRole: 'member' as const, raisedAt: '', sends: 1, resolvedAt: new Date().toISOString(), scheduledDate: '', startTime: '', duration: 60, member: { id: 'me', name: 'Rahul' }, companion: { id: 'c1', name: 'Ayesha' } });
+  },
+  searchLocalities: (_state, q) => {
+    const all = ['Gachibowli', 'Madhapur', 'Kondapur', 'Banjara Hills', 'Jubilee Hills', 'Hitech City', 'Begumpet', 'Secunderabad', 'Kukatpally', 'Manikonda'].map((name, i) => ({ name, district: 'Hyderabad', pincode: String(500032 + i) }));
+    const t = q.trim().toLowerCase();
+    return wait(t ? all.filter((l) => l.name.toLowerCase().includes(t) || l.pincode.startsWith(t)) : all);
+  },
+  cityPlans: (city) =>
+    wait(
+      city.toLowerCase() === 'hyderabad'
+        ? [
+            { id: 'cp1', state: 'Telangana', city: 'Hyderabad', category: 'explore', title: 'Fort and heritage walk', details: 'Golconda Fort and the Qutb Shahi Tombs', hours: 6 },
+            { id: 'cp2', state: 'Telangana', city: 'Hyderabad', category: 'new_in_town', title: 'Café hopping', details: 'A few cafés and the streets around them', hours: 2 },
+            { id: 'cp3', state: 'Telangana', city: 'Hyderabad', category: 'explore', title: 'Film city day', details: 'Ramoji Film City (tickets extra)', hours: 8 },
+          ]
+        : [],
+    ),
+  markNotificationsRead: () => {
+    notifications = notifications.map((n) => ({ ...n, isRead: true }));
+    return wait({ message: 'Read' });
+  },
+  saveProfile: async (fields, photo) => {
+    const patchU: Partial<SessionUser> = { ...(fields as Partial<SessionUser>), ...(photo ? { profilePhoto: photo.uri, photoStatus: 'pending' as const } : {}) };
+    await useSession.getState().updateUser(patchU);
+    return wait({ ...me, ...viewer(), ...patchU } as SessionUser);
+  },
+  resubmitForReview: async () => {
+    await useSession.getState().updateUser({ approvalStatus: 'pending', approvalNote: null });
+    return wait({ ...me, ...viewer() } as SessionUser);
+  },
 
   companions: () => wait(people.filter(visibleTo).map(view)),
   companion: (id) => {
@@ -244,7 +288,15 @@ export const demo: Backend = {
     return wait({ hasProfile: true, status, is_verified: status === 'verified', role: viewer()?.role ?? ('user' as const) });
   },
   onboardBasic: (f) => wait({ user: { id: 'me', role: 'user' as const, fullName: f.fullName, verification_status: 'verified' as const, is_verified: true } }),
-  onboardCompanion: () => wait({ message: 'You’re live.' }),
+  onboardCompanion: async (f) => {
+    await useSession.getState().updateUser({ role: 'companion', approvalStatus: 'pending', verification_status: 'id_required', categories: f.categories, fullName: f.fullName, city: f.city });
+    // Demo only: approved a few seconds later.
+    setTimeout(() => {
+      void useSession.getState().updateUser({ approvalStatus: 'approved', photoStatus: 'approved' });
+      notifications = [{ _id: `n${Date.now()}`, type: 'approval', message: 'You’re approved and live. Members in Hyderabad can now book you.', isRead: false, createdAt: new Date().toISOString(), action: { kind: 'approved' } }, ...notifications];
+    }, 9000);
+    return wait({ message: 'Sent for approval.', user: { ...me, ...viewer(), role: 'companion', approvalStatus: 'pending' } as SessionUser });
+  },
   submitIdDocuments: () => {
     void useSession.getState().updateUser({ verification_status: 'pending', is_verified: false });
     // Demo only: the team approves a few seconds later and held bookings are confirmed.

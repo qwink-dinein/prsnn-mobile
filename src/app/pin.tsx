@@ -11,7 +11,7 @@ import { PinPad } from '@/components/ui/forms';
 import { Enter, useShake } from '@/components/ui/motion';
 import { svc } from '@/services';
 import { errorMessage } from '@/lib/api';
-import { afterAuth, displayPhone, goHome } from '@/lib/flow';
+import { afterAuth, afterPin, displayLogin } from '@/lib/flow';
 import { useSession } from '@/state/session';
 
 const LEN = 4;
@@ -57,7 +57,7 @@ export default function Pin() {
       if (mode === 'login') {
         setBusy(true);
         try {
-          await afterAuth(await svc.pinLogin(phone ?? '', pin));
+          await afterAuth(await svc.pinLogin(phone ?? '', pin), { viaPin: true });
         } catch (e) {
           fail(errorMessage(e));
         } finally {
@@ -83,7 +83,7 @@ export default function Pin() {
         await svc.setPin(pin);
         await updateUser({ hasPin: true });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        goHome();
+        afterPin();
       } catch (e) {
         firstRef.current = null;
         setFirst(null);
@@ -119,14 +119,14 @@ export default function Pin() {
   );
 
   const title = mode === 'login' ? 'Enter your PIN' : first ? 'Confirm your PIN' : reset ? 'Choose a new PIN' : 'Set a 4-digit PIN';
-  const sub = mode === 'login' ? `For ${displayPhone(phone)}` : first ? 'Enter the same 4 digits again.' : 'Use this PIN for quicker and more secure access.';
+  const sub = mode === 'login' ? `For ${displayLogin(phone)}` : first ? 'Enter the same 4 digits again.' : 'You’re verified. Next time, open prsnn with this PIN — no code needed.';
 
   return (
     <Screen scroll={false}>
       <Header
         right={
           mode === 'set' && !reset ? (
-            <Text variant="subhead" color={colors.moss} onPress={() => goHome()} accessibilityRole="button" style={{ padding: space.md }}>
+            <Text variant="subhead" color={colors.moss} onPress={() => afterPin()} accessibilityRole="button" style={{ padding: space.md }}>
               Skip
             </Text>
           ) : undefined

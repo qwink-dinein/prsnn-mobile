@@ -97,6 +97,27 @@ export const platformShareOf = (amount: number) => amount - companionShareOf(amo
 
 export const hoursLabel = (h: number) => `${h} ${h === 1 ? 'hour' : 'hours'}`;
 
+/**
+ * One generic line per duration for the price cards: how much time it is, not
+ * what to do (no meals or activities, so nobody reads it as booking a person for lunch).
+ */
+export function durationLine(h: number): string {
+  if (h <= 1) return 'A quick, easy start';
+  if (h === 2) return 'Time to really connect';
+  if (h === 3) return 'Unhurried, relaxed time';
+  if (h === 4) return 'The sweet spot for most plans';
+  if (h === 5) return 'Plenty of time, no rush';
+  if (h === 6) return 'Half a day together';
+  if (h <= 8) return 'A full day out';
+  return 'Your whole day, covered';
+}
+
+/** Saving vs paying the 1-hour rate for every hour, as a whole percent. */
+export const savingPercent = (h: number) => {
+  const full = current.packagePrices[1] * h;
+  return full ? Math.round((savingFor(h) * 100) / full) : 0;
+};
+
 /** Durations a companion offers (older profiles: the headline packages). */
 export const offeredHours = (packages?: number[] | null) => (packages && packages.length ? [...packages].sort((a, b) => a - b) : current.headlineHours);
 

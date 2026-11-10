@@ -7,11 +7,13 @@ import { secure } from './storage';
  * a salted SHA-256 is stored (Keychain / Keystore). Five wrong tries wipe it, and
  * the person logs in with OTP again.
  */
-const key = (phone: string) => `prsnn.pin.${phone.replace(/\D/g, '').slice(-10)}`;
+/** A PIN belongs to a mobile number (last 10 digits) or, for email sign-ups, an email. */
+const norm = (id: string) => (id.includes('@') ? `e.${id.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_')}` : id.replace(/\D/g, '').slice(-10));
+const key = (phone: string) => `prsnn.pin.${norm(phone)}`;
 const triesKey = (phone: string) => `${key(phone)}.tries`;
 export const MAX_PIN_TRIES = 5;
 
-const hash = (phone: string, pin: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, `prsnn:${phone.replace(/\D/g, '').slice(-10)}:${pin}`);
+const hash = (phone: string, pin: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, `prsnn:${norm(phone)}:${pin}`);
 
 export async function hasLocalPin(phone?: string | null) {
   return !!phone && !!(await secure.get(key(phone)));

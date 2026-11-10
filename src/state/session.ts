@@ -22,6 +22,8 @@ interface Prefs {
 
 interface SessionState {
   hydrated: boolean;
+  /** Set when the session ended on its own (not "Log out"): the app sends them to log in, drafts kept. */
+  expired: boolean;
   token: string | null;
   user: SessionUser | null;
   prefs: Prefs;
@@ -35,8 +37,11 @@ interface SessionState {
 
 const writePrefs = (p: Prefs) => AsyncStorage.setItem(PREFS_KEY, JSON.stringify(p)).catch(() => {});
 
+let manualSignOut = false;
+
 export const useSession = create<SessionState>((set, get) => ({
   hydrated: false,
+  expired: false,
   token: null,
   user: null,
   prefs: { saved: [] },
@@ -68,9 +73,11 @@ export const useSession = create<SessionState>((set, get) => ({
 
   async signIn(token, user) {
     setApiToken(token);
-    set({ token, user });
+    set({ token, user, expired: false });
     await Promise.all([secure.set(TOKEN_KEY, token), secure.set(USER_KEY, JSON.stringify(user))]);
-    if (user.phone) await get().setPrefs({ lastPhone: user.phone });
+    // The PIN login button remembers the number (or email, for email sign-ups).
+    const id = user.phone || user.email;
+    if (id) await get().setPrefs({ lastPhone: id });
   },
 
   async updateUser(patch) {
@@ -83,7 +90,9 @@ export const useSession = create<SessionState>((set, get) => ({
 
   async signOut() {
     setApiToken(null);
+    manualSignOut = true;
     if (!DEMO) await supabase.auth.signOut().catch(() => {});
+    manualSignOut = false;
     set({ token: null, user: null });
     await Promise.all([secure.remove(TOKEN_KEY), secure.remove(USER_KEY)]);
   },
@@ -109,7 +118,7 @@ if (!DEMO) {
     if (event === 'TOKEN_REFRESHED' && session && st.user) useSession.setState({ token: session.access_token });
     if (event === 'SIGNED_OUT' && st.token) {
       setApiToken(null);
-      useSession.setState({ token: null, user: null });
+      useSession.setState({ token: null, user: null, expired: !manualSignOut });
     }
   });
 }

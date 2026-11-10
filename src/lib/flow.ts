@@ -5,6 +5,7 @@ import { useSession } from '@/state/session';
 import { svc } from '@/services';
 import { hasIdentity } from '@/domain/privacy';
 import { isStaff } from '@/domain/admin';
+import { displayPhone as displayPhoneOf } from '@/domain/phone';
 
 /** Where to go once someone is signed in and set up. */
 export function goHome(user: SessionUser | null = useSession.getState().user) {
@@ -19,29 +20,41 @@ export function goHome(user: SessionUser | null = useSession.getState().user) {
   router.replace('/home');
 }
 
+/** Setup still has unanswered questions (staff only need a name; companions answer the rest in companion sign-up). */
+export function needsSetup(u: SessionUser | null | undefined): boolean {
+  if (!u) return false;
+  if (!u.fullName) return true;
+  if (isStaff(u.role) || u.role === 'companion') return false;
+  if (!u.phone && !u.contactPhone) return true; // email sign-ups give a mobile for updates and safety alerts
+  return !hasIdentity(u) || !u.city || !u.categories?.length || !u.photoStatus || u.photoStatus === 'none';
+}
+
+/** After the PIN is set (or skipped): finish setup, else home. */
+export function afterPin(user: SessionUser | null = useSession.getState().user) {
+  if (needsSetup(user)) router.replace('/setup-profile');
+  else goHome(user);
+}
+
 /**
- * After OTP / email / PIN sign-in:
- *   new or nameless account → set up profile → set PIN → home
- *   no PIN yet              → set PIN → home
+ * After OTP / email / PIN sign-in. The PIN comes first, straight after the
+ * number (or email) is verified; then setup for anything unanswered; then home.
  */
-export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean } = {}) {
+export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean; viaPin?: boolean } = {}) {
   await useSession.getState().signIn(res.token, res.user);
-  // Logins that don't return gender/privacy (email accounts) pick them up from the profile.
-  if (!hasIdentity(res.user)) {
-    try {
-      const p = await svc.profile();
-      const patch = { gender: p.gender, seeGender: p.seeGender, profileVisibility: p.profileVisibility, city: p.city ?? res.user.city, fullName: res.user.fullName || p.fullName };
-      await useSession.getState().updateUser(patch);
-      res = { ...res, user: { ...res.user, ...patch } };
-    } catch {
-      // offline or older server: the setup screen asks instead
-    }
+  // Refresh from the server (photo/approval status, categories, city) without blocking on errors.
+  try {
+    const fresh = await svc.me();
+    await useSession.getState().updateUser({ ...fresh, hasPin: res.user.hasPin });
+    res = { ...res, user: { ...res.user, ...fresh, hasPin: res.user.hasPin } };
+  } catch {
+    // offline: carry on with what sign-in returned
   }
-  // Forgot PIN: the OTP proved it's them, so go straight to choosing a new PIN.
   if (opts.resetPin && !res.isNewUser) router.replace({ pathname: '/pin', params: { mode: 'set', reset: '1' } });
-  else if (res.isNewUser || !res.user.fullName || !hasIdentity(res.user)) router.replace('/setup-profile');
-  else if (res.user.phone && !res.user.hasPin) router.replace({ pathname: '/pin', params: { mode: 'set' } });
-  else goHome(res.user);
+  else if (!opts.viaPin && !res.user.hasPin) router.replace({ pathname: '/pin', params: { mode: 'set' } });
+  else afterPin(res.user);
 }
 
 export { normaliseIndianMobile, displayPhone } from '@/domain/phone';
+
+/** "+91 98765 43210" for numbers, the address itself for email sign-ups. */
+export const displayLogin = (id?: string | null) => (!id ? '' : id.includes('@') ? id : displayPhoneOf(id));

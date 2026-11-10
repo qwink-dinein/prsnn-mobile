@@ -12,14 +12,15 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/forms';
 import { svc } from '@/services';
 import { errorMessage } from '@/lib/api';
-import { displayPhone, normaliseIndianMobile } from '@/lib/flow';
+import { displayLogin, normaliseIndianMobile } from '@/lib/flow';
+import { Notice } from '@/components/ui/states';
 import { LINKS } from '@/lib/config';
 import { useSession } from '@/state/session';
 
 /** Screen 4 · Login / Sign up with mobile number (code arrives on WhatsApp, SMS as backup). */
 export default function Login() {
   const lastPhone = useSession((s) => s.prefs.lastPhone);
-  const params = useLocalSearchParams<{ reset?: string; phone?: string }>();
+  const params = useLocalSearchParams<{ reset?: string; phone?: string; expired?: string }>();
   const resetting = params.reset === '1';
   const [phone, setPhone] = useState(resetting && params.phone ? params.phone.replace(/^91/, '') : '');
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +77,7 @@ export default function Login() {
       </View>
 
       <View style={{ gap: space.lg }}>
+        {params.expired === '1' ? <Notice tone="warning" text="Your session ended, so we logged you out to keep your account safe. Log in again — anything you were filling in is saved on this phone." /> : null}
         <Enter index={3}>
         <Animated.View style={shakeStyle}>
         <TextField
@@ -105,7 +107,7 @@ export default function Login() {
         {lastPhone && !resetting ? (
           <Enter index={5}>
           <Button
-            label={`Log in with PIN · ${displayPhone(lastPhone)}`}
+            label={`Log in with PIN · ${displayLogin(lastPhone)}`}
             variant="secondary"
             icon="lock"
             onPress={() => router.push({ pathname: '/pin', params: { mode: 'login', phone: lastPhone } })}
@@ -113,6 +115,18 @@ export default function Login() {
           </Enter>
         ) : null}
 
+        {!resetting ? (
+          <Enter index={6}>
+            <View style={styles.divider}>
+              <View style={styles.line} />
+              <Text variant="footnote" muted>
+                Not in India?
+              </Text>
+              <View style={styles.line} />
+            </View>
+            <Button label="Continue with email" variant="ghost" icon="mail" onPress={() => router.push('/login-email')} />
+          </Enter>
+        ) : null}
       </View>
 
       <Enter index={7}>
