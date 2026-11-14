@@ -307,7 +307,7 @@ def m_chat():
             f'<div class="msgs">{b}</div><div class="comp"><span class="hidek">{ic("down", M, 18)}</span><div class="cin">See you at 4! I’ll message when I’m<i class="cur"></i></div><span class="sendb">{ic("send", P, 16)}</span></div><div class="kb"></div>')
 def m_chat_panic():
     return (chat_head() + f'<div class="msgs">' + ''.join(f'<div class="bub {w}">{t}<div class="bt2">{tm}</div></div>' for w, t, tm in [('them', 'I’m at the entrance.', '4:02'), ('me', 'Coming in now.', '4:03')]) + '</div>'
-            + sheet(f'<div style="text-align:center">{sos(90)}<div style="font:600 16px Urbanist;margin-top:12px">Feel unsafe? Hold for 3 seconds</div><div class="sub" style="text-align:center">Every prsnn admin is alerted at once, and again every 5 minutes until you’re safe. Maya isn’t told who pressed it.</div></div>'
+            + sheet(f'<div style="text-align:center">{sos(90)}<div style="font:600 16px Urbanist;margin-top:12px">Feel unsafe? Hold for 3 seconds</div><div class="sub" style="text-align:center">Every prsnn admin is alerted at once, and again every 5 minutes until you’re safe.</div></div>'
                     f'<div style="margin-top:12px">{btn("Call 112 (police, ambulance)", "red", "phone")}</div><div style="margin-top:8px">{btn("Not now", "ghost")}</div>')
             + '<div class="tagnote" style="top:auto;bottom:6px;z-index:40">New: panic button in chat (approved)</div>')
 def m_chat_ended():
