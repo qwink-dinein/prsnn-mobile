@@ -2,13 +2,32 @@ import { DEMO } from '@/lib/config';
 import { backend } from './backend';
 import { demo } from './demo';
 
-/** One entry point for all server calls. Demo mode swaps in sample data. */
-export const svc = DEMO ? demo : backend;
+let current = DEMO ? demo : backend;
+let previewing = false;
 
-export type { AuthResult, PaymentIntent, CompanionForm, IdForm } from './backend';
+/**
+ * One entry point for all server calls. Demo mode (EXPO_PUBLIC_DEMO=1) swaps in sample
+ * data at build time; staff "View the app as…" swaps it in at run time (setSampleMode).
+ */
+export const svc: typeof backend = new Proxy({} as typeof backend, {
+  get: (_t, key) => (current as Record<string | symbol, unknown>)[key],
+});
+
+/** True while the app is running on sample data (demo build or an admin preview). Nothing reaches the server. */
+export const isSampleMode = () => DEMO || previewing;
+
+/** Staff preview: route every call to the sample service, or back to the real backend. */
+export function setSampleMode(on: boolean) {
+  previewing = on;
+  current = DEMO || on ? demo : backend;
+}
+
+export type { AuthResult, PaymentIntent, CompanionForm, IdForm, UnreadCounts } from './backend';
 
 /** React Query keys, in one place so invalidation stays consistent. */
 export const qk = {
+  me: ['me'] as const,
+  unread: ['unread'] as const,
   companions: ['companions'] as const,
   companion: (id: string) => ['companion', id] as const,
   myBookings: ['bookings', 'mine'] as const,

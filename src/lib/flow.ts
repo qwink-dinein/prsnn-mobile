@@ -8,17 +8,26 @@ import { isStaff } from '@/domain/admin';
 import { displayPhone as displayPhoneOf } from '@/domain/phone';
 import { hasLocalPin } from '@/lib/pin';
 
+/**
+ * Replace the whole stack, so the screens behind (welcome, number, code, PIN) can't be
+ * reached with the back button or a swipe once someone is past them.
+ */
+function resetTo(href: Parameters<typeof router.replace>[0]) {
+  if (router.canDismiss()) router.dismissAll();
+  router.replace(href);
+}
+
 /** Where to go once someone is signed in and set up. */
 export function goHome(user: SessionUser | null = useSession.getState().user) {
   if (isStaff(user?.role)) {
-    router.replace('/admin');
+    resetTo('/admin');
     return;
   }
   if (user?.role === 'companion' && (user.verification_status === 'not_submitted' || !user.verification_status)) {
-    router.replace('/fellow/onboarding');
+    resetTo('/fellow/onboarding');
     return;
   }
-  router.replace('/home');
+  resetTo('/home');
 }
 
 export { needsSetup } from '@/domain/setup';
@@ -29,13 +38,13 @@ export { needsSetup } from '@/domain/setup';
  */
 export async function goToLogin(fallback: '/welcome' | '/login' = '/welcome') {
   const last = useSession.getState().prefs.lastPhone;
-  if (last && (await hasLocalPin(last))) router.replace({ pathname: '/pin', params: { mode: 'login', phone: last } });
-  else router.replace(fallback);
+  if (last && (await hasLocalPin(last))) resetTo({ pathname: '/pin', params: { mode: 'login', phone: last } });
+  else resetTo(fallback);
 }
 
 /** After the PIN is set (or skipped): finish setup, else home. */
 export function afterPin(user: SessionUser | null = useSession.getState().user) {
-  if (needsSetup(user)) router.replace('/setup-profile');
+  if (needsSetup(user)) resetTo('/setup-profile');
   else goHome(user);
 }
 
@@ -53,8 +62,8 @@ export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean; via
   } catch {
     // offline: carry on with what sign-in returned
   }
-  if (opts.resetPin && !res.isNewUser) router.replace({ pathname: '/pin', params: { mode: 'set', reset: '1' } });
-  else if (!opts.viaPin && !res.user.hasPin) router.replace({ pathname: '/pin', params: { mode: 'set' } });
+  if (opts.resetPin && !res.isNewUser) resetTo({ pathname: '/pin', params: { mode: 'set', reset: '1' } });
+  else if (!opts.viaPin && !res.user.hasPin) resetTo({ pathname: '/pin', params: { mode: 'set' } });
   else afterPin(res.user);
 }
 

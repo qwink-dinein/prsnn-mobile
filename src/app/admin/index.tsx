@@ -4,7 +4,7 @@ import { Icon } from '@/components/ui/Icon';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
-import { Header, ListRow, Loading, ErrorState, Screen } from '@/components/ui/layout';
+import { Header, ListRow, Loading, ErrorState, Screen, BellButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { StatTile } from '@/components/admin';
 import { can, roleLabel } from '@/domain/admin';
@@ -24,7 +24,7 @@ export default function AdminOverview() {
 
   return (
     <Screen padded={false} refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void Promise.all([q.refetch(), counts.refetch(), panics.refetch()])} tintColor={colors.moss} />}>
-      <Header title="Admin" />
+      <Header title="Admin" right={<BellButton />} />
       <View style={{ paddingHorizontal: 20, gap: space.lg }}>
         <Text variant="footnote" muted>
           Signed in as {role ? roleLabel(role).toLowerCase() : 'staff'}.{role !== 'superadmin' ? ' Refunds, prices and broadcasts are handled by a superadmin.' : ''}

@@ -28,6 +28,9 @@ import { svc, qk } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
 import { pickImage } from '@/lib/pickImage';
 import { useSession } from '@/state/session';
+import { useStepFlow } from '@/lib/stepFlow';
+import { useConfirm } from '@/components/ui/confirm';
+import { goToLogin } from '@/lib/flow';
 
 type Step = 'gender' | 'photo' | 'visibility' | 'where' | 'about' | 'offer' | 'durations' | 'availability' | 'finish';
 const STEPS: Step[] = ['gender', 'photo', 'visibility', 'where', 'about', 'offer', 'durations', 'availability', 'finish'];
@@ -54,7 +57,23 @@ export default function CompanionOnboarding() {
     avail: emptyAvailability() as AvailabilityValue,
   });
   const set = (p: Partial<typeof d>) => setD((cur) => ({ ...cur, ...p }));
-  const [i, setI] = useState(0);
+  const confirm = useConfirm();
+  // Back always means "previous step"; on the first step it asks before leaving setup.
+  const onLeave = async () => {
+    if (
+      await confirm({
+        title: 'Finish setting up?',
+        message: 'Your answers are saved. You can carry on now, or log out and finish later.',
+        confirmLabel: 'Log out',
+        cancelLabel: 'Keep going',
+        destructive: true,
+      })
+    ) {
+      await useSession.getState().signOut();
+      await goToLogin('/welcome');
+    }
+  };
+  const { i, setI, clearStep } = useStepFlow({ key: `companion.${user?.id ?? 'new'}`, count: STEPS.length, initial: 0, onLeave });
   const step = STEPS[i];
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +85,15 @@ export default function CompanionOnboarding() {
     setTouched(false);
     setI((x) => Math.min(x + 1, STEPS.length - 1));
   };
-  const back = () => (i > 0 ? (setError(null), setI(i - 1)) : router.back());
+  const back = () => {
+    setError(null);
+    if (i > 0) setI(i - 1);
+    else if (router.canGoBack()) {
+      // Companions who came from Profile → Become a companion can simply go back to it.
+      clearStep();
+      router.back();
+    } else void onLeave();
+  };
   const hasPhoto = !!photo || (!!user?.profilePhoto && user.photoStatus !== 'changes_requested');
 
   const submit = async () => {
@@ -92,6 +119,7 @@ export default function CompanionOnboarding() {
       });
       await updateUser({ ...r.user, hasPin: user?.hasPin });
       clearDraft();
+      clearStep();
       qc.invalidateQueries({ queryKey: qk.profileCheck });
       router.replace({ pathname: '/fellow/verification', params: { sent: '1' } });
     } catch (e) {

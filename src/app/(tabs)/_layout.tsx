@@ -4,6 +4,7 @@ import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useSession } from '@/state/session';
+import { badgeLabel, useUnread } from '@/lib/live';
 
 const tab = (icon: IconName) =>
   function TabIcon({ color, focused }: { color: unknown; focused: boolean }) {
@@ -13,7 +14,10 @@ const tab = (icon: IconName) =>
 export default function TabsLayout() {
   const token = useSession((s) => s.token);
   const isCompanion = useSession((s) => s.user?.role === 'companion');
+  const unread = useUnread();
   if (!token) return <Redirect href="/welcome" />;
+  const bookingsBadge = badgeLabel(unread.bookings);
+  const messagesBadge = badgeLabel(unread.messages);
 
   return (
     <Tabs
@@ -28,12 +32,25 @@ export default function TabsLayout() {
         // Five short labels in a fixed bar: very large system text would clip them.
         tabBarAllowFontScaling: false,
         sceneStyle: { backgroundColor: colors.mist },
+        // Live counts (src/lib/live.ts): champagne circle, midnight number, hidden at 0.
+        tabBarBadgeStyle: { backgroundColor: colors.champagne, color: colors.midnight, fontFamily: fonts.bold, fontSize: 11, minWidth: 18, height: 18, lineHeight: 18, borderWidth: 2, borderColor: colors.paper },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: tab(isCompanion ? 'chart' : 'home') }} />
       <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: tab('search') }} />
-      <Tabs.Screen name="bookings" options={{ title: isCompanion ? 'Requests' : 'Bookings', tabBarIcon: tab('calendar') }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: tab('message') }} />
+      <Tabs.Screen
+        name="bookings"
+        options={{
+          title: isCompanion ? 'Requests' : 'Bookings',
+          tabBarIcon: tab('calendar'),
+          tabBarBadge: bookingsBadge ?? undefined,
+          tabBarAccessibilityLabel: bookingsBadge ? `${isCompanion ? 'Requests' : 'Bookings'}, ${unread.bookings} waiting for you` : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{ title: 'Messages', tabBarIcon: tab('message'), tabBarBadge: messagesBadge ?? undefined, tabBarAccessibilityLabel: messagesBadge ? `Messages, ${unread.messages} unread` : undefined }}
+      />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tab('user') }} />
     </Tabs>
   );

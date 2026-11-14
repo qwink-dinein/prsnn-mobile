@@ -3,7 +3,7 @@ import { RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
-import { Screen, Avatar, Card, ListRow, Section, IconButton } from '@/components/ui/layout';
+import { Screen, Avatar, Card, ListRow, Section, BellButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -45,7 +45,7 @@ export function CompanionDashboard() {
             </Text>
           </View>
         </View>
-        <IconButton name="bell" label="Notifications" onPress={() => router.push('/notifications')} />
+        <BellButton />
       </View>
 
       {approval !== 'approved' ? (

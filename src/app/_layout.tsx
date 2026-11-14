@@ -16,11 +16,14 @@ import { setUnauthorizedHandler } from '@/lib/api';
 import { ConfirmProvider } from '@/components/ui/confirm';
 import { usePricingSync } from '@/lib/pricing';
 import { registerForPush } from '@/lib/push';
+import { useLiveMe, useLiveUnread } from '@/lib/live';
 import { OfflineBanner, connectOnlineManager } from '@/components/ui/states';
 
 /** App-wide background work that needs React Query: live prices, push token after sign-in. */
 function AppEffects() {
   usePricingSync();
+  useLiveMe();
+  useLiveUnread();
   const token = useSession((s) => s.token);
   const expired = useSession((s) => s.expired);
   useEffect(() => {

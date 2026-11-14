@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
@@ -15,7 +14,9 @@ import { LocationFields, type LocationValue } from '@/components/LocationFields'
 import { CategoryTiles } from '@/components/CategoryTiles';
 import { svc } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
-import { goHome } from '@/lib/flow';
+import { goHome, goToLogin } from '@/lib/flow';
+import { useStepFlow } from '@/lib/stepFlow';
+import { useConfirm } from '@/components/ui/confirm';
 import { pickImage } from '@/lib/pickImage';
 import { stateOf } from '@/domain/places';
 import { defaultVisibility, GENDER_OPTIONS, VISIBILITY_COPY } from '@/domain/privacy';
@@ -81,7 +82,23 @@ export default function SetupProfile() {
     const i = steps.findIndex((s) => !done[s]);
     return i < 0 ? 0 : i;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [i, setI] = useState(firstMissing);
+  const confirm = useConfirm();
+  // Back always means "previous step"; on the first step it asks before leaving setup.
+  const onLeave = async () => {
+    if (
+      await confirm({
+        title: 'Finish setting up?',
+        message: 'Your answers are saved. You can carry on now, or log out and finish later.',
+        confirmLabel: 'Log out',
+        cancelLabel: 'Keep going',
+        destructive: true,
+      })
+    ) {
+      await useSession.getState().signOut();
+      await goToLogin('/welcome');
+    }
+  };
+  const { i, setI, clearStep } = useStepFlow({ key: `setup.${user?.id ?? 'new'}`, count: steps.length, initial: firstMissing, onLeave });
   const step = steps[i];
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +110,11 @@ export default function SetupProfile() {
     setTouched(false);
     setI((x) => Math.min(x + 1, steps.length - 1));
   };
-  const back = () => (i > 0 ? (setError(null), setI(i - 1)) : router.canGoBack() ? router.back() : undefined);
+  const back = () => {
+    setError(null);
+    if (i > 0) setI(i - 1);
+    else void onLeave();
+  };
 
   const save = async (visibility?: Visibility) => {
     setBusy(true);
@@ -118,6 +139,7 @@ export default function SetupProfile() {
           );
       await updateUser({ ...fresh, hasPin: user?.hasPin });
       clearDraft();
+      clearStep();
       goHome({ ...user!, ...fresh });
     } catch (e) {
       setError(errorMessage(e));
@@ -153,7 +175,7 @@ export default function SetupProfile() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.top}>
-        {i > 0 ? <IconButton name="chevronLeft" label="Back" onPress={back} /> : <View style={{ width: 48 }} />}
+        <IconButton name="chevronLeft" label={i > 0 ? 'Back' : 'Leave setup'} onPress={back} />
         <View style={styles.dots} accessibilityLabel={`Step ${i + 1} of ${steps.length}`}>
           {steps.map((s, k) => (
             <View key={s} style={[styles.dot, k <= i && styles.dotOn]} />

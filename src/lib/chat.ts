@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DEMO } from './config';
+import { isSampleMode } from '@/services';
 import { supabase } from './supabase';
 import type { ChatMessage } from '@/domain/types';
 
@@ -15,13 +15,14 @@ const toMessage = (r: Row): ChatMessage => ({ _id: r.id, bookingId: r.booking_id
  * read or write; phone numbers are masked by the database on insert.
  */
 export function useChat(bookingId: string, myId: string) {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => (DEMO ? demoThread(bookingId, myId) : []));
-  const [status, setStatus] = useState<Status>(DEMO ? 'open' : 'connecting');
+  const sample = isSampleMode();
+  const [messages, setMessages] = useState<ChatMessage[]>(() => (sample ? demoThread(bookingId, myId) : []));
+  const [status, setStatus] = useState<Status>(sample ? 'open' : 'connecting');
   const [error, setError] = useState<string | null>(null);
   const [ended] = useState(false);
 
   useEffect(() => {
-    if (DEMO) return;
+    if (sample) return;
     let alive = true;
     const add = (m: ChatMessage) => setMessages((prev) => (prev.some((p) => p._id === m._id) ? prev : [...prev, m].sort((a, b) => a.createdAt.localeCompare(b.createdAt))));
     supabase
@@ -50,13 +51,13 @@ export function useChat(bookingId: string, myId: string) {
       alive = false;
       supabase.removeChannel(channel);
     };
-  }, [bookingId, myId]);
+  }, [bookingId, myId, sample]);
 
   const send = useCallback(
     (text: string) => {
       const message = text.trim();
       if (!message || message.length > MAX_MESSAGE_LENGTH) return false;
-      if (DEMO) {
+      if (sample) {
         setMessages((p) => [...p, { _id: `m${Date.now()}`, bookingId, senderId: myId, content: message, createdAt: new Date().toISOString() }]);
         return true;
       }
@@ -71,7 +72,7 @@ export function useChat(bookingId: string, myId: string) {
         });
       return true;
     },
-    [bookingId, myId],
+    [bookingId, myId, sample],
   );
 
   return { messages, status, error, ended, send };

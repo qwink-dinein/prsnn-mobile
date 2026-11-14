@@ -149,6 +149,16 @@ export const demo: Backend = {
           ]
         : [],
     ),
+  unreadCounts: () => {
+    const role = viewer()?.role;
+    return wait({
+      notifications: notifications.filter((n) => !n.isRead).length,
+      messages: 2,
+      perChat: { [bookings[0]?._id ?? 'b1']: 2 },
+      bookings: role === 'companion' ? incoming.filter((b) => b.myOffer?.status === 'offered').length : bookings.filter((b) => b.paymentStatus !== 'paid' && b.status !== 'cancelled').length,
+    });
+  },
+  markChatRead: () => wait({ message: 'Read' }),
   markNotificationsRead: () => {
     notifications = notifications.map((n) => ({ ...n, isRead: true }));
     return wait({ message: 'Read' });

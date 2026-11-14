@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
@@ -34,6 +34,13 @@ export default function Chat() {
   useEffect(() => {
     if (messages.length) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
   }, [messages.length]);
+
+  // Reading the chat clears its unread badge (and again as new messages arrive while it's open).
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!bookingId || status !== 'open') return;
+    svc.markChatRead(bookingId).then(() => qc.invalidateQueries({ queryKey: qk.unread })).catch(() => {});
+  }, [bookingId, status, messages.length, qc]);
 
   const submit = () => {
     if (send(text)) setText('');

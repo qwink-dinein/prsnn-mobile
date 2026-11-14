@@ -12,11 +12,14 @@ import { canChat, isMineAsCompanion, personOf, startsAt } from '@/domain/booking
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
+import { badgeLabel, useUnread } from '@/lib/live';
+import { fonts } from '@/theme/fonts';
 
 /** Conversations: one per confirmed booking (chat opens once the booking is accepted and paid). */
 export default function MessagesTab() {
   const isCompanion = useSession((s) => s.user?.role === 'companion');
   const q = useQuery({ queryKey: isCompanion ? qk.incoming : qk.myBookings, queryFn: isCompanion ? svc.incomingBookings : svc.myBookings });
+  const { perChat } = useUnread();
   const threads = useMemo(
     () => (q.data ?? []).filter((b) => canChat(b, isCompanion) && (!isCompanion || isMineAsCompanion(b))).sort((a, b) => startsAt(b).getTime() - startsAt(a).getTime()),
     [q.data, isCompanion],
@@ -39,23 +42,31 @@ export default function MessagesTab() {
           refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.moss} />}
           renderItem={({ item, index }) => {
             const other = personOf(isCompanion ? item.requesterId : item.companionId);
+            const n = perChat[item._id] ?? 0;
+            const badge = badgeLabel(n);
             return (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Chat with ${other?.fullName ?? 'your companion'}, ${whenOf(item)}`}
+                accessibilityLabel={`Chat with ${other?.fullName ?? 'your companion'}, ${whenOf(item)}${n ? `, ${n} unread` : ''}`}
                 onPress={() => router.push(`/chat/${item._id}`)}
                 style={({ pressed }) => [styles.row, index > 0 && styles.line, pressed && { opacity: 0.7 }]}
               >
                 <Avatar uri={other?.profilePhotoUrl} name={other?.fullName} size={52} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="headline" numberOfLines={1}>
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                  <Text variant="headline" numberOfLines={1} style={badge ? { fontFamily: fonts.bold } : undefined}>
                     {other?.fullName ?? 'Companion'}
                   </Text>
                   <Text variant="footnote" muted numberOfLines={1}>
                     {whenOf(item)}
                   </Text>
                 </View>
-                <Icon name="chevronRight" size={18} color={colors.gray400} />
+                {badge ? (
+                  <View style={styles.count}>
+                    <Text style={styles.countText}>{badge}</Text>
+                  </View>
+                ) : (
+                  <Icon name="chevronRight" size={18} color={colors.gray400} />
+                )}
               </Pressable>
             );
           }}
@@ -77,4 +88,6 @@ const styles = StyleSheet.create({
   title: { paddingHorizontal: GUTTER, paddingTop: space.sm, paddingBottom: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  count: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, backgroundColor: colors.champagne, alignItems: 'center', justifyContent: 'center' },
+  countText: { fontFamily: fonts.bold, fontSize: 12, color: colors.midnight },
 });

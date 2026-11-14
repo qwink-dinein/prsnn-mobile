@@ -61,7 +61,7 @@ export default function Notifications() {
   // Opening the bell marks everything read (after a moment, so unread ones are still highlighted).
   useEffect(() => {
     if (!q.data?.some((n) => !n.isRead)) return;
-    const t = setTimeout(() => svc.markNotificationsRead().then(() => qc.invalidateQueries({ queryKey: ['notifications', 'unread'] })).catch(() => {}), 2500);
+    const t = setTimeout(() => svc.markNotificationsRead().then(() => qc.invalidateQueries({ queryKey: qk.unread })).catch(() => {}), 2500);
     return () => clearTimeout(t);
   }, [q.data, qc]);
 

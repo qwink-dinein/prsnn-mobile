@@ -15,6 +15,7 @@ import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
 import { needsIdToAccept } from '@/domain/verification';
+import { refreshMe } from '@/lib/live';
 
 /** Re-render every 30 s so offer countdowns stay current. */
 function useNow(intervalMs = 30_000) {
@@ -38,7 +39,22 @@ export function RequestCard({ b }: { b: Booking }) {
   const confirm = useConfirm();
   const now = useNow();
   const idFirst = needsIdToAccept(useSession((s) => s.user?.verification_status));
-  const verifyAndAccept = () => router.push({ pathname: '/fellow/verify-id', params: { booking: b._id } });
+  const openIdCheck = () => router.push({ pathname: '/fellow/verify-id', params: { booking: b._id } });
+  // Never ask for an ID the server already has: re-check the live status first (an admin may
+  // have approved it a moment ago), and only open the ID screen if it's still needed.
+  const [checking, setChecking] = useState(false);
+  const verifyAndAccept = async () => {
+    setChecking(true);
+    try {
+      const fresh = await refreshMe(qc);
+      if (needsIdToAccept(fresh?.verification_status)) openIdCheck();
+      else accept.mutate();
+    } catch {
+      openIdCheck();
+    } finally {
+      setChecking(false);
+    }
+  };
   const who = personOf(b.requesterId);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: qk.incoming });
@@ -54,7 +70,11 @@ export function RequestCard({ b }: { b: Booking }) {
     onSuccess: refresh,
     onError: (e) => {
       refresh();
-      if (/verify your id/i.test(errorMessage(e))) return verifyAndAccept();
+      if (/verify your id/i.test(errorMessage(e))) {
+        // The server is the source of truth: refresh what the phone knows, then show the ID screen.
+        void refreshMe(qc).finally(openIdCheck);
+        return;
+      }
       confirm({ title: 'Couldn’t accept', message: errorMessage(e) });
     },
   });
@@ -130,7 +150,7 @@ export function RequestCard({ b }: { b: Booking }) {
               }}
             />
             {idFirst ? (
-              <Button label="Verify ID & accept" icon="shieldCheck" compact style={{ flex: 2 }} haptic onPress={verifyAndAccept} />
+              <Button label="Verify ID & accept" icon="shieldCheck" compact style={{ flex: 2 }} haptic loading={checking || accept.isPending} onPress={() => void verifyAndAccept()} />
             ) : (
               <Button label="Accept" compact style={{ flex: 1 }} haptic loading={accept.isPending} onPress={() => accept.mutate()} />
             )}

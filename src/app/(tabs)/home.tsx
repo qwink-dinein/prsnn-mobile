@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { useLiveCompanions , Notice, Skeleton } from '@/components/ui/states';
 import { colors, GUTTER, radius, space } from '@/theme/tokens';
-import { Screen, Section, Logo, IconButton, EmptyState, ErrorState } from '@/components/ui/layout';
+import { Screen, Section, Logo, BellButton, EmptyState, ErrorState } from '@/components/ui/layout';
 import { Enter, PressScale } from '@/components/ui/motion';
 import { CategoryCard } from '@/components/CategoryTiles';
 import { formatINR } from '@/domain/booking';
@@ -32,7 +32,6 @@ function Discover() {
   const { width } = useAppWidth();
   const q = useLiveCompanions();
   const notes = useQuery({ queryKey: qk.notifications, queryFn: svc.notifications });
-  const unread = (notes.data ?? []).filter((n) => !n.isRead).length;
   const cardW = Math.floor(Math.min((width - GUTTER * 2 - space.md) / 2, 200));
   const city = user?.city ?? q.data?.find((c) => c.city)?.city ?? '';
   const plans = useQuery({ queryKey: ['cityPlans', city], queryFn: () => svc.cityPlans(city), enabled: !!city, staleTime: 10 * 60_000 });
@@ -56,10 +55,7 @@ function Discover() {
             </Text>
             <Icon name="chevronDown" size={14} color={colors.gray500} />
           </Pressable>
-          <View>
-            <IconButton name="bell" label={unread ? `Notifications, ${unread} unread` : 'Notifications'} onPress={() => router.push('/notifications')} />
-            {unread ? <View style={styles.badge} /> : null}
-          </View>
+          <BellButton />
         </View>
       </View>
 

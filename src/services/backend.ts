@@ -295,6 +295,13 @@ export const backend = {
     if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : error.message);
     return (data ?? []).map((n) => ({ _id: n.id, type: n.type, message: n.message, isRead: n.is_read, createdAt: n.created_at, action: n.action }));
   },
+  /** Live badge counts: unread notifications, unread chat messages (total and per booking), bookings needing you. */
+  unreadCounts: async (): Promise<UnreadCounts> => rpc<UnreadCounts>('unread_counts'),
+  /** Opening a chat marks it read up to now. */
+  markChatRead: async (bookingId: string) => {
+    await rpc('mark_chat_read', { bid: bookingId });
+    return { message: 'Read' };
+  },
   markNotificationsRead: async () => {
     const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', await uid()).eq('is_read', false);
     if (error) throw new Error(error.message);
@@ -438,3 +445,10 @@ export const backend = {
 };
 
 export type Backend = typeof backend;
+
+export interface UnreadCounts {
+  notifications: number;
+  messages: number;
+  perChat: Record<string, number>;
+  bookings: number;
+}

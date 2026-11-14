@@ -10,6 +10,7 @@ import { Button } from './Button';
 import { Wordmark } from './Brand';
 import { LockedPhoto } from '../LockedPhoto';
 import { ProgressBar, useOnline, useSlow } from './states';
+import { badgeLabel, useUnread } from '@/lib/live';
 
 /** Every screen: mist background, safe areas, optional scroll and a footer pinned above the home indicator. */
 export function Screen({
@@ -326,4 +327,27 @@ const styles = StyleSheet.create({
   seg: { flexDirection: 'row', backgroundColor: colors.mistDeep, borderRadius: radius.md, padding: 4, gap: 4 },
   segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, paddingHorizontal: 6 },
   segOn: { backgroundColor: colors.moss },
+});
+
+/** Notification bell with the live unread number (1, 2 … 9+), hidden at 0. */
+export function BellButton({ color = colors.ink }: { color?: string }) {
+  const { notifications } = useUnread();
+  const label = badgeLabel(notifications);
+  return (
+    <View>
+      <IconButton name="bell" color={color} label={label ? `Notifications, ${notifications} unread` : 'Notifications'} onPress={() => router.push('/notifications')} />
+      {label ? (
+        <View style={bellStyles.badge} pointerEvents="none">
+          <Text style={bellStyles.badgeText} maxFontSizeMultiplier={1.2}>
+            {label}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+const bellStyles = StyleSheet.create({
+  badge: { position: 'absolute', top: 6, right: 4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.champagne, borderWidth: 2, borderColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: 'Urbanist-Bold', fontSize: 10, lineHeight: 12, color: colors.midnight },
 });
