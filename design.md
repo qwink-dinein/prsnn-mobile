@@ -5,6 +5,25 @@ mobile; 22 is the web admin) and the web palette in
 `prsnn-frontend/app/globals.css`. **Keep the theme and palette as they are.**
 Code tokens live in `src/theme/tokens.ts` and `src/theme/fonts.ts`.
 
+## Next palette (approved 2026-11-14, not applied yet)
+
+Chosen by the owner: Two’s light screens with Hour’s champagne details, **Urbanist titles**
+(option A in `preview/blend-screens.html`). The app still uses the palette below until the
+owner says to switch; then these become the tokens in `src/theme/tokens.ts`.
+
+| Token | Hex | Use |
+|---|---|---|
+| `porcelain` | `#F1F1F4` | App background |
+| `white` | `#FFFFFF` | Cards, sheets, inputs, tab bar |
+| `midnight` | `#181B34` | Text, primary buttons, my chat bubbles, selected chips |
+| `muted` | `#6B6E85` | Secondary text |
+| `champagne` | `#C9B68E` | Logo diamond, Popular pill, selected-card border, button on photos |
+| `champagneDeep` | `#8E7646` | Savings text (readable on white) |
+| `champagneMist` | `#F6F1E6` | Selected card fill, safety tip |
+| `line` | `rgba(24,27,52,.08)` | Hairlines |
+
+Type: **Urbanist** 600 for titles, 400–500 for text. The logo is the only serif (logo still to be chosen).
+
 ## Palette ("2026 Presence": mist, ink, moss, signal)
 
 | Token | Hex | Use |
