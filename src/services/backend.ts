@@ -431,6 +431,8 @@ export const backend = {
       return (data ?? []).map((b) => ({ _id: b.id, audience: b.audience, title: b.title, body: b.body, recipients: b.recipients, sent: b.sent, failed: b.failed, createdAt: b.created_at }));
     },
     activity: (before?: string) => rpc<AuditEntry[]>('admin_activity', { before_at: before ?? null }),
+    /** Records a staff "View the app as…" preview in the activity log (the preview itself is sample data). */
+    logPreview: (as: 'member' | 'companion', start: string) => rpc<null>('admin_log_preview', { as_role: as, start_at: start }),
     approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),
     approvals: async (kind: 'companions' | 'photos') => withDocLinks(await rpc<Record<string, any>[]>('admin_approvals', { kind })),
     decideProfile: (id: string, decision: 'approve' | 'reject', note?: string) => rpc<{ message: string; user: AdminUser }>('admin_decide_profile', { uid: id, decision, note: note ?? null }),

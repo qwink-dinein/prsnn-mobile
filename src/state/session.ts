@@ -29,6 +29,11 @@ interface SessionState {
   token: string | null;
   user: SessionUser | null;
   prefs: Prefs;
+  /**
+   * Staff "View the app as…": the screens run as a sample member or companion on sample data.
+   * `real` is the staff member's own profile, restored on exit. Nothing about it is saved.
+   */
+  preview: { as: 'member' | 'companion'; real: SessionUser } | null;
   hydrate: () => Promise<void>;
   signIn: (token: string, user: SessionUser) => Promise<void>;
   updateUser: (patch: Partial<SessionUser>) => Promise<void>;
@@ -50,6 +55,7 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   prefs: { saved: [] },
+  preview: null,
 
   async hydrate() {
     const [token, userRaw, prefsRaw] = await Promise.all([
@@ -93,10 +99,17 @@ export const useSession = create<SessionState>((set, get) => ({
     if (!user) return;
     const next = { ...user, ...patch };
     set({ user: next });
+    if (get().preview) return; // sample profile: never saved over the staff member's own
     await secure.set(USER_KEY, JSON.stringify(next));
   },
 
   async signOut() {
+    const pv = get().preview;
+    if (pv) {
+      // "Log out" inside a preview only leaves the preview.
+      set({ preview: null, user: pv.real });
+      return;
+    }
     // Not supabase.auth.signOut(): that revokes the session on the server and the
     // next login would need a paid WhatsApp code. The PIN screen reopens it instead.
     setApiToken(null);
@@ -157,10 +170,11 @@ if (!DEMO) {
     if (session?.refresh_token && id && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
       void saveSession(id, session.refresh_token);
     }
-    if (event === 'TOKEN_REFRESHED' && session && st.user && sameLogin(st.user.phone || st.user.email, session.user)) useSession.setState({ token: session.access_token });
+    const own = st.preview?.real ?? st.user;
+    if (event === 'TOKEN_REFRESHED' && session && own && sameLogin(own.phone || own.email, session.user)) useSession.setState({ token: session.access_token });
     if (event === 'SIGNED_OUT' && st.token && !manualSignOut && !restoring) {
       // The library gave up on the session. Try the copy saved on this phone before asking for a code.
-      const who = st.user?.phone || st.user?.email || '';
+      const who = own?.phone || own?.email || '';
       restoring = true;
       void restoreSession(who).then(({ session: back, gone }) => {
         restoring = false;
@@ -172,7 +186,7 @@ if (!DEMO) {
         // Offline: stay in the app; calls fail with "no internet" and work again once back online.
         if (!gone) return;
         setApiToken(null);
-        useSession.setState({ token: null, user: null, expired: true });
+        useSession.setState({ token: null, user: null, preview: null, expired: true });
       });
     }
   });

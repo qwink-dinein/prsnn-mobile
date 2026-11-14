@@ -13,12 +13,14 @@ import { companionStatusLine, idCheckValue } from '@/domain/verification';
 import { seeLabel } from '@/domain/privacy';
 import { isStaff, roleLabel } from '@/domain/admin';
 import { unregisterPush } from '@/lib/push';
+import { endPreview, startPreview } from '@/lib/preview';
 
 /** Screen 15 · Profile (grouped settings list, no hamburger menu). */
 export default function ProfileTab() {
   const user = useSession((s) => s.user);
   const savedCount = useSession((s) => s.prefs.saved.length);
   const signOut = useSession((s) => s.signOut);
+  const preview = useSession((s) => s.preview);
   const isCompanion = user?.role === 'companion';
   const verified = user?.is_verified;
   const privacyValue = [user?.profileVisibility === 'locked' ? 'Photo locked' : user?.profileVisibility === 'open' ? 'Photo open' : null, user?.seeGender ? `Showing ${seeLabel(user.seeGender).toLowerCase()}` : null].filter(Boolean).join(' · ') || undefined;
@@ -93,10 +95,22 @@ export default function ProfileTab() {
         <ListRow icon="doc" label="Terms & privacy" onPress={() => Linking.openURL(LINKS.terms)} last />
       </View>
 
-      <View style={styles.group}>
-        <ListRow icon="logout" label="Log out" onPress={logout} danger />
-        <ListRow icon="trash" label="Delete account" onPress={() => router.push('/delete-account')} danger last />
-      </View>
+      {preview ? (
+        // Staff preview: switch sides or leave; no real account actions on sample data.
+        <View style={styles.group}>
+          <ListRow
+            icon="users"
+            label={preview.as === 'member' ? 'Switch to companion preview' : 'Switch to member preview'}
+            onPress={() => void startPreview(queryClient, preview.as === 'member' ? 'companion' : 'member', 'home').catch(() => {})}
+          />
+          <ListRow icon="logout" label="Exit preview" onPress={() => endPreview(queryClient)} last />
+        </View>
+      ) : (
+        <View style={styles.group}>
+          <ListRow icon="logout" label="Log out" onPress={logout} danger />
+          <ListRow icon="trash" label="Delete account" onPress={() => router.push('/delete-account')} danger last />
+        </View>
+      )}
     </Screen>
   );
 }

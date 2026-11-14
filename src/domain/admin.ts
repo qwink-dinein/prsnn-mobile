@@ -88,6 +88,7 @@ export function describeAction(action: string): string {
     'verification.approve': 'verified a companion',
     'verification.reject': 'rejected a companion',
     'user.edit': 'edited a profile',
+    'app.preview': 'viewed the app with sample data',
     'user.suspend': 'suspended an account',
     'user.unsuspend': 'restored an account',
     'user.delete': 'deleted an account',

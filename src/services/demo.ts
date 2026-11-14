@@ -99,6 +99,8 @@ let notifications: AppNotification[] = [
 
 const me: SessionUser = { id: 'me', role: 'user', is_verified: true, verification_status: 'verified', fullName: 'Rahul Mehta', phone: '919876543210', hasPin: true, gender: 'man', seeGender: 'everyone', profileVisibility: 'open', city: 'Hyderabad', state: 'Telangana', area: 'Gachibowli', photoStatus: 'approved', approvalStatus: 'draft', categories: ['new_in_town', 'dont_go_alone'] };
 const auth = (u: SessionUser = me): AuthResult => ({ token: 'demo-token', user: u });
+// Snapshot of the sample data, so an admin preview can start clean and leave nothing behind.
+const INITIAL = JSON.stringify({ bookings, notifications });
 const keys = new Map<string, string>(); // idempotencyKey → booking id
 const find = (id: string) => [...bookings, ...incoming].find((b) => b._id === id);
 const patch = (id: string, p: Partial<Booking>) => {
@@ -328,3 +330,13 @@ export const demo: Backend = {
 };
 
 export const demoIncoming = incoming;
+const INITIAL_INCOMING = JSON.stringify(incoming);
+
+/** Back to the original sample data (staff preview start and exit). */
+export function resetDemo() {
+  const init = JSON.parse(INITIAL) as { bookings: Booking[]; notifications: AppNotification[] };
+  bookings = init.bookings;
+  notifications = init.notifications;
+  incoming.splice(0, incoming.length, ...(JSON.parse(INITIAL_INCOMING) as Booking[]));
+  keys.clear();
+}

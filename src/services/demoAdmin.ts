@@ -278,6 +278,10 @@ export const demoAdmin: Backend['admin'] = {
   },
   broadcasts: () => superOnly() ?? wait(broadcasts),
   activity: () => superOnly() ?? wait(activity),
+  logPreview: (as: 'member' | 'companion', start: string) => {
+    activity = [{ _id: `a${Date.now()}`, action: 'app.preview', role: 'superadmin', actorId: 'me', actorName: 'You', target: { kind: 'app', id: as }, after: { as, start }, at: new Date().toISOString() } as AuditEntry, ...activity];
+    return wait(null);
+  },
   approvalCounts: () => wait({ companions: users.filter((x) => x.role === 'companion' && x.approvalStatus === 'pending').length, photos: users.filter((x) => x.photoStatus === 'pending').length, idChecks: users.filter((x) => x.verificationStatus === 'pending').length, panics: panics.filter((a) => !a.resolvedAt).length }),
   approvals: (kind) => wait(kind === 'companions' ? users.filter((x) => x.role === 'companion' && x.approvalStatus === 'pending') : users.filter((x) => x.photoStatus === 'pending' && x.role !== 'companion')),
   decideProfile: (id, decision, note) => {

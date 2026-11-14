@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MAX_APP_WIDTH, useAppWidth } from '@/lib/layout';
 import { Stack, router } from 'expo-router';
+import { PreviewStrip } from '@/lib/preview';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
@@ -79,6 +80,7 @@ export default function RootLayout() {
           <AppEffects />
           <StatusBar style="dark" />
           <OfflineBanner />
+          <PreviewStrip />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist }, animation: 'slide_from_right', animationDuration: 280 }}>
             <Stack.Screen name="index" options={{ animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
