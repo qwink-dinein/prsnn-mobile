@@ -193,3 +193,15 @@ In companion mode the cards are multi-select with a checkbox and an extra line,
 
 Onboarding choices (role, I am, Show me, visibility, city, area) are single taps that move
 to the next step with no Confirm button. Only free text (name) has a Next button.
+
+## Screens v2 (approved 2026-11-14, not built yet)
+
+Every screen and state is in `preview/all-screens-v2.html` (121 screens), checked against the
+current app (`preview/screens-gap-audit.md`). It adds one feature: an SOS button in the chat header
+(live from session start to 1 h after the end, same alert as the booking screen).
+
+**Onboarding copy stays very simple** (owner, 2026-11-14): one short title and at most one short
+line per step, e.g. "I am", "Where are you based?", "Who would you like to meet?" (Women, Men,
+Non-binary, Anyone), "Add your photo" (Face clearly visible · Just you · Good light), "Who can see
+your photo?" (Locked: only people you've booked with · Open: everyone), "How long can you meet?",
+"When are you free?", "Almost done". No long explanations in setup or companion onboarding.

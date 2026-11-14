@@ -87,7 +87,7 @@ def g_otp(mode='wa'):
             f'<div style="text-align:center;margin-top:12px;font:500 12.5px Urbanist;color:{CD}">We sent a new code on WhatsApp.</div><div style="margin-top:12px">{btn("Resend on WhatsApp", "ghost")}</div><div style="margin-top:8px">{btn("Send by SMS instead", "ghost")}</div>')
     return bar() + q('Enter the code', sub) + body(f'<div class="obs">{boxes}</div>{tail}') + foot(btn('Verify'))
 def g_email():
-    return (bar() + q('Visiting India?', 'Sign up with your email. We’ll send a 6-digit code. You’ll add a mobile number with your country code next, for booking updates and safety alerts.')
+    return (bar() + q('Not in India?', 'Sign up with your email. We’ll send you a code.')
             + body(field('Email', 'name@example.com', None, ph=True, on=True)) + foot(btn('Email me a code')))
 def pin_screen(title, sub, filled=0, err=None, skip=False, login=False):
     boxes = ''.join(f'<span class="pb{" f" if i < filled else ""}">{"•" if i < filled else ""}</span>' for i in range(4))
@@ -100,29 +100,29 @@ def g_pin_set(): return pin_screen('Set a 4-digit PIN', 'You’re verified. Next
 def g_pin_confirm(): return pin_screen('Confirm your PIN', 'Enter the same 4 digits again.', 0, 'That PIN is too easy to guess. Try another.')
 def g_pin_login(): return pin_screen('Enter your PIN', 'For +91 98765 43210', 0, 'Incorrect PIN.', login=True)
 N = 8
-def s1(): return setup_head(1, N) + q('What should we call you?', 'Companions see your first name when you book.') + body(notice('We kept your answers from last time.', 'champ', 'check') + field('Full name', 'Sam Rivera', on=True)) + foot(btn('Next →'))
-def s2(): return (setup_head(2, N) + q('Your mobile number', 'With your country code. For booking updates and safety alerts, never shown to anyone.')
-                  + body(label('Country you live in', 8) + chips(['United Kingdom', 'United States', 'United Arab Emirates', 'Canada', 'Australia', 'Singapore', 'Germany', 'France', 'Saudi Arabia', 'Qatar', 'Other'], (0,), 8)
+def s1(): return setup_head(1, N) + q('What’s your name?', 'Companions see only your first name.') + body(notice('Your answers are saved.', 'champ', 'check') + field('Full name', 'Sam Rivera', on=True)) + foot(btn('Next →'))
+def s2(): return (setup_head(2, N) + q('Your mobile number', 'We never show it to anyone.')
+                  + body(label('Your country', 8) + chips(['United Kingdom', 'United States', 'United Arab Emirates', 'Canada', 'Australia', 'Singapore', 'Germany', 'France', 'Saudi Arabia', 'Qatar', 'Other'], (0,), 8)
                          + field('Mobile with country code', '+44 7700 900123', None, on=True)) + foot(btn('Next →')) + '<div class="tagnote">Email sign-ups only</div>')
-def s3(): return A.s_setup_where().replace('Step 7 of 7', 'Step 3 of 8').replace('<i style="flex:1;height:4px;border-radius:2px;background:#181B34"></i>' * 7, '') if False else (setup_head(3, N) + q('Where are you?', 'We show companions and popular plans near you. Change it any time.')
+def s3(): return A.s_setup_where().replace('Step 7 of 7', 'Step 3 of 8').replace('<i style="flex:1;height:4px;border-radius:2px;background:#181B34"></i>' * 7, '') if False else (setup_head(3, N) + q('Where are you based?', 'We’ll show people near you.')
                   + body(field('State', 'Telangana') + field('City', 'Hyderabad') + field('Area', 'Search by area or PIN code', ph=True, on=True)
                          + card(''.join(f'<div class="lrow">{ic("pin", CD, 15)}<span>{a}</span><span class="rv">{b}</span></div>' for a, b in [('Gachibowli', '500032'), ('Banjara Hills', '500034'), ('Jubilee Hills', '500033')]), mt=8, pad='4px 14px'))
                   + foot(btn('Next →')))
 def s4():
     tiles = ''.join(f'<div class="ctile{" on" if i in (0, 1) else ""}"><span class="av" style="width:40px;height:40px;border-radius:12px;background:{img(k)} center/cover"></span><div style="flex:1"><div style="font:600 14px Urbanist">{t}</div><div style="font:400 11.5px Urbanist;color:{MUT}">{s}</div></div><span class="cb{" on" if i in (0, 1) else ""}">{ic("check", P, 12, 2.6) if i in (0, 1) else ""}</span></div>' for i, (t, s, k) in enumerate(CATS))
-    return setup_head(4, N) + q('What can we help you with?', 'Tap all that fit. Home opens on them.') + body(tiles) + foot(btn('Next · 2 chosen →'))
-def s5(): return setup_head(5, N) + q('I am') + body(''.join(opt(t, None, False, 'user') for t in ['Woman', 'Man', 'Non-binary']) + notice('Tap one: you move on straight away.', 'grey', 'check'))
-def s6(): return (setup_head(6, N) + q('Who would you like to meet?', 'Only these companions are shown to you. Change it any time in Privacy.')
-                  + body(opt('Women companions', 'Only women companions are shown to you.', True, 'users') + opt('Men companions', 'Only men companions are shown to you.', False, 'users')
-                         + opt('Non-binary companions', 'Only non-binary companions are shown to you.', False, 'users') + opt('Anyone', 'All companions are shown to you.', False, 'users')))
+    return setup_head(4, N) + q('What would you like to do?', 'Pick one or more.') + body(tiles) + foot(btn('Next · 2 chosen →'))
+def s5(): return setup_head(5, N) + q('I am') + body(''.join(opt(t, None, False, 'user') for t in ['Woman', 'Man', 'Non-binary']) )
+def s6(): return (setup_head(6, N) + q('Who would you like to meet?', 'You can change this later.')
+                  + body(opt('Women', None, True, 'users') + opt('Men', None, False, 'users')
+                         + opt('Non-binary', None, False, 'users') + opt('Anyone', None, False, 'users')))
 def s7():
-    tips = ''.join(f'<div style="display:flex;gap:8px;align-items:center;margin-top:7px;font-size:12.5px">{ic("shield", CD, 14)}{t}</div>' for t in ['Your face clearly visible, no sunglasses or filters', 'Just you in the photo', 'Good light: daylight or a bright room', 'You choose who sees it on the next step'])
-    return (setup_head(7, N) + q('Add a clear photo of you', 'Our team approves every photo. You can keep using prsnn while it’s reviewed.')
+    tips = ''.join(f'<div style="display:flex;gap:8px;align-items:center;margin-top:7px;font-size:12.5px">{ic("shield", CD, 14)}{t}</div>' for t in ['Face clearly visible', 'Just you', 'Good light'])
+    return (setup_head(7, N) + q('Add your photo', 'Our team checks every photo.')
             + body(f'<div style="margin:14px auto 0;width:124px;height:124px;border-radius:50%;border:2px dashed {C};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:{CD};font:600 13px Urbanist;background:{CM}">{ic("cam", CD, 26)}Add photo</div>{tips}')
             + foot(btn('Next →')))
-def s8(): return (setup_head(8, N) + q('Who can see your photo?', 'Tap one to choose it. Tapping is your consent to this setting; change it any time in Privacy.')
-                  + body(opt('Locked · recommended', 'People see a blurred placeholder with a lock and your first name. Your photo shows only to someone with a confirmed, paid booking with you.', True, 'lock')
-                         + opt('Open', 'Everyone can see your photo and full name.', False, 'globe') + '<div class="sub" style="text-align:center;margin-top:12px">Saving…</div>'))
+def s8(): return (setup_head(8, N) + q('Who can see your photo?', 'You can change this later.')
+                  + body(opt('Locked', 'Only people you’ve booked with', True, 'lock')
+                         + opt('Open', 'Everyone', False, 'globe')))
 
 # ═══════════════ MEMBER ═══════════════
 def home_head(unread=True):
@@ -405,35 +405,35 @@ def c_apply():
             f'<div style="position:absolute;left:18px;right:18px;bottom:18px;color:{P}"><div style="font:600 25px/1.05 Urbanist">Earn doing what you love</div><div style="font:400 12.5px Urbanist;opacity:.9;margin-top:5px">Be good company. Spend time with people who could use some, on your own terms.</div></div></div>'
             + body(perks + notice('Changed copy: today’s screen says “Set your own hourly rate” and “Every member is ID-verified”. Neither is true now.', 'grey', 'edit')) + foot(btn('Apply now →')))
 CN = 9
-def c1(): return setup_head(1, CN, 'Companion') + q('I am', 'Members choose who they’d like to meet.') + body(notice('We kept your answers from last time.', 'champ', 'check') + ''.join(opt(t, None, t == 'Woman', 'user') for t in ['Woman', 'Man', 'Non-binary']))
+def c1(): return setup_head(1, CN, 'Companion') + q('I am') + body(notice('Your answers are saved.', 'champ', 'check') + ''.join(opt(t, None, t == 'Woman', 'user') for t in ['Woman', 'Man', 'Non-binary']))
 def c2():
-    tips = ''.join(f'<div style="display:flex;gap:8px;align-items:center;margin-top:7px;font-size:12.5px">{ic("shield", CD, 14)}{t}</div>' for t in ['Your face clearly visible, no sunglasses or filters', 'Just you in the photo', 'Smile: friendly photos get more bookings'])
-    return (setup_head(2, CN, 'Companion') + q('Add a clear photo of you', 'Members see this first. Our team approves it with the rest of your profile.')
+    tips = ''.join(f'<div style="display:flex;gap:8px;align-items:center;margin-top:7px;font-size:12.5px">{ic("shield", CD, 14)}{t}</div>' for t in ['Face clearly visible', 'Just you', 'A smile helps'])
+    return (setup_head(2, CN, 'Companion') + q('Add your photo', 'Members see this first.')
             + body(f'<div style="margin:12px auto 0;width:118px;height:118px;border-radius:50%;background:{img("evening")} center/cover;box-shadow:0 0 0 4px {W},0 0 0 5.5px {C}"></div><div style="text-align:center;font:600 12px Urbanist;color:{CD};margin-top:8px">Tap to change</div>{tips}') + foot(btn('Next →')))
-def c3(): return (setup_head(3, CN, 'Companion') + q('Who can see your photo?', 'Tap one to choose. Tapping is your consent; change it any time in Privacy.')
-                  + body(opt('Locked · recommended', 'Members see a blurred placeholder and your first name until they have a confirmed, paid booking with you.', True, 'lock') + opt('Open', 'Everyone can see your photo and full name.', False, 'globe')))
-def c4(): return (setup_head(4, CN, 'Companion') + q('Where are you based?', 'Bookings come from your area first.') + body(field('State', 'Telangana') + field('City', 'Hyderabad') + field('Area', 'Banjara Hills', on=True)) + foot(btn('Next →')))
+def c3(): return (setup_head(3, CN, 'Companion') + q('Who can see your photo?', 'You can change this later.')
+                  + body(opt('Locked', 'Only people who’ve booked you', True, 'lock') + opt('Open', 'Everyone', False, 'globe')))
+def c4(): return (setup_head(4, CN, 'Companion') + q('Where are you based?', 'You’ll get bookings near you.') + body(field('State', 'Telangana') + field('City', 'Hyderabad') + field('Area', 'Banjara Hills', on=True)) + foot(btn('Next →')))
 def c5():
     ints = ['Coffee', 'Walks', 'Food', 'Movies', 'Music', 'Books', 'Sports', 'Art', 'Shopping', 'Travel', 'Hindi', 'English', 'Telugu', 'Urdu']
-    return (setup_head(5, CN, 'Companion') + q('Tell members about you', 'A few friendly lines. This is what members read.')
-            + body(field('About you', 'Gallery openings, long coffees and city walks. Calm, curious and a good listener.', '96/600 · at least 30 characters', tall=True)
+    return (setup_head(5, CN, 'Companion') + q('About you', 'A few lines for members.')
+            + body(field('About you', 'Gallery openings, long coffees and city walks. Calm, curious and a good listener.', 'At least 30 letters', tall=True)
                    + label('Interests and languages') + f'<div class="chips" style="flex-wrap:wrap;margin-top:8px">' + ''.join(f'<span class="chip{" on" if t in ("Coffee", "Art", "Hindi", "English") else ""}">{t}</span>' for t in ints) + '</div>') + foot(btn('Next →')))
 def c6():
     tiles = ''.join(f'<div class="ctile{" on" if i in (1, 2) else ""}" style="padding:8px 12px;margin-top:7px"><span class="av" style="width:36px;height:36px;border-radius:10px;background:{img(k)} center/cover"></span><div style="flex:1"><div style="font:600 13.5px Urbanist">{t}</div><div style="font:400 11px Urbanist;color:{MUT}">{s}</div></div><span class="cb{" on" if i in (1, 2) else ""}">{ic("check", P, 12, 2.6) if i in (1, 2) else ""}</span></div>' for i, (t, s, k) in enumerate(CATS))
-    return setup_head(6, CN, 'Companion') + q('What would you enjoy doing?', 'You’ll show up in these categories. Pick everything you’d enjoy.') + body(tiles) + foot(btn('Next · 2 chosen →'))
+    return setup_head(6, CN, 'Companion') + q('What would you like to do?', 'Pick one or more.') + body(tiles) + foot(btn('Next · 2 chosen →'))
 def c7():
     rows_ = ''.join(f'<div style="margin-top:{0 if i == 0 else 7}px">{price_tab(h_, "You get " + inr(earn(h_)))}</div>' for i, h_ in enumerate(range(1, 13)))
-    return setup_head(7, CN, 'Companion') + q('Which bookings do you want?', 'Same prices for everyone. Longer bookings earn more. You receive 80%.') + body(f'<div style="margin-top:10px">{rows_}</div>') + foot(btn('Next →'))
+    return setup_head(7, CN, 'Companion') + q('How long can you meet?', 'You get 80% of each booking.') + body(f'<div style="margin-top:10px">{rows_}</div>') + foot(btn('Next →'))
 def c8():
     days = ''.join(f'<span class="chip{" on" if on else ""}">{d}</span>' for d, on in zip(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], [1, 1, 0, 1, 1, 1, 1]))
     frm = ''.join(f'<span class="chip{" on" if t == "10 AM" else ""}">{t}</span>' for t in ['7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM'])
     unt = ''.join(f'<span class="chip{" on" if t == "8 PM" else ""}">{t}</span>' for t in ['5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM'])
-    return (setup_head(8, CN, 'Companion') + q('When are you free?', 'Evenings and weekends get the most requests.')
+    return (setup_head(8, CN, 'Companion') + q('When are you free?')
             + body(label('Days', 8) + f'<div class="chips" style="flex-wrap:wrap;margin-top:8px">{days}</div>' + label('From') + f'<div class="chips" style="flex-wrap:wrap;margin-top:8px">{frm}</div>' + label('Until') + f'<div class="chips" style="flex-wrap:wrap;margin-top:8px">{unt}</div>') + foot(btn('Next →')))
 def c9():
-    lines = ''.join(f'<div class="lrow" style="display:block"><div class="sub" style="margin:0">{a}</div><div style="font:500 13px Urbanist">{b}</div></div>' for a, b in [('Based in', 'Banjara Hills, Hyderabad, Telangana'), ('Offers', 'Don’t Go Alone, Explore & Discover'), ('Durations', '1 h (you get ₹319) · 2 h (₹559) · 4 h (₹1,039) · 6 h (₹1,519)')])
-    return (setup_head(9, CN, 'Companion') + q('One thing before your first booking') + body(notice('When your first booking arrives, we’ll ask for a photo ID and a selfie. It takes about 2 minutes, and nothing is needed now.', 'champ', 'id') + card(lines, pad='2px 14px')
-                                                                                         + checkbox(True, 'I agree to the prsnn Code of Conduct.')) + foot(btn('Send for approval →')))
+    lines = ''.join(f'<div class="lrow" style="display:block"><div class="sub" style="margin:0">{a}</div><div style="font:500 13px Urbanist">{b}</div></div>' for a, b in [('Based in', 'Banjara Hills, Hyderabad'), ('You’d like to do', 'Don’t Go Alone, Explore & Discover'), ('Lengths', '1, 2, 4 and 6 hours')])
+    return (setup_head(9, CN, 'Companion') + q('Almost done') + body(notice('We’ll ask for your ID at your first booking. Nothing needed now.', 'champ', 'id') + card(lines, pad='2px 14px')
+                                                                                         + checkbox(True, 'I agree to the <u>Code of Conduct</u>.')) + foot(btn('Send for approval →')))
 def status_screen(kind):
     if kind == 'review':
         top_ = f'<div style="text-align:center;margin-top:6px"><span class="okb" style="background:{CM}">{ic("clock", CD, 32)}</span><div class="h" style="font-size:22px;margin-top:14px">Profile sent for approval</div><div class="sub">Our team reviews every companion before they go live, usually within 24 hours. We’ll let you know in your notifications.</div></div>'
