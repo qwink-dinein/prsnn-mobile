@@ -12,7 +12,16 @@ Nothing here is built yet. Keep adding to this list; build everything in one go.
 - Become a companion: drop "Set your own hourly rate" and "Every member is ID-verified" (no longer true).
 - Mock-up annotations are not part of the app (e.g. the grey "Changed copy: …" note on Become a companion, "Email sign-ups only" and "New: panic button in chat" tags).
 
-## 2. Bugs (owner, 2026-11-14)
+## 2. New: admins can view the app as a member or companion (design for approval: `preview/view-as.html`)
+- Admin overview gets a "View the app as…" row → choose **A member** or **A companion**, and where to start (Home, Sign-up, A booking, Chat).
+- Opens the real app screens with the built-in sample data (the demo service), never a real person's account. Admins can't see or act as real users.
+- A midnight strip on every screen: "Member preview · sample data · Exit". Switch member ↔ companion from the preview's Profile tab.
+- Everything is tappable (book, sample pay, chat, panic, companion onboarding, accept, ID check, earnings) but nothing reaches the server: no payments, notifications or WhatsApp. Sample changes are cleared on exit.
+- Exit returns to Admin with the admin's own session untouched; each preview is written to the activity log.
+- How: make `svc` switchable at runtime (backend ↔ demo) for staff, with a separate React Query cache and session overlay while previewing.
+- Later, if approved: Users → a companion → "See their profile as members do" (read-only real public profile).
+
+## 3. Bugs (owner, 2026-11-14)
 - **Text must never spill out of its card.** Seen in the mock-ups:
   - My bookings: the price "₹1,299" on the "Paid · awaiting companion" card runs past the card's right edge.
   - Become a companion: the last note runs under the "Apply now" button.
