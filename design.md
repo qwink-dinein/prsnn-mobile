@@ -31,6 +31,14 @@ and photos, **deep champagne `#8E7646`** on porcelain and white. App icon: “p.
 midnight (porcelain p, champagne dot) or white (midnight p, deep-champagne dot). Reference:
 `preview/wordmark-dot.html` (“In use”). Replaces the italic Lora wordmark when the new look is applied.
 
+**Home categories (approved 2026-11-14, not applied yet): Wallet, “B · Lift to choose”**
+(`preview/wallet-variants.html`). The chosen category is a large photo card (radius 24, midnight
+gradient over the photo, logo and “n of 5” on top, name in Urbanist 600 24, one line, a champagne
+“Find company →” button). The other categories wait below as slim overlapping card tabs, each in its
+own material with fine engraved lines and a small round photo: New in Town = midnight, Don’t Go Alone =
+champagne, Explore & Discover = pearl (white), For a Loved One = steel `#3A3F5C`, Work & Study = mist
+`#E6E6EC`. Tapping a tab lifts it into the large card.
+
 ## Palette ("2026 Presence": mist, ink, moss, signal)
 
 | Token | Hex | Use |
