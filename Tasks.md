@@ -34,6 +34,10 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 🔑 **WhatsApp `prsnn_panic_alert`**: submit in Waplify, then set the secret `WAPLIFY_TPL_PANIC_ALERT`
 - 💡 Weekly plans for a loved one and gift bookings (designed, not built: need series payments and gift codes)
 
+- ✅ **Round 3** (2026-11-14): PIN forever (Log out locks the app; the session is saved on the phone; OTP only for Forgot PIN, 5 wrong PINs or account deletion) · WhatsApp to one side only (offer → companion, confirmed → member) · 5 AM day-of reminder to both · panic alerts with session, activity and alert count
+- 🔑 **WhatsApp `prsnn_session_reminder`** (#8) and the 12-variable **`prsnn_panic_alert`** (#7): submit in Waplify, then set `WAPLIFY_TPL_SESSION_REMINDER` and `WAPLIFY_TPL_PANIC_ALERT`
+- ⏳ Website (prsnn-frontend) still sends its own messages through the old Express API; it follows these rules once it moves to Supabase
+
 ## Before the first real build
 
 - ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.

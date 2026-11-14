@@ -129,5 +129,16 @@ ok((await rpc(sup, 'admin_audience')).data?.members === 1, 'audience counts it')
 await rpc(mem, 'save_push_token', { token: null });
 { const { data } = await mem.from('notifications').select('message').order('created_at'); ok(data?.length >= 4, `member has ${data?.length} notifications`); }
 
+console.log('9. Who is told what (WhatsApp: offer → companion only, confirmed → member only)');
+{
+  const { data: mn } = await mem.from('notifications').select('type').eq('booking_id', bid);
+  const { data: cn } = await comp.from('notifications').select('type').eq('booking_id', bid);
+  ok(cn?.some((n) => n.type === 'booking_offer') && !mn?.some((n) => n.type === 'booking_offer'), 'the offer goes to the companion, not the member', { mn, cn });
+  ok(mn?.some((n) => n.type === 'booking_confirmed'), 'the member is told the booking is confirmed', mn);
+  ok((await rpc(mem, 'claim_notifications')).error, 'members cannot read the delivery queue');
+}
+// The 5 AM reminder and the 12-field panic alert run as the database itself:
+// check them with prsnn-backend/supabase/tests/round3-notify.sql (always rolls back).
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

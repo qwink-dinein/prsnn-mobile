@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { secure } from './storage';
+import { loginKey } from '@/domain/login';
 
 /**
  * The 4-digit PIN is a device unlock: after one OTP login the session stays on
@@ -8,7 +9,7 @@ import { secure } from './storage';
  * the person logs in with OTP again.
  */
 /** A PIN belongs to a mobile number (last 10 digits) or, for email sign-ups, an email. */
-const norm = (id: string) => (id.includes('@') ? `e.${id.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_')}` : id.replace(/\D/g, '').slice(-10));
+const norm = loginKey;
 const key = (phone: string) => `prsnn.pin.${norm(phone)}`;
 const triesKey = (phone: string) => `${key(phone)}.tries`;
 export const MAX_PIN_TRIES = 5;
@@ -40,8 +41,24 @@ export async function checkLocalPin(phone: string, pin: string): Promise<boolean
   const tries = Number((await secure.get(triesKey(phone))) ?? '0') + 1;
   if (tries >= MAX_PIN_TRIES) {
     await clearLocalPin(phone);
+    await forgetSavedSession(phone);
     throw new Error('Too many wrong PINs. Log in with OTP and choose a new PIN.');
   }
   await secure.set(triesKey(phone), String(tries));
   return false;
 }
+
+/**
+ * The saved session: the Supabase refresh token for each person who has logged in
+ * on this phone, in the Keychain / Keystore. Refresh tokens don't expire on their
+ * own, so the PIN keeps working for good: "Log out" only locks the app, and the
+ * code (OTP) is needed again only after Forgot PIN, five wrong PINs, or deleting
+ * the account.
+ */
+const rtKey = (id: string) => `prsnn.rt.${norm(id)}`;
+
+export async function saveSession(id: string, refreshToken: string) {
+  if (norm(id)) await secure.set(rtKey(id), refreshToken);
+}
+export const savedSession = (id: string) => secure.get(rtKey(id));
+export const forgetSavedSession = (id: string) => secure.remove(rtKey(id));

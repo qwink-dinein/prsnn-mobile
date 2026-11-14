@@ -1,13 +1,14 @@
 import { useAppWidth } from '@/lib/layout';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, shadow, space } from '@/theme/tokens';
 import { Logo } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { useSession } from '@/state/session';
+import { goToLogin } from '@/lib/flow';
 
 const PHOTOS = [require('../../assets/images/coffee.jpg'), require('../../assets/images/together.jpg'), require('../../assets/images/walks.jpg'), require('../../assets/images/study.jpg')];
 
@@ -18,7 +19,7 @@ export default function Splash() {
 
   useEffect(() => {
     if (token) return;
-    const t = setTimeout(() => router.replace('/welcome'), 1600);
+    const t = setTimeout(() => void goToLogin('/welcome'), 1600);
     return () => clearTimeout(t);
   }, [token]);
 

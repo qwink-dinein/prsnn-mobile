@@ -4,6 +4,8 @@ import { secure } from '@/lib/storage';
 import { setApiToken } from '@/lib/api';
 import { DEMO } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
+import { clearLocalPin, forgetSavedSession, saveSession, savedSession } from '@/lib/pin';
+import { loginIdOfAuthUser, sameLogin, sessionIsGone } from '@/domain/login';
 import type { Role, SessionUser } from '@/domain/types';
 
 const TOKEN_KEY = 'prsnn.token';
@@ -30,7 +32,10 @@ interface SessionState {
   hydrate: () => Promise<void>;
   signIn: (token: string, user: SessionUser) => Promise<void>;
   updateUser: (patch: Partial<SessionUser>) => Promise<void>;
+  /** "Log out": locks the app. The session stays saved on this phone, so the PIN opens it again. */
   signOut: () => Promise<void>;
+  /** Ends the session for good (account deleted): the next login needs a code. */
+  endSession: () => Promise<void>;
   setPrefs: (patch: Partial<Prefs>) => Promise<void>;
   toggleSaved: (companionId: string) => Promise<void>;
 }
@@ -64,7 +69,10 @@ export const useSession = create<SessionState>((set, get) => ({
     let live = token;
     if (!DEMO) {
       const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
-      live = data.session?.access_token ?? null;
+      let session = data.session;
+      // The library dropped the session but this phone still has it saved: bring it back.
+      if (!session && user) session = (await restoreSession(user.phone || user.email || '')).session;
+      live = session && sameLogin(user?.phone || user?.email, session.user) ? session.access_token : null;
       if (!live) user = null;
     }
     setApiToken(live && user ? live : null);
@@ -89,12 +97,21 @@ export const useSession = create<SessionState>((set, get) => ({
   },
 
   async signOut() {
+    // Not supabase.auth.signOut(): that revokes the session on the server and the
+    // next login would need a paid WhatsApp code. The PIN screen reopens it instead.
+    setApiToken(null);
+    set({ token: null, user: null });
+    await Promise.all([secure.remove(TOKEN_KEY), secure.remove(USER_KEY)]);
+  },
+
+  async endSession() {
+    const id = get().user?.phone || get().user?.email;
     setApiToken(null);
     manualSignOut = true;
     if (!DEMO) await supabase.auth.signOut().catch(() => {});
     manualSignOut = false;
     set({ token: null, user: null });
-    await Promise.all([secure.remove(TOKEN_KEY), secure.remove(USER_KEY)]);
+    await Promise.all([secure.remove(TOKEN_KEY), secure.remove(USER_KEY), ...(id ? [forgetSavedSession(id), clearLocalPin(id)] : [])]);
   },
 
   async setPrefs(patch) {
@@ -111,14 +128,52 @@ export const useSession = create<SessionState>((set, get) => ({
 
 export const isCompanionUser = (u: SessionUser | null) => u?.role === 'companion';
 
-/** Keep the stored token in step with Supabase (refreshes) and sign out when the session ends. */
+/**
+ * Bring back a saved session for `id` (number or email) from this phone.
+ * `gone` is true only when the server says it no longer exists; a network
+ * problem leaves it saved for the next try.
+ */
+export async function restoreSession(id: string): Promise<{ session: import('@supabase/supabase-js').Session | null; gone: boolean }> {
+  if (!id) return { session: null, gone: false };
+  const rt = await savedSession(id);
+  if (!rt) return { session: null, gone: true };
+  try {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: rt });
+    if (data.session && sameLogin(id, data.session.user)) return { session: data.session, gone: false };
+    const gone = !data.session && sessionIsGone(error?.message);
+    if (gone) await forgetSavedSession(id);
+    return { session: null, gone };
+  } catch (e) {
+    return { session: null, gone: sessionIsGone(e instanceof Error ? e.message : null) };
+  }
+}
+
+/** Keep the saved session and the stored token in step with Supabase (refreshes, new logins). */
 if (!DEMO) {
+  let restoring = false;
   supabase.auth.onAuthStateChange((event, session) => {
     const st = useSession.getState();
-    if (event === 'TOKEN_REFRESHED' && session && st.user) useSession.setState({ token: session.access_token });
-    if (event === 'SIGNED_OUT' && st.token) {
-      setApiToken(null);
-      useSession.setState({ token: null, user: null, expired: !manualSignOut });
+    const id = loginIdOfAuthUser(session?.user);
+    if (session?.refresh_token && id && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+      void saveSession(id, session.refresh_token);
+    }
+    if (event === 'TOKEN_REFRESHED' && session && st.user && sameLogin(st.user.phone || st.user.email, session.user)) useSession.setState({ token: session.access_token });
+    if (event === 'SIGNED_OUT' && st.token && !manualSignOut && !restoring) {
+      // The library gave up on the session. Try the copy saved on this phone before asking for a code.
+      const who = st.user?.phone || st.user?.email || '';
+      restoring = true;
+      void restoreSession(who).then(({ session: back, gone }) => {
+        restoring = false;
+        if (back) {
+          setApiToken(back.access_token);
+          useSession.setState({ token: back.access_token });
+          return;
+        }
+        // Offline: stay in the app; calls fail with "no internet" and work again once back online.
+        if (!gone) return;
+        setApiToken(null);
+        useSession.setState({ token: null, user: null, expired: true });
+      });
     }
   });
 }

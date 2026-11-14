@@ -6,6 +6,7 @@ import { svc } from '@/services';
 import { needsSetup } from '@/domain/setup';
 import { isStaff } from '@/domain/admin';
 import { displayPhone as displayPhoneOf } from '@/domain/phone';
+import { hasLocalPin } from '@/lib/pin';
 
 /** Where to go once someone is signed in and set up. */
 export function goHome(user: SessionUser | null = useSession.getState().user) {
@@ -21,6 +22,16 @@ export function goHome(user: SessionUser | null = useSession.getState().user) {
 }
 
 export { needsSetup } from '@/domain/setup';
+
+/**
+ * Not signed in: whoever last logged in on this phone and set a PIN goes straight
+ * to the PIN screen (no WhatsApp code needed); everyone else to `fallback`.
+ */
+export async function goToLogin(fallback: '/welcome' | '/login' = '/welcome') {
+  const last = useSession.getState().prefs.lastPhone;
+  if (last && (await hasLocalPin(last))) router.replace({ pathname: '/pin', params: { mode: 'login', phone: last } });
+  else router.replace(fallback);
+}
 
 /** After the PIN is set (or skipped): finish setup, else home. */
 export function afterPin(user: SessionUser | null = useSession.getState().user) {

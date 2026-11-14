@@ -177,16 +177,28 @@ export default function Pin() {
         <PinPad onKey={onKey} disabled={busy} />
       </Enter>
       {mode === 'login' ? (
-        <Text
-          variant="subhead"
-          color={colors.moss}
-          center
-          onPress={() => router.replace({ pathname: '/login', params: { reset: '1', phone: phone ?? '' } })}
-          accessibilityRole="button"
-          style={{ padding: space.lg }}
-        >
-          Forgot PIN? Reset it with a code
-        </Text>
+        <View>
+          <Text
+            variant="subhead"
+            color={colors.moss}
+            center
+            onPress={() => router.replace({ pathname: '/login', params: { reset: '1', phone: phone ?? '' } })}
+            accessibilityRole="button"
+            style={{ paddingTop: space.lg, paddingBottom: space.sm, paddingHorizontal: space.lg }}
+          >
+            Forgot PIN? Reset it with a code
+          </Text>
+          <Text
+            variant="footnote"
+            color={colors.textMuted}
+            center
+            onPress={() => router.replace('/login')}
+            accessibilityRole="button"
+            style={{ paddingTop: space.sm, paddingBottom: space.lg, paddingHorizontal: space.lg }}
+          >
+            Not you? Log in with another number
+          </Text>
+        </View>
       ) : (
         <View style={{ height: space.xl }} />
       )}

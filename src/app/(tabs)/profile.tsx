@@ -6,7 +6,7 @@ import { Screen, Avatar, ListRow, Pill } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { LINKS } from '@/lib/config';
-import { displayPhone } from '@/lib/flow';
+import { displayPhone, goToLogin } from '@/lib/flow';
 import { queryClient } from '@/lib/queryClient';
 import { useSession } from '@/state/session';
 import { companionStatusLine, idCheckValue } from '@/domain/verification';
@@ -25,11 +25,11 @@ export default function ProfileTab() {
 
   const confirm = useConfirm();
   const logout = async () => {
-    if (!(await confirm({ title: 'Log out?', message: 'You can log back in with your number and OTP or your PIN.', confirmLabel: 'Log out', destructive: true }))) return;
+    if (!(await confirm({ title: 'Log out?', message: 'You’ll log back in with your PIN. No code needed.', confirmLabel: 'Log out', destructive: true }))) return;
     await unregisterPush();
     await signOut();
     queryClient.clear();
-    router.replace('/welcome');
+    await goToLogin('/welcome');
   };
 
   return (

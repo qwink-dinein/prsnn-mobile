@@ -1,6 +1,6 @@
 # WhatsApp templates for prsnn (Waplify → Meta)
 
-Seven templates cover login, the booking flow and safety alerts. Submit them in Waplify →
+Eight templates cover login, the booking flow, the day-of reminder and safety alerts. Submit them in Waplify →
 Templates (language **English**), then put the approved names in the backend
 env on Render.
 
@@ -13,6 +13,12 @@ env on Render.
 | 5 | `prsnn_booking_confirmed` | Utility | member | companion accepted a paid booking | `WAPLIFY_TPL_BOOKING_CONFIRMED` |
 | 6 | `prsnn_booking_unfulfilled` | Utility | member | nobody accepted → full refund | `WAPLIFY_TPL_BOOKING_UNFULFILLED` |
 | 7 | `prsnn_panic_alert` | Utility | **every admin** | panic button pressed; repeats every 5 min until resolved | `WAPLIFY_TPL_PANIC_ALERT` |
+| 8 | `prsnn_session_reminder` | Utility | member **and** companion | 5:00 AM on the day of a confirmed, paid session | `WAPLIFY_TPL_SESSION_REMINDER` |
+
+**Who gets which message (2026-11-14).** Each booking message goes to one side only:
+the companion gets #2 when a member books (the member is not messaged — they know they
+booked); the member gets #5 when a companion accepts (the companion is not messaged —
+they know they accepted). Only the 5 AM reminder (#8) goes to both.
 
 > **Why #1 is "Authentication", not "Utility".** Meta only allows one-time
 > codes in Authentication templates. A Utility template containing a code
@@ -235,6 +241,9 @@ Member: {{6}}, {{7}}
 Companion: {{8}}, {{9}}
 Meeting place: {{10}}
 
+Session: {{11}}
+Status: {{12}}
+
 Please call them now. This alert repeats every 5 minutes until it is marked resolved in the admin app.
 ```
 
@@ -250,6 +259,13 @@ Please call them now. This alert repeats every 5 minutes until it is marked reso
 | {{8}} | companion's full name | Priya Nair |
 | {{9}} | companion's mobile | +91 90000 11111 |
 | {{10}} | the agreed public place (and who they're meeting, for bookings made for someone else) | Starbucks, Inorbit Mall, Madhapur, Hyderabad |
+| {{11}} | duration and activity | 4 hours · Don't Go Alone |
+| {{12}} | which alert this is and when it was first pressed | Alert 2, first pressed at 4:35 PM |
+
+> **Updated 2026-11-14: now 12 variables.** If you already submitted the 10-variable
+> version, submit this one as a new template (same name with `_v2`, e.g.
+> `prsnn_panic_alert_v2`) and set the secret to that name. Until the secret is set,
+> admins still get the push and the in-app alert with all the same details.
 
 After Meta approves it, add the secret **`WAPLIFY_TPL_PANIC_ALERT` = `prsnn_panic_alert`**
 (Supabase → Edge Functions → Secrets). Until then admins still get the push and the
@@ -258,3 +274,36 @@ in-app alert; the WhatsApp message starts as soon as the secret is set.
 > Admins must have a number on their account (phone login, or the mobile with
 > country code that email sign-ups give) to receive it. Numbers in the superadmin
 > list always receive it.
+
+---
+
+## 8 · `prsnn_session_reminder` (Utility → member and companion) · env `WAPLIFY_TPL_SESSION_REMINDER`
+
+Sent at **5:00 AM India time** on the day of a confirmed, paid session, once to each side.
+Not sent for bookings confirmed after 5 AM that same day (they have just had their
+confirmation). No header, footer or buttons. Language English.
+
+**Body**
+```
+Hello {{1}}, this is a reminder from {{2}} that your session with {{3}} is today.
+
+Date: {{4}}
+Time: {{5}}
+Meeting place: {{6}}
+Booking reference: {{7}}
+
+Please be there on time and meet only in public places. You can chat in the app if anything changes.
+```
+
+| Var | Meaning | Sample to enter in Waplify |
+|---|---|---|
+| {{1}} | the person's first name | Karan |
+| {{2}} | brand | prsnn |
+| {{3}} | the other person's first name | Ayesha |
+| {{4}} | date | Sun, 15 Nov |
+| {{5}} | start time | 4:00 PM |
+| {{6}} | meeting place, area, city | Starbucks, Inorbit Mall, Madhapur, Hyderabad |
+| {{7}} | booking reference | ABC9F1 |
+
+After Meta approves it, add the secret **`WAPLIFY_TPL_SESSION_REMINDER` = `prsnn_session_reminder`**
+(Supabase → Edge Functions → Secrets). Until then the reminder arrives as a push and in the bell.

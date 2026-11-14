@@ -14,7 +14,7 @@ import { useSession } from '@/state/session';
 
 /** In-app account deletion (required by the App Store and Google Play). */
 export default function DeleteAccount() {
-  const signOut = useSession((s) => s.signOut);
+  const endSession = useSession((s) => s.endSession);
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +24,7 @@ export default function DeleteAccount() {
     setBusy(true);
     try {
       await svc.deleteAccount();
-      await signOut();
+      await endSession();
       queryClient.clear();
       router.replace('/welcome');
     } catch (e) {

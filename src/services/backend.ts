@@ -1,7 +1,8 @@
 import type { UploadFile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
-import { useSession } from '@/state/session';
+import { restoreSession, useSession } from '@/state/session';
+import { sameLogin } from '@/domain/login';
 import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
@@ -197,12 +198,16 @@ export const backend = {
   /** `id` is the mobile number or, for email sign-ups, the email. */
   pinLogin: async (id: string, pin: string): Promise<AuthResult> => {
     if (!(await checkLocalPin(id, pin))) throw new Error('Incorrect PIN.');
-    const { data } = await supabase.auth.refreshSession();
-    const u = data.session?.user;
-    const same = id.includes('@') ? u?.email?.toLowerCase() === id.toLowerCase() : u?.phone?.replace(/\D/g, '').slice(-10) === id.replace(/\D/g, '').slice(-10);
-    if (!data.session || !same) throw new Error('Your session on this device has ended. Log in with a code again.');
+    // The session on this phone (refreshed by the library if it's old), else the copy saved for this person.
+    const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    let session = data.session && sameLogin(id, data.session.user) ? data.session : null;
+    if (!session) {
+      const back = await restoreSession(id);
+      if (!back.session) throw new Error(back.gone ? 'For your safety, confirm it’s you with a code this once. Tap “Forgot PIN?”.' : NETWORK);
+      session = back.session;
+    }
     const user = await sessionUser(await rpc<SessionUser>('sync_my_role'));
-    return { token: data.session.access_token, user };
+    return { token: session.access_token, user };
   },
   /** Visitors from abroad: a 6-digit code by email (Supabase Auth email OTP). */
   sendEmailOtp: async (email: string) => {

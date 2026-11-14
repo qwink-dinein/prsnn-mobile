@@ -190,3 +190,30 @@ types `action_needed`, `approval`, `panic`. Panic pushes use the Android channel
 
 **WhatsApp.** Panic alerts go through `private.whatsapp_outbox` → `claim_whatsapp()` → the `notify` edge function, template
 `WAPLIFY_TPL_PANIC_ALERT` (WHATSAPP_TEMPLATES.md #7), to every staff number and the superadmin list.
+
+
+## Round 3 (2026-11-14)
+
+**Sessions last until the person ends them.** Supabase refresh tokens have no time limit on
+this project, so a session never runs out on its own. The app keeps each person's refresh
+token in the Keychain / Keystore (`src/lib/pin.ts`, `saveSession`) and the PIN reopens it.
+**Log out only locks the app** (no `auth.signOut()`, which would revoke the session and force a
+paid WhatsApp code). A code is needed again only after *Forgot PIN*, five wrong PINs, deleting
+the account, or if the server reports the session gone (`sessionIsGone` in `src/domain/login.ts`;
+network errors never log anyone out).
+
+**WhatsApp audience.** `claim_notifications()` now returns `toRequester` (the recipient is the
+member who booked) and `booking.place`. `functions/notify` sends `booking_offer` → companion only,
+`booking_confirmed` → member only, unfulfilled `refund` → member only, `session_reminder` → both.
+
+**5 AM reminder.** New notification type `session_reminder`, column `bookings.reminder_sent_at`,
+`private.send_day_reminders()` (pg_cron `prsnn-day-reminders`, every 5 min): from 5:00 AM IST, every
+accepted + paid booking that day, confirmed before 5 AM and not started yet, gets one row for the
+member and one for the companion (push + `WAPLIFY_TPL_SESSION_REMINDER`). Sent once per booking.
+
+**Panic alert details.** `private.panic_send` adds {{11}} duration + activity and {{12}} the alert
+number and first-pressed time (12 variables, WHATSAPP_TEMPLATES.md #7); the staff push carries the
+same. Email sign-ups' `contactPhone` is used when there is no login number.
+
+Checks: `scripts/e2e-supabase.mjs` §9 and `prsnn-backend/supabase/tests/round3-notify.sql`
+(one transaction, always rolled back).

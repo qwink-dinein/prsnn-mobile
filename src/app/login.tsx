@@ -77,7 +77,7 @@ export default function Login() {
       </View>
 
       <View style={{ gap: space.lg }}>
-        {params.expired === '1' ? <Notice tone="warning" text="Your session ended, so we logged you out to keep your account safe. Log in again — anything you were filling in is saved on this phone." /> : null}
+        {params.expired === '1' ? <Notice tone="warning" text="For your safety, please confirm it’s you with a code this once. Anything you were filling in is saved on this phone." /> : null}
         <Enter index={3}>
         <Animated.View style={shakeStyle}>
         <TextField
