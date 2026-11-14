@@ -97,7 +97,7 @@ export default function PanicScreen() {
           <Animated.View style={[styles.badge, reduced ? null : { animationName: PULSE, animationDuration: 1400, animationIterationCount: 'infinite' }]}>
             <Text style={styles.sos}>SOS</Text>
           </Animated.View>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text variant="title1" color={colors.paper} accessibilityRole="header">
               Alert sent
             </Text>

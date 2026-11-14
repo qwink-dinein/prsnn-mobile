@@ -97,5 +97,5 @@ function Activity() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  item: { gap: 4, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  item: { gap: 4, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
 });

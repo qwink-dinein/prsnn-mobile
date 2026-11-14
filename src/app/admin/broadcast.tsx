@@ -89,7 +89,7 @@ function Broadcast() {
             <View style={styles.appIcon}>
               <Icon name="sparkle" size={16} color={colors.onMoss} />
             </View>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <Text variant="caption" muted>
                 {BRAND_WORD} · now
               </Text>
@@ -135,6 +135,6 @@ function Broadcast() {
 }
 
 const styles = StyleSheet.create({
-  preview: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  preview: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   appIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center' },
 });

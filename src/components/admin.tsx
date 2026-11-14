@@ -72,7 +72,7 @@ export function UserRow({ u, onPress }: { u: AdminUser; onPress?: () => void }) 
   return (
     <Card onPress={onPress ?? (() => router.push(`/admin/user/${u.id}`))} accessibilityLabel={`${u.fullName || 'No name'}, ${roleLabel(u.role)}${u.suspended ? ', suspended' : ''}`} style={styles.userRow}>
       <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={44} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text variant="headline" numberOfLines={1}>
           {u.fullName || 'No name yet'}
         </Text>
@@ -98,7 +98,7 @@ export function KV({ k, v }: { k: string; v?: ReactNode }) {
           {v}
         </Text>
       ) : (
-        <View style={{ flex: 1 }}>{v}</View>
+        <View style={{ flex: 1, minWidth: 0 }}>{v}</View>
       )}
     </View>
   );
@@ -194,7 +194,7 @@ export const rupeeField = (max: number, label = 'Amount (₹)', initial?: number
 });
 
 const styles = StyleSheet.create({
-  tile: { flexBasis: '47%', flexGrow: 1, gap: 2, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, minHeight: 96 },
+  tile: { flexBasis: '47%', flexGrow: 1, gap: 2, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, minHeight: 96 },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
   kv: { flexDirection: 'row', gap: space.md, paddingVertical: 6 },

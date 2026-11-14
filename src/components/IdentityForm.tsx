@@ -64,7 +64,7 @@ export function IdentityForm({ value, onChange, showSee = true, role = 'member' 
               style={[styles.option, on && styles.optionOn]}
             >
               <Icon name={v === 'locked' ? 'lock' : 'eye'} size={20} color={colors.moss} />
-              <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <Text variant="callout" style={{ fontFamily: 'Urbanist-SemiBold' }}>
                   {VISIBILITY_COPY[v].title}
                   {value.gender && defaultVisibility(value.gender) === v ? <Text variant="caption" muted>{'  '}· default</Text> : null}

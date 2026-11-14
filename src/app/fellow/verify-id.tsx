@@ -180,7 +180,7 @@ export default function VerifyId() {
               }}
               style={[styles.opt, on && styles.optOn]}
             >
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text variant="headline">{t.label}</Text>
                 <Text variant="footnote" muted>
                   {t.sides}
@@ -212,7 +212,7 @@ export default function VerifyId() {
 function OfferSummary({ b, earn }: { b: Booking; earn: string | null }) {
   return (
     <Card style={styles.offer}>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text variant="footnote" muted>
           {personOf(b.requesterId)?.fullName?.split(' ')[0] ?? 'Member'} · {whenOf(b)} · {durationLabel(b.duration)}
         </Text>

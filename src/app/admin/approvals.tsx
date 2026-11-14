@@ -65,7 +65,7 @@ export default function Approvals() {
               tab === 'companions' ? (
                 <PressScale accessibilityRole="button" accessibilityLabel={`Review ${u.fullName}`} onPress={() => router.push({ pathname: '/admin/review/[id]', params: { id: u.id } })} innerStyle={styles.row}>
                   <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={56} />
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                     <Text variant="headline">{u.fullName || 'No name'}</Text>
                     <Text variant="footnote" muted numberOfLines={1}>
                       {[u.area, u.city].filter(Boolean).join(', ') || 'No area'} · {u.updatedAt ? ago(u.updatedAt) : ''}
@@ -77,7 +77,7 @@ export default function Approvals() {
                 <Card style={{ gap: space.md }}>
                   <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'center' }}>
                     {u.profilePhotoUrl ? <Image source={{ uri: u.profilePhotoUrl }} style={styles.photo} contentFit="cover" /> : <View style={[styles.photo, { backgroundColor: colors.mistDeep }]} />}
-                    <View style={{ flex: 1, gap: 2 }}>
+                    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                       <Text variant="headline">{u.fullName || 'No name'}</Text>
                       <Text variant="footnote" muted>
                         {u.role === 'companion' ? 'Companion' : 'Member'} · {u.city ?? ''}
@@ -102,6 +102,6 @@ export default function Approvals() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   photo: { width: 96, height: 96, borderRadius: radius.lg },
 });

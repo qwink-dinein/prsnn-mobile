@@ -124,7 +124,7 @@ export default function Checkout() {
       <Header title="Review & pay" />
       <Card style={styles.person}>
         <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="headline">{c.fullName}</Text>
           <Text variant="footnote" muted>
             {placeOf(c)}

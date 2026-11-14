@@ -19,6 +19,7 @@ const PATHS = {
   chevronLeft: 'M15 5l-7 7 7 7',
   chevronRight: 'M9 5l7 7-7 7',
   chevronDown: 'M5 9l7 7 7-7',
+  chevronUp: 'M5 15l7-7 7 7',
   close: 'M6 6l12 12M18 6 6 18',
   check: 'M5 12.5 10 17l9-10',
   mapPin: 'M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',

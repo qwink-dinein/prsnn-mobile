@@ -107,7 +107,7 @@ export default function AdminUserDetail() {
       <View style={{ paddingHorizontal: GUTTER, gap: space.lg, paddingBottom: space.huge }}>
         <View style={styles.head}>
           <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={64} />
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
             <View style={styles.row}>
               <Pill label={roleLabel(u.role)} tone={u.role === 'superadmin' || u.role === 'subadmin' ? 'success' : 'neutral'} />
               {u.suspended ? <Pill label="Suspended" tone="danger" /> : null}
@@ -130,10 +130,10 @@ export default function AdminUserDetail() {
             <Text variant="headline">Profile</Text>
             <TextField label="Full name" value={form.fullName} onChangeText={(t) => set({ fullName: t })} />
             <View style={styles.row2}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <TextField label="City" value={form.city} onChangeText={(t) => set({ city: t })} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <TextField label="Area" value={form.area} onChangeText={(t) => set({ area: t })} />
               </View>
             </View>
@@ -174,10 +174,10 @@ export default function AdminUserDetail() {
                   </View>
                 </View>
                 <View style={styles.row2}>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
                     <TextField label="From (HH:MM)" value={form.startTime} onChangeText={(t) => set({ startTime: t })} keyboardType="numbers-and-punctuation" />
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
                     <TextField label="Until (HH:MM)" value={form.endTime} onChangeText={(t) => set({ endTime: t })} keyboardType="numbers-and-punctuation" />
                   </View>
                 </View>

@@ -144,7 +144,7 @@ export default function Pay() {
               style={[styles.method, i > 0 && styles.line]}
             >
               <Icon name={m.icon} size={22} color={colors.moss} />
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text variant="callout">{m.label}</Text>
                 <Text variant="caption" muted>
                   {m.hint}

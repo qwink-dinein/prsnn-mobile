@@ -76,7 +76,7 @@ function SearchSheet<T>({
             const r = render(item);
             return (
               <Pressable accessibilityRole="button" accessibilityLabel={r.sub ? `${r.title}, ${r.sub}` : r.title} onPress={() => onPick(item)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text variant="callout">{r.title}</Text>
                   {r.sub ? (
                     <Text variant="caption" muted>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginHorizontal: GUTTER, marginBottom: space.sm, minHeight: 50, paddingHorizontal: space.lg, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.ink, paddingVertical: 12 },
   row: { minHeight: 52, justifyContent: 'center', paddingHorizontal: space.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
-  useTyped: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50 },
+  useTyped: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, borderWidth: 1, borderColor: colors.line },
 });
 
 /** The city search sheet on its own, for chip-style triggers (Search filters). */

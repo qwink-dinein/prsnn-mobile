@@ -102,7 +102,7 @@ export function CompanionRow({ c, onPress }: { c: Companion; onPress?: () => voi
         style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.mistDeep }]}
       >
         <Avatar uri={c.profilePhoto} name={c.fullName} size={64} online locked={c.locked} />
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text variant="headline" numberOfLines={1}>
             {c.fullName ?? 'Companion'}
           </Text>
@@ -132,7 +132,7 @@ export function CompanionRow({ c, onPress }: { c: Companion; onPress?: () => voi
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  card: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   cardPhoto: { width: '100%', backgroundColor: colors.mistDeep },
   cardBody: { padding: space.md, gap: 2 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

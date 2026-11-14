@@ -135,7 +135,7 @@ export default function Notifications() {
                 <View style={[styles.icon, item.type === 'panic' && { backgroundColor: colors.dangerSoft }]}>
                   <Icon name={ICON[item.type] ?? 'bell'} size={20} color={item.type === 'panic' ? colors.danger : colors.moss} />
                 </View>
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                   <Text variant="callout">{item.message}</Text>
                   <Text variant="caption" muted>
                     {ago(item.createdAt)}
@@ -154,7 +154,7 @@ export default function Notifications() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  item: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  item: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   unread: { backgroundColor: colors.green50, borderColor: colors.mossSoft },
   icon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.clay },

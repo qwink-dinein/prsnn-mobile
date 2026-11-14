@@ -287,7 +287,7 @@ function CompanionPicker({ visible, exclude, onClose, onPick }: { visible: boole
             renderItem={({ item: c }) => (
               <Pressable accessibilityRole="button" accessibilityLabel={`Choose ${c.fullName}`} onPress={() => onPick(c)} style={({ pressed }) => [styles.pick, pressed && { opacity: 0.8 }]}>
                 <Avatar uri={c.profilePhotoUrl} name={c.fullName} size={40} />
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text variant="headline">{c.fullName}</Text>
                   <Text variant="footnote" muted>
                     {[c.area, c.city].filter(Boolean).join(', ')}
@@ -305,6 +305,6 @@ function CompanionPicker({ visible, exclude, onClose, onPick }: { visible: boole
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   actions: { flexDirection: 'row', gap: space.sm },
-  note: { padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, gap: 2 },
-  pick: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  note: { padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, gap: 2, borderWidth: 1, borderColor: colors.line },
+  pick: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
 });

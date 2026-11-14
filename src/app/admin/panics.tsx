@@ -53,7 +53,7 @@ export default function Panics() {
                       SOS
                     </Text>
                   </View>
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                     <Text variant="headline" color={open ? colors.paper : colors.ink}>
                       #{a.ref} · {a.raisedRole === 'member' ? a.member.name : a.companion.name}
                     </Text>
@@ -75,7 +75,7 @@ export default function Panics() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   open: { backgroundColor: colors.danger, borderColor: colors.danger },
   sos: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
 });

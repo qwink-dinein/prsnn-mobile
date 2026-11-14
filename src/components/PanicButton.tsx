@@ -39,7 +39,7 @@ export function PanicButton({ b }: { b: Booking }) {
         <View style={[styles.mini, { backgroundColor: colors.mistDeep }]}>
           <Text style={[styles.sos, { fontSize: 13, color: colors.gray500 }]}>SOS</Text>
         </View>
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text variant="headline">Panic button</Text>
           <Text variant="footnote" muted>
             Turns on at {formatTime(b.startTime)} and stays on until {formatTime(`${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`)} (1 hour after the end).
@@ -57,7 +57,7 @@ function ActiveAlert({ b }: { b: Booking }) {
       <View style={[styles.mini, { backgroundColor: colors.paper }]}>
         <Text style={[styles.sos, { fontSize: 13, color: colors.danger }]}>SOS</Text>
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text variant="headline" color={colors.paper}>
           Safety alert active
         </Text>
@@ -70,7 +70,8 @@ function ActiveAlert({ b }: { b: Booking }) {
   );
 }
 
-function HoldButton({ b }: { b: Booking }) {
+/** The hold-to-alert button on its own (booking screen card, and the chat's SOS sheet). */
+export function HoldButton({ b, bare }: { b: Booking; bare?: boolean }) {
   const reduced = useReducedMotion();
   const confirm = useConfirm();
   const qc = useQueryClient();
@@ -115,7 +116,7 @@ function HoldButton({ b }: { b: Booking }) {
   };
 
   return (
-    <View style={[styles.card, { flexDirection: 'column', alignItems: 'center', gap: space.md, paddingVertical: space.xl }]}>
+    <View style={[bare ? null : styles.card, { flexDirection: 'column', alignItems: 'center', gap: space.md, paddingVertical: space.xl }]}>
       <Pressable
         onPressIn={start}
         onPressOut={stop}
@@ -161,7 +162,7 @@ function HoldButton({ b }: { b: Booking }) {
 const PULSE = { '0%': { transform: [{ scale: 1 }] }, '50%': { transform: [{ scale: 1.06 }] }, '100%': { transform: [{ scale: 1 }] } };
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, marginTop: space.lg },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, marginTop: space.lg },
   active: { backgroundColor: colors.danger, borderColor: colors.danger },
   mini: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   bigWrap: { width: 150, height: 150, alignItems: 'center', justifyContent: 'center' },

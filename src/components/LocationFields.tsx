@@ -117,7 +117,7 @@ function Sheet({ visible, title, onClose, query, setQuery, placeholder, children
 function Row({ title, sub, onPress, on }: { title: string; sub?: string; onPress: () => void; on?: boolean }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={sub ? `${title}, ${sub}` : title} onPress={onPress} style={({ pressed }) => [styles.row, on && styles.rowOn, pressed && { backgroundColor: colors.mistDeep }]}>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text variant="callout">{title}</Text>
         {sub ? (
           <Text variant="caption" muted>

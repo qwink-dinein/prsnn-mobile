@@ -50,13 +50,15 @@ export function BookingCard({ b }: { b: Booking }) {
     <Card style={{ gap: space.md }}>
       <View style={styles.top}>
         <Avatar uri={person?.profilePhotoUrl} name={person?.fullName} size={56} locked={person?.locked} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <Text variant="headline" numberOfLines={1}>
             {person?.fullName ?? 'Companion'}
           </Text>
           <Pill label={s.label} tone={s.tone} />
         </View>
-        <Text variant="subhead">{formatINR(totalOf(b))}</Text>
+        <Text variant="subhead" style={{ flexShrink: 0, alignSelf: 'flex-start' }} numberOfLines={1}>
+          {formatINR(totalOf(b))}
+        </Text>
       </View>
       <MetaLine icon="calendar" text={whenOf(b)} />
       <MetaLine icon="clock" text={durationLabel(b.duration)} />

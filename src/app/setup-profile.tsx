@@ -436,7 +436,7 @@ function Options({ items, selected, onPick, busy }: { items: { key: string; titl
             <View style={styles.optionIcon}>
               <Icon name={it.icon} size={20} color={colors.moss} />
             </View>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <Text variant="headline">{it.title}</Text>
               {it.body ? (
                 <Text variant="footnote" muted>

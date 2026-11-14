@@ -145,7 +145,7 @@ function Discover() {
           <View style={styles.lovedIcon}>
             <Icon name="heart" size={22} color={colors.moss} />
           </View>
-          <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <Text variant="headline">Can’t be there for mum or dad?</Text>
             <Text variant="footnote" muted>
               {loved.line}. Friendly company for a loved one, paid from anywhere.

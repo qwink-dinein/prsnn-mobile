@@ -19,7 +19,7 @@ export function Upload({ label, file, onPick, square, camera }: { label: string;
       style={[styles.upload, file && styles.uploadDone]}
     >
       {file ? <Image source={{ uri: file.uri }} style={styles.thumb} contentFit="cover" /> : <Icon name={camera ? 'camera' : 'image'} size={24} color={colors.moss} />}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text variant="callout">{label}</Text>
         <Text variant="caption" muted>
           {file ? 'Added · tap to replace' : camera ? 'Take a photo' : 'Choose from your photos'}

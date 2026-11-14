@@ -108,7 +108,7 @@ export default function Plans() {
 function Row({ p, onEdit, onRemove }: { p: CityPlan; onEdit: () => void; onRemove: () => void }) {
   return (
     <View style={styles.row}>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text variant="headline">{p.title}</Text>
         <Text variant="footnote" muted>
           {p.city} · {categoryTitle(p.category)} · {p.hours} h · {formatINR(priceFor(p.hours) ?? 0)}
@@ -127,7 +127,7 @@ function Row({ p, onEdit, onRemove }: { p: CityPlan; onEdit: () => void; onRemov
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  form: { marginHorizontal: GUTTER, padding: space.lg, gap: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  form: { marginHorizontal: GUTTER, padding: space.lg, gap: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
 });

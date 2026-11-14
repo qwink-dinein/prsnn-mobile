@@ -73,7 +73,7 @@ export default function ReviewCompanion() {
               <Header title={u.fullName || 'Companion'} />
               <View style={styles.top}>
                 {u.profilePhotoUrl ? <Image source={{ uri: u.profilePhotoUrl }} style={styles.photo} contentFit="cover" /> : <View style={[styles.photo, { backgroundColor: colors.mistDeep }]} />}
-                <View style={{ flex: 1, gap: 4 }}>
+                <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                   <Text variant="title2">{u.fullName}</Text>
                   <Text variant="footnote" muted>
                     {[u.gender, u.profileVisibility === 'locked' ? 'photo locked' : 'photo open'].filter(Boolean).join(' · ')}

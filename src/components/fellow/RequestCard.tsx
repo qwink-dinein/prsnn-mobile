@@ -116,7 +116,7 @@ export function RequestCard({ b }: { b: Booking }) {
     <Card style={{ gap: space.md }}>
       <View style={styles.top}>
         <Avatar uri={who?.profilePhotoUrl} name={who?.fullName} size={52} locked={who?.locked} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <Text variant="headline" numberOfLines={1}>
             {who?.fullName ?? 'Member'}
           </Text>

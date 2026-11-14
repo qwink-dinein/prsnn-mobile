@@ -142,7 +142,7 @@ function Prices() {
                 <Text variant="callout" style={{ width: 72 }}>
                   {hoursLabel(h)}
                 </Text>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <TextField prefix="₹" value={d.prices[h]} onChangeText={(t) => set({ prices: { ...d.prices, [h]: t.replace(/\D/g, '') } })} keyboardType="number-pad" accessibilityLabel={`Price for ${hoursLabel(h)}`} />
                 </View>
                 <Text variant="caption" muted style={{ width: 92, textAlign: 'right' }}>
@@ -179,7 +179,7 @@ function Prices() {
 
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: reprice }} onPress={() => setReprice((v) => !v)} style={styles.check}>
           <View style={[styles.box, reprice && styles.boxOn]}>{reprice ? <Icon name="check" size={16} color={colors.onMoss} /> : null}</View>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text variant="callout">Re-price unpaid bookings</Text>
             <Text variant="footnote" muted>
               Only bookings still awaiting payment. Paid bookings never change.
@@ -194,8 +194,8 @@ function Prices() {
 function Pair({ a, b }: { a: React.ReactNode; b: React.ReactNode }) {
   return (
     <View style={{ flexDirection: 'row', gap: space.sm }}>
-      <View style={{ flex: 1 }}>{a}</View>
-      <View style={{ flex: 1 }}>{b}</View>
+      <View style={{ flex: 1, minWidth: 0 }}>{a}</View>
+      <View style={{ flex: 1, minWidth: 0 }}>{b}</View>
     </View>
   );
 }

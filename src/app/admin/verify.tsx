@@ -50,7 +50,7 @@ export default function AdminVerify() {
             <Card style={{ gap: space.md }}>
               <View style={styles.head}>
                 <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={56} />
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                   <Text variant="headline">{u.fullName || 'No name'}</Text>
                   {u.heldBookings ? <Pill label={`${u.heldBookings} booking${u.heldBookings > 1 ? 's' : ''} held${u.heldUntil ? ` · decide by ${formatDateTime(u.heldUntil)}` : ''}`} tone="danger" /> : null}
                   <Text variant="footnote" muted>
@@ -107,7 +107,7 @@ export default function AdminVerify() {
 
 function Doc({ uri, label }: { uri?: string; label: string }) {
   return (
-    <View style={{ flex: 1, gap: 4 }}>
+    <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
       {uri ? (
         <Image source={{ uri }} style={styles.doc} contentFit="cover" accessibilityLabel={label} />
       ) : (

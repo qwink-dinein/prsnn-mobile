@@ -156,7 +156,7 @@ export default function CompanionProfile() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm }]}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="title3">From {formatINR(fromPrice(c))}</Text>
           <Text variant="caption" muted>
             for {hoursLabel(offeredHours(c.packages)[0] ?? 1)} · longer costs less per hour
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.lg, alignItems: 'center' },
   tagCard: { alignItems: 'center', gap: 4, minWidth: 68, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   h: { marginTop: space.xl, marginBottom: space.xs },
-  lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, marginVertical: space.xs },
+  lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.green50, marginVertical: space.xs, borderWidth: 1, borderColor: colors.line },
   pkg: { minWidth: 84, paddingVertical: space.sm, paddingHorizontal: space.md, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, gap: 2 },
   infoCard: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: space.lg, gap: space.sm, borderWidth: 1, borderColor: colors.line },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: GUTTER, paddingTop: space.md, backgroundColor: colors.paper, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },

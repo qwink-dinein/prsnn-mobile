@@ -39,7 +39,7 @@ export default function ProfileTab() {
       </Text>
       <View style={styles.head}>
         <Avatar uri={user?.profilePhoto} name={user?.fullName} size={76} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <Text variant="title3" numberOfLines={1}>
             {user?.fullName || 'Your name'}
           </Text>
@@ -104,5 +104,5 @@ export default function ProfileTab() {
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.lg, marginVertical: space.xl },
   verified: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  group: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', marginBottom: space.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  group: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', marginBottom: space.lg, borderWidth: 1, borderColor: colors.line },
 });

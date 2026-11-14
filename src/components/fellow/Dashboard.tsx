@@ -31,7 +31,7 @@ export function CompanionDashboard() {
     <Screen refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { q.refetch(); check.refetch(); meQ.refetch(); }} tintColor={colors.moss} />}>
       <View style={styles.head}>
         <Avatar uri={user?.profilePhoto} name={user?.fullName} size={56} />
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="caption" muted>
             Welcome back
           </Text>
@@ -51,7 +51,7 @@ export function CompanionDashboard() {
       {approval !== 'approved' ? (
         <Card style={[styles.banner, approval !== 'pending' && { backgroundColor: colors.warningSoft }]} onPress={() => router.push(approval === 'draft' ? '/fellow/onboarding' : approval === 'pending' ? '/fellow/verification' : { pathname: '/fix', params: { target: 'profile' } })} accessibilityLabel="Profile approval status">
           <Icon name={approval === 'pending' ? 'clock' : 'edit'} size={24} color={approval === 'pending' ? colors.moss : colors.clay} />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text variant="headline">{approval === 'pending' ? 'Your profile is being reviewed' : approval === 'draft' ? 'Finish your profile' : approval === 'rejected' ? 'Your profile wasn’t approved' : 'A few changes, please'}</Text>
             <Text variant="footnote" muted>
               {approval === 'pending' ? 'Usually within 24 hours. You go live as soon as it’s approved.' : approval === 'draft' ? 'Complete companion sign-up to go live.' : `“${meQ.data?.approvalNote ?? user?.approvalNote ?? 'See the note from our team.'}” Tap to fix and resubmit.`}
@@ -62,7 +62,7 @@ export function CompanionDashboard() {
       ) : !verified ? (
         <Card style={styles.banner} onPress={() => router.push(status === 'not_submitted' ? '/fellow/onboarding' : '/fellow/verification')} accessibilityLabel="ID check status">
           <Icon name="shieldCheck" size={24} color={colors.moss} />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text variant="headline">
               {status === 'not_submitted' ? 'Finish your profile' : status === 'id_required' && pending.length ? 'Your first booking is here' : status === 'id_required' ? 'You’re live' : status === 'pending' ? 'ID check in progress' : 'Your ID needs another look'}
             </Text>
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.lg, backgroundColor: colors.green50 },
   stats: { flexDirection: 'row', gap: space.sm },
-  stat: { flex: 1, backgroundColor: colors.paper, borderRadius: radius.lg, padding: space.md, gap: 2, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, alignItems: 'center' },
-  group: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', marginBottom: space.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  stat: { flex: 1, backgroundColor: colors.paper, borderRadius: radius.lg, padding: space.md, gap: 2, borderWidth: 1, borderColor: colors.line, alignItems: 'center' },
+  group: { backgroundColor: colors.paper, borderRadius: radius.xl, overflow: 'hidden', marginBottom: space.lg, borderWidth: 1, borderColor: colors.line },
 });

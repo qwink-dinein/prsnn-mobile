@@ -69,7 +69,7 @@ export default function BookingDetail() {
       <Card style={{ gap: space.md, marginTop: space.sm }}>
         <View style={styles.row}>
           <Avatar uri={other?.profilePhotoUrl} name={other?.fullName} size={60} locked={other?.locked} />
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
             <Text variant="headline">{other?.fullName ?? (isCompanion ? 'Member' : 'Companion')}</Text>
             <Pill label={s.label} tone={s.tone} />
           </View>

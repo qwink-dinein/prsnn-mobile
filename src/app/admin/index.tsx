@@ -105,7 +105,7 @@ function PanicBanner({ name, role, ref_, sends, at, onPress }: { name: string; r
             SOS
           </Text>
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="headline" color={colors.paper}>
             Panic alert · #{ref_}
           </Text>
@@ -122,7 +122,7 @@ const BLINK = { from: { opacity: 1 }, to: { opacity: 0.78 } };
 
 function Money({ label, v }: { label: string; v: number }) {
   return (
-    <View style={{ flex: 1, gap: 2 }}>
+    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
       <Text variant="headline">{formatINR(v)}</Text>
       <Text variant="caption" muted>
         {label}
@@ -133,9 +133,9 @@ function Money({ label, v }: { label: string; v: number }) {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  money: { gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.green50, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.mossSoft },
+  money: { gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.green50, borderWidth: 1, borderColor: colors.line },
   moneyRow: { flexDirection: 'row', gap: space.md },
   panic: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.danger },
   sos: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  group: { backgroundColor: colors.paper, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, overflow: 'hidden', marginBottom: space.xl },
+  group: { backgroundColor: colors.paper, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', marginBottom: space.xl },
 });

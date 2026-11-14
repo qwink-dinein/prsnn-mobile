@@ -69,17 +69,19 @@ export default function CategoryPage() {
               </View>
             </View>
             <View style={styles.sheet}>
-              <Enter index={0} style={{ gap: 6 }}>
+              <Enter index={0} style={styles.ticks}>
                 {c.bullets.map((b) => (
                   <View key={b} style={styles.row}>
-                    <Icon name="check" size={16} color={colors.moss} strokeWidth={2.4} />
-                    <Text variant="callout">{b}</Text>
+                    <Icon name="check" size={16} color={colors.champagneDeep} strokeWidth={2.4} />
+                    <Text variant="callout" style={{ flex: 1, minWidth: 0 }}>
+                      {b}
+                    </Text>
                   </View>
                 ))}
               </Enter>
 
               <Enter index={1} style={styles.suggest}>
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                   <Text variant="caption" color={colors.moss} style={{ fontWeight: '700', letterSpacing: 0.5 }}>
                     SUGGESTED
                   </Text>
@@ -97,7 +99,7 @@ export default function CategoryPage() {
                   <View style={{ gap: space.sm }}>
                     {myPlans.map((p) => (
                       <View key={p.id} style={[styles.plan, plan === p.title && styles.planOn]}>
-                        <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1, minWidth: 0 }}>
                           <Text variant="headline">{p.title}</Text>
                           {p.details ? (
                             <Text variant="footnote" muted>
@@ -155,10 +157,11 @@ export default function CategoryPage() {
 const styles = StyleSheet.create({
   hero: { height: 260, justifyContent: 'space-between', backgroundColor: colors.mistDeep },
   heroText: { padding: GUTTER, paddingBottom: space.xxl, gap: 4 },
-  sheet: { marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.mist, padding: GUTTER, gap: space.md },
+  sheet: { marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.mist, padding: GUTTER, paddingTop: space.xl, gap: space.md },
+  ticks: { gap: space.sm, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   suggest: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.green50, borderWidth: 2, borderColor: colors.moss },
-  plan: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   planOn: { borderWidth: 2, borderColor: colors.moss },
   others: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'center' },
   chip: { minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
