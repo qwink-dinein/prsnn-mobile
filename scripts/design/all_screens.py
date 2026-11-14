@@ -562,16 +562,17 @@ def phone(fn):
     cut = max(html.rfind('<div class="tabs">'), html.rfind('<div class="foot"'))
     content, fixed = (html[:cut], html[cut:]) if cut > 0 else (html, '')
     return f'<div class="ph"><div class="notch"></div><div class="scr{" pad" if fixed else ""}">{content}</div>{fixed}</div>'
-count = sum(len(s) for _, _, s in GROUPS)
-toc = ''.join(f'<a href="#g{i}">{g} · {len(s)}</a>' for i, (g, _, s) in enumerate(GROUPS))
-groups_html = ''.join(f'<section class="grp" id="g{i}"><h2>{g}</h2><p>{d}</p><div class="grid">' + ''.join(f'<div class="cell">{phone(fn)}<span class="cap">{t}</span></div>' for t, fn in s) + '</div></section>'
-                      for i, (g, d, s) in enumerate(GROUPS))
-copy_html = '<section class="copy"><h2 style="font:600 26px Urbanist;margin:10px 0 12px">Copy changes</h2><table><tr><th>Screen</th><th>Today</th><th>New</th></tr>' + ''.join(f'<tr><td><b>{a}</b></td><td style="color:{MUT}">{b}</td><td>{c}</td></tr>' for a, b, c in COPY) + '</table></section>'
-html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>prsnn screens</title>'
-        '<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&family=Outfit:wght@700&display=swap" rel="stylesheet">'
-        f'<style>{CSS}</style></head><body><div class="intro"><h1>prsnn. · every screen in the new look</h1>'
-        f'<p>{count} screens: the approved palette, Urbanist, the Outfit logo with the champagne dot, Wallet cards on Home and price cards in the same style. UI and copy only; every screen keeps the features it has today. Copy is sharper but every claim is true (no invented reviews, ratings or counts).</p>'
-        f'<div class="toc">{toc}<a href="#copy">Copy changes</a></div></div>{groups_html}<div id="copy"></div>{copy_html}</body></html>')
-html = re.sub(r'url\(IMG_(\w+)\)', r'var(--\1)', html)
-(ROOT / 'preview/all-screens.html').write_text(html)
-print('wrote preview/all-screens.html', count, 'screens', len(html) // 1024, 'KB')
+if __name__ == '__main__':
+    count = sum(len(s) for _, _, s in GROUPS)
+    toc = ''.join(f'<a href="#g{i}">{g} · {len(s)}</a>' for i, (g, _, s) in enumerate(GROUPS))
+    groups_html = ''.join(f'<section class="grp" id="g{i}"><h2>{g}</h2><p>{d}</p><div class="grid">' + ''.join(f'<div class="cell">{phone(fn)}<span class="cap">{t}</span></div>' for t, fn in s) + '</div></section>'
+                          for i, (g, d, s) in enumerate(GROUPS))
+    copy_html = '<section class="copy"><h2 style="font:600 26px Urbanist;margin:10px 0 12px">Copy changes</h2><table><tr><th>Screen</th><th>Today</th><th>New</th></tr>' + ''.join(f'<tr><td><b>{a}</b></td><td style="color:{MUT}">{b}</td><td>{c}</td></tr>' for a, b, c in COPY) + '</table></section>'
+    html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>prsnn screens</title>'
+            '<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&family=Outfit:wght@700&display=swap" rel="stylesheet">'
+            f'<style>{CSS}</style></head><body><div class="intro"><h1>prsnn. · every screen in the new look</h1>'
+            f'<p>{count} screens: the approved palette, Urbanist, the Outfit logo with the champagne dot, Wallet cards on Home and price cards in the same style. UI and copy only; every screen keeps the features it has today. Copy is sharper but every claim is true (no invented reviews, ratings or counts).</p>'
+            f'<div class="toc">{toc}<a href="#copy">Copy changes</a></div></div>{groups_html}<div id="copy"></div>{copy_html}</body></html>')
+    html = re.sub(r'url\(IMG_(\w+)\)', r'var(--\1)', html)
+    (ROOT / 'preview/all-screens.html').write_text(html)
+    print('wrote preview/all-screens.html', count, 'screens', len(html) // 1024, 'KB')
