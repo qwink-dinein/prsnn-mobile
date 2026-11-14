@@ -31,11 +31,10 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 - ✅ **Round 2** (2026-11-10): PIN right after verification · email sign-up for visitors from abroad · all-India state → city → area dropdowns (India Post, 156,912 localities) · five categories · new price cards · photo required and approved by staff · every companion approved before going live · change requests in the bell with "Fix and resubmit" · booking for someone else (incl. Other) · meeting place on every booking · chat safety reminder · panic button (session start → end + 1 h, hold 3 s) with WhatsApp + push to every admin every 5 min until resolved · admin approvals, panic alerts and city plans · offline banner, slow-network progress, drafts kept through session expiry, success states
 - 🔑 **Supabase email OTP** (visitors from abroad): Authentication → Providers → Email on, "Confirm email" on; Email Templates → Magic Link: put `{{ .Token }}` in the body; set up custom SMTP (the built-in sender allows only a few emails an hour)
-- 🔑 **WhatsApp `prsnn_panic_alert`**: submit in Waplify, then set the secret `WAPLIFY_TPL_PANIC_ALERT`
 - 💡 Weekly plans for a loved one and gift bookings (designed, not built: need series payments and gift codes)
 
 - ✅ **Round 3** (2026-11-14): PIN forever (Log out locks the app; the session is saved on the phone; OTP only for Forgot PIN, 5 wrong PINs or account deletion) · WhatsApp to one side only (offer → companion, confirmed → member) · 5 AM day-of reminder to both · panic alerts with session, activity and alert count
-- 🔑 **WhatsApp `prsnn_session_reminder`** (#8) and the 12-variable **`prsnn_panic_alert`** (#7): submit in Waplify, then set `WAPLIFY_TPL_SESSION_REMINDER` and `WAPLIFY_TPL_PANIC_ALERT`
+- ✅ **WhatsApp `prsnn_session_reminder`** (#8) and **`prsnn_panic_alert`** (#7) approved by Meta (2026-11-14); secrets `WAPLIFY_TPL_SESSION_REMINDER` and `WAPLIFY_TPL_PANIC_ALERT` set by the owner
 - ⏳ Website (prsnn-frontend) still sends its own messages through the old Express API; it follows these rules once it moves to Supabase
 
 ## Before the first real build
