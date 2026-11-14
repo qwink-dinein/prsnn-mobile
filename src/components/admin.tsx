@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
   kv: { flexDirection: 'row', gap: space.md, paddingVertical: 6 },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,17,13,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(24,27,52,0.4)' },
   sheetWrap: { flex: 1, justifyContent: 'center', padding: space.xl },
   sheet: { backgroundColor: colors.paper, borderRadius: radius.xl, padding: space.xl, gap: space.md, maxWidth: 460, width: '100%', alignSelf: 'center' },
 });

@@ -18,8 +18,8 @@ export default function Welcome() {
   return (
     <View style={styles.fill}>
       <Image source={require('../../assets/images/coffee.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center" />
-      <LinearGradient colors={[colors.mist, 'rgba(243,241,235,0.85)', 'rgba(243,241,235,0)']} locations={[0, 0.4, 0.62]} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={['rgba(14,17,13,0)', 'rgba(14,17,13,0.55)']} locations={[0.65, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[colors.mist, 'rgba(241,241,244,0.85)', 'rgba(241,241,244,0)']} locations={[0, 0.4, 0.62]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['rgba(24,27,52,0)', 'rgba(24,27,52,0.55)']} locations={[0.65, 1]} style={StyleSheet.absoluteFill} />
       <SafeAreaView style={styles.content} edges={['top', 'bottom']}>
         <View style={{ gap: space.md, marginTop: space.xxxl }}>
           <Text variant="largeTitle" style={{ fontSize: 36, lineHeight: 42 }}>
@@ -41,5 +41,5 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.mist },
   content: { flex: 1, justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingBottom: space.lg },
-  ghost: { backgroundColor: 'rgba(250,249,246,0.9)' },
+  ghost: { backgroundColor: 'rgba(255,255,255,0.9)' },
 });

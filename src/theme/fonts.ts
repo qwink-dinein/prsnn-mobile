@@ -1,27 +1,24 @@
 /**
- * Typography: Lora (serif) for display headings, matching the app mock-ups
- * ("Life is better with good company."), and DM Sans for everything people
- * read and tap — the same body face as the website (next/font DM_Sans).
- * Subpath imports keep unused weights out of the bundle.
+ * Typography (approved 2026-11-14): Urbanist for titles and text, Outfit Bold
+ * for the "prsnn." logo and big numbers. Subpath imports keep unused weights out.
  */
 export const fontAssets = {
-  'Lora-Medium': require('@expo-google-fonts/lora/500Medium/Lora_500Medium.ttf'),
-  'Lora-SemiBold': require('@expo-google-fonts/lora/600SemiBold/Lora_600SemiBold.ttf'),
-  'Lora-SemiBoldItalic': require('@expo-google-fonts/lora/600SemiBold_Italic/Lora_600SemiBold_Italic.ttf'),
-  'DMSans-Regular': require('@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.ttf'),
-  'DMSans-Medium': require('@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf'),
-  'DMSans-SemiBold': require('@expo-google-fonts/dm-sans/600SemiBold/DMSans_600SemiBold.ttf'),
-  'DMSans-Bold': require('@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf'),
+  'Urbanist-Regular': require('@expo-google-fonts/urbanist/400Regular/Urbanist_400Regular.ttf'),
+  'Urbanist-Medium': require('@expo-google-fonts/urbanist/500Medium/Urbanist_500Medium.ttf'),
+  'Urbanist-SemiBold': require('@expo-google-fonts/urbanist/600SemiBold/Urbanist_600SemiBold.ttf'),
+  'Urbanist-Bold': require('@expo-google-fonts/urbanist/700Bold/Urbanist_700Bold.ttf'),
+  'Outfit-Bold': require('@expo-google-fonts/outfit/700Bold/Outfit_700Bold.ttf'),
 };
 
 export const fonts = {
-  display: 'Lora-SemiBold',
-  displayMedium: 'Lora-Medium',
-  brand: 'Lora-SemiBoldItalic',
-  body: 'DMSans-Regular',
-  medium: 'DMSans-Medium',
-  semibold: 'DMSans-SemiBold',
-  bold: 'DMSans-Bold',
+  display: 'Urbanist-SemiBold',
+  displayMedium: 'Urbanist-Medium',
+  brand: 'Outfit-Bold', // logo and big numbers (prices, times)
+  number: 'Outfit-Bold',
+  body: 'Urbanist-Regular',
+  medium: 'Urbanist-Medium',
+  semibold: 'Urbanist-SemiBold',
+  bold: 'Urbanist-Bold',
 } as const;
 
 /**

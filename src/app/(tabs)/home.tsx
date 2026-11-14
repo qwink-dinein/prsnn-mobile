@@ -66,7 +66,7 @@ function Discover() {
       <Enter index={0}>
         <View style={styles.hero}>
           <Image source={require('../../../assets/images/together.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" />
-          <LinearGradient colors={['rgba(14,17,13,0.05)', 'rgba(14,17,13,0.78)']} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['rgba(24,27,52,0.05)', 'rgba(24,27,52,0.78)']} style={StyleSheet.absoluteFill} />
           <View style={styles.heroText}>
             <Text variant="title1" color={colors.paper}>
               Good company, from ₹399

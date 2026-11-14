@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   cardOn: { borderColor: colors.moss, backgroundColor: colors.green50 },
   photo: { width: '100%', height: 96, backgroundColor: colors.mistDeep },
   body: { padding: space.md, gap: 2, minHeight: 76 },
-  tick: { position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.paper, backgroundColor: 'rgba(14,17,13,0.35)', alignItems: 'center', justifyContent: 'center' },
+  tick: { position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.paper, backgroundColor: 'rgba(24,27,52,0.35)', alignItems: 'center', justifyContent: 'center' },
   tickOn: { backgroundColor: colors.moss, borderColor: colors.paper },
   price: { position: 'absolute', left: 8, top: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.paper },
 });

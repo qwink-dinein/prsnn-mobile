@@ -3,7 +3,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { colors, GUTTER, HIT, radius, shadow, space } from '@/theme/tokens';
+import { colors, CONTENT_MAX, GUTTER, HIT, radius, shadow, space } from '@/theme/tokens';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 import { Button } from './Button';
@@ -29,9 +29,10 @@ export function Screen({
   style?: StyleProp<ViewStyle>;
   refreshControl?: React.ComponentProps<typeof ScrollView>['refreshControl'];
 }) {
+  // Tablets and wide windows: content keeps a readable width, centred (design.md · fit every device).
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[padded && styles.padded, { paddingBottom: footer ? space.lg : space.huge }, style]}
+      contentContainerStyle={[styles.column, padded && styles.padded, { paddingBottom: footer ? space.xl : space.huge }, style]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       refreshControl={refreshControl}
@@ -39,7 +40,7 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.fill, padded && styles.padded, style]}>{children}</View>
+    <View style={[styles.fill, styles.column, padded && styles.padded, style]}>{children}</View>
   );
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
@@ -47,7 +48,7 @@ export function Screen({
         {body}
         {footer ? (
           <SafeAreaView edges={['bottom']} style={styles.footer}>
-            {footer}
+            <View style={styles.column}>{footer}</View>
           </SafeAreaView>
         ) : null}
       </KeyboardAvoidingView>
@@ -183,12 +184,12 @@ export function ListRow({ icon, label, value, onPress, danger, last }: { icon: I
       style={({ pressed }) => [styles.row, !last && styles.rowLine, pressed && { backgroundColor: colors.mistDeep }]}
     >
       <Icon name={icon} size={20} color={danger ? colors.danger : colors.moss} />
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text variant="callout" color={danger ? colors.danger : colors.ink}>
           {label}
         </Text>
         {value ? (
-          <Text variant="footnote" muted numberOfLines={1}>
+          <Text variant="footnote" muted numberOfLines={2}>
             {value}
           </Text>
         ) : null}
@@ -267,7 +268,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
   return <EmptyState icon="info" title="That didn’t load" body={`${message ?? 'Something went wrong on our side.'} Try again in a moment — if it keeps happening, contact support.`} action={onRetry ? 'Try again' : undefined} onAction={onRetry} />;
 }
 
-/** The italic "prsnn." wordmark with the clay full stop (see Brand.tsx). */
+/** The "prsnn." wordmark with the champagne dot (see Brand.tsx). */
 export function Logo({ size = 28, color = colors.ink }: { size?: number; color?: string }) {
   return <Wordmark size={size} color={color} />;
 }
@@ -304,17 +305,18 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
   fill: { flex: 1 },
   padded: { paddingHorizontal: GUTTER },
+  column: { width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' },
   footer: { paddingHorizontal: GUTTER, paddingTop: space.md, paddingBottom: space.sm, backgroundColor: colors.mist, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   header: { flexDirection: 'row', alignItems: 'center', minHeight: 52, paddingHorizontal: space.xs },
   headerSide: { width: 72, justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center' },
   iconBtn: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center', borderRadius: HIT / 2 },
-  card: { backgroundColor: colors.paper, borderRadius: radius.xl, padding: space.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, ...shadow.card },
+  card: { backgroundColor: colors.paper, borderRadius: radius.xl, padding: space.lg, borderWidth: 1, borderColor: colors.line, ...shadow.card },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   chipOn: { backgroundColor: colors.moss, borderColor: colors.moss },
-  pill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  pill: { alignSelf: 'flex-start', flexShrink: 1, maxWidth: '100%', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   initials: { backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
-  dot: { position: 'absolute', width: 12, height: 12, borderRadius: 6, backgroundColor: '#3FB950', borderWidth: 2, borderColor: colors.paper },
+  dot: { position: 'absolute', width: 12, height: 12, borderRadius: 6, backgroundColor: colors.success, borderWidth: 2, borderColor: colors.paper },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.lg, paddingVertical: space.sm },
   rowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md },

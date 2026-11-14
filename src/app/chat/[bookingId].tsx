@@ -82,7 +82,7 @@ export default function Chat() {
                   <Text variant="callout" color={mine ? colors.onMoss : colors.ink}>
                     {item.content}
                   </Text>
-                  <Text variant="caption" color={mine ? 'rgba(250,249,246,0.7)' : colors.gray400} style={{ alignSelf: 'flex-end', marginTop: 2 }}>
+                  <Text variant="caption" color={mine ? 'rgba(255,255,255,0.7)' : colors.gray400} style={{ alignSelf: 'flex-end', marginTop: 2 }}>
                     {time(item.createdAt)}
                   </Text>
                 </View>

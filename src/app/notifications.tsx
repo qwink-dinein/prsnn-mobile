@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   unread: { backgroundColor: colors.green50, borderColor: colors.mossSoft },
   icon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.clay },
-  action: { gap: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: '#ecc8b4' },
+  action: { gap: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: '#E9DDC3' },
   actionPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.paper },
   panic: { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
 });

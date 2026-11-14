@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
   collageBottom: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: space.lg },
   photo: { borderRadius: radius.sm, borderWidth: 5, borderColor: colors.paper, ...shadow.card },
   center: { alignItems: 'center', gap: space.xs },
-  tagline: { fontFamily: 'Lora-Medium', fontStyle: 'italic' },
+  tagline: { fontFamily: 'Urbanist-Medium' },
 });

@@ -82,7 +82,7 @@ export function RequestChangesSheet({ user, target, onClose, onDone }: { user: A
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,17,13,0.45)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(24,27,52,0.45)' },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '88%', backgroundColor: colors.mist, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.xl },
   reason: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44 },
   box: { width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: colors.gray400, alignItems: 'center', justifyContent: 'center' },

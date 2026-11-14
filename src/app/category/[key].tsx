@@ -55,7 +55,7 @@ export default function CategoryPage() {
           <>
             <View style={styles.hero}>
               <Image source={c.image} style={StyleSheet.absoluteFill} contentFit="cover" />
-              <LinearGradient colors={['rgba(14,17,13,0.35)', 'rgba(14,17,13,0.05)', 'rgba(14,17,13,0.8)']} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={['rgba(24,27,52,0.35)', 'rgba(24,27,52,0.05)', 'rgba(24,27,52,0.8)']} style={StyleSheet.absoluteFill} />
               <SafeAreaView edges={['top']} style={{ paddingHorizontal: space.xs }}>
                 <IconButton name="chevronLeft" label="Back" color={colors.paper} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
               </SafeAreaView>

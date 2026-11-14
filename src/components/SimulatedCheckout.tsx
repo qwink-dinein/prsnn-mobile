@@ -77,7 +77,7 @@ export function SimulatedCheckout({ visible, amount, methodLabel, description, o
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(14,17,13,0.35)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(24,27,52,0.35)' },
   sheet: { backgroundColor: colors.paper, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl, padding: space.xl, paddingBottom: space.huge, gap: space.md },
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: colors.gray200, marginBottom: space.sm },
   badge: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.warningSoft },

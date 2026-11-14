@@ -176,9 +176,9 @@ export default function CompanionProfile() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
   fallback: { alignItems: 'center', justifyContent: 'center' },
-  initial: { fontFamily: 'Lora-SemiBold', fontSize: 120, color: colors.moss },
+  initial: { fontFamily: 'Urbanist-SemiBold', fontSize: 120, color: colors.moss },
   photoBar: { position: 'absolute', left: space.md, right: space.md, flexDirection: 'row', justifyContent: 'space-between' },
-  round: { backgroundColor: 'rgba(250,249,246,0.92)' },
+  round: { backgroundColor: 'rgba(255,255,255,0.92)' },
   sheet: { marginTop: -28, backgroundColor: colors.mist, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl, paddingHorizontal: GUTTER, paddingTop: space.xl, gap: space.xs },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 2 },

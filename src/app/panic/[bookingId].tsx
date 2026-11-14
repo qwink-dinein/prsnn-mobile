@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   sos: { fontFamily: fonts.semibold, fontSize: 18, color: colors.danger, letterSpacing: 1 },
   panel: { gap: 4, padding: space.lg, borderRadius: radius.lg, backgroundColor: 'rgba(255,255,255,0.14)' },
   count: { fontFamily: fonts.semibold, fontSize: 40, lineHeight: 48, color: colors.paper },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(14,17,13,0.5)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(24,27,52,0.5)' },
   sheet: { backgroundColor: colors.mist, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: GUTTER, gap: space.md },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: space.lg, marginVertical: space.sm },
   dot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: colors.moss },

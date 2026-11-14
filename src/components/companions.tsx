@@ -139,9 +139,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.lg },
   heart: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   heartSlot: { position: 'absolute' },
-  heartOnPhoto: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(250,249,246,0.92)' },
+  heartOnPhoto: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.92)' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.mossSoft, marginTop: 2 },
   badgeNew: { backgroundColor: colors.mistDeep },
   photoFallback: { backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
-  photoInitial: { fontFamily: 'Lora-SemiBold', fontSize: 48, color: colors.moss },
+  photoInitial: { fontFamily: 'Urbanist-SemiBold', fontSize: 48, color: colors.moss },
 });

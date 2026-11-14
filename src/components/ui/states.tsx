@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   ringWrap: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
   ring: { position: 'absolute', width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: colors.moss },
   okCircle: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center' },
-  notice: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  notice: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
 });
 
 // ───────── Live lists ─────────

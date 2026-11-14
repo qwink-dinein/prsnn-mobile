@@ -76,7 +76,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 export const useConfirm = () => useContext(Ctx);
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,17,13,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(24,27,52,0.4)' },
   wrap: { flex: 1, justifyContent: 'center', padding: space.xl },
   card: { backgroundColor: colors.paper, borderRadius: radius.xl, padding: space.xl, gap: space.sm, maxWidth: 420, width: '100%', alignSelf: 'center' },
 });

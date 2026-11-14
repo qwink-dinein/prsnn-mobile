@@ -26,5 +26,5 @@ export function LockedPhoto({ style, size = 'md', rounded }: { style?: StyleProp
 
 const styles = StyleSheet.create({
   center: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  badge: { backgroundColor: 'rgba(250,249,246,0.92)', alignItems: 'center', justifyContent: 'center' },
+  badge: { backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
 });

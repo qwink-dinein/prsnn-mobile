@@ -121,7 +121,7 @@ export function PrepaidStatus({ b }: { b: Booking }) {
             {i < steps.length - 1 ? <View style={[styles.line, st.state === 'done' && { backgroundColor: colors.moss }]} /> : null}
           </View>
           <View style={{ flex: 1, paddingBottom: i < steps.length - 1 ? space.lg : 0 }}>
-            <Text variant="callout" color={st.state === 'todo' ? colors.gray500 : colors.ink} style={{ fontFamily: st.state === 'now' ? 'DMSans-SemiBold' : undefined }}>
+            <Text variant="callout" color={st.state === 'todo' ? colors.gray500 : colors.ink} style={{ fontFamily: st.state === 'now' ? 'Urbanist-SemiBold' : undefined }}>
               {st.label}
             </Text>
             {st.detail ? (

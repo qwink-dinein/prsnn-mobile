@@ -147,7 +147,7 @@ export default function Login() {
 }
 
 /**
- * The italic "prsnn." wordmark with its clay full stop settling in after the
+ * The "prsnn." wordmark with its champagne dot settling in after the
  * word: the one deliberate flourish on a screen people see rarely.
  */
 function Wordmark() {
@@ -157,12 +157,10 @@ function Wordmark() {
       <Text style={styles.wordmarkText} maxFontSizeMultiplier={1.3}>
         {BRAND_WORD}
       </Text>
-      <Animated.Text
-        maxFontSizeMultiplier={1.3}
+      <Animated.View
         style={[
-          styles.wordmarkText,
+          styles.dot,
           {
-            color: colors.clay,
             animationName: reduced ? DOT_FADE : DOT_SETTLE,
             animationDuration: reduced ? 200 : 320,
             animationDelay: reduced ? 0 : 620,
@@ -170,9 +168,7 @@ function Wordmark() {
             animationFillMode: 'backwards',
           },
         ]}
-      >
-        .
-      </Animated.Text>
+      />
     </View>
   );
 }
@@ -185,7 +181,8 @@ const DOT_FADE = { from: { opacity: 0 }, to: { opacity: 1 } };
 
 const styles = StyleSheet.create({
   wordmark: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' },
-  wordmarkText: { fontFamily: fonts.brand, fontSize: 46, lineHeight: 58, letterSpacing: -0.9, color: colors.ink },
+  wordmarkText: { fontFamily: fonts.brand, fontSize: 46, lineHeight: 52, letterSpacing: -2, color: colors.ink, includeFontPadding: false },
+  dot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.champagneDeep, marginLeft: 2, marginBottom: 9 },
   head: { alignItems: 'center', marginTop: space.lg, marginBottom: space.xxxl },
   divider: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginVertical: space.xs },
   line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.lineStrong, borderRadius: radius.pill },
