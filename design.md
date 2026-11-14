@@ -22,7 +22,14 @@ owner says to switch; then these become the tokens in `src/theme/tokens.ts`.
 | `champagneMist` | `#F6F1E6` | Selected card fill, safety tip |
 | `line` | `rgba(24,27,52,.08)` | Hairlines |
 
-Type: **Urbanist** 600 for titles, 400–500 for text. The logo is the only serif (logo still to be chosen).
+Type: **Urbanist** 600 for titles, 400–500 for text.
+
+**Logo (approved 2026-11-14, not applied yet):** the wordmark **“prsnn.”** in **Outfit Bold (700)**,
+tracking −0.045 em, ink in midnight (or porcelain/white on dark), with a **round full stop**
+(diameter 0.2 × font size, 0.045 em after the last n). Dot colour: **champagne `#C9B68E`** on midnight
+and photos, **deep champagne `#8E7646`** on porcelain and white. App icon: “p.” in the same style on
+midnight (porcelain p, champagne dot) or white (midnight p, deep-champagne dot). Reference:
+`preview/wordmark-dot.html` (“In use”). Replaces the italic Lora wordmark when the new look is applied.
 
 ## Palette ("2026 Presence": mist, ink, moss, signal)
 
