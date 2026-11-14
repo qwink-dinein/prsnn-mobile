@@ -39,6 +39,15 @@ own material with fine engraved lines and a small round photo: New in Town = mid
 champagne, Explore & Discover = pearl (white), For a Loved One = steel `#3A3F5C`, Work & Study = mist
 `#E6E6EC`. Tapping a tab lifts it into the large card.
 
+**Companion “The lengths you offer” (approved 2026-11-14, not applied yet)**
+(`preview/wallet-companion.html`). All twelve lengths (1–12 h) as card rows, 62 pt tall, radius 18,
+fine engraved lines. Each row: a tick box, “N hours” (Urbanist 600 15) with “Popular” on 4 h and
+“Best value” on 12 h, “Members pay ₹X” under it, and on the right “You get” over the companion’s
+80% (Outfit 700 17, `floor(price × 0.8)`, from `DEFAULT_PACKAGE_PRICES` / live pricing). Card
+materials: 4 h midnight, 6 h steel, 12 h champagne; the others alternate pearl (odd) and mist (even).
+On dark cards the ticked box is champagne with a midnight tick; on light cards midnight with a
+white tick. The list scrolls; “Save N lengths” stays pinned at the bottom.
+
 ## Palette ("2026 Presence": mist, ink, moss, signal)
 
 | Token | Hex | Use |
