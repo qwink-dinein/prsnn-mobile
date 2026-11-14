@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { PackageGrid } from '@/components/PackageGrid';
 import { MIN_LEAD_MINUTES, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf , formatINR } from '@/domain/booking';
-import { hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
+import { POPULAR_HOURS, hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
 import type { Duration } from '@/domain/types';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -26,12 +26,14 @@ export default function SelectDateTime() {
     return d;
   }, []);
   const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() });
-  const [hours, setHours] = useState<number | null>(null);
+  const [picked, setHours] = useState<number | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string | null>(null);
 
   const c = q.data;
   const offered = offeredHours(c?.packages);
+  // Start on the suggested length (as in the approved design); one tap lifts another.
+  const hours = picked ?? (offered.includes(POPULAR_HOURS) ? POPULAR_HOURS : (offered[0] ?? null));
   const weeks = monthGrid(cursor.y, cursor.m);
   const last = new Date(today);
   last.setDate(last.getDate() + BOOK_AHEAD_DAYS);

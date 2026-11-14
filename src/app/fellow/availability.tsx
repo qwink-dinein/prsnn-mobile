@@ -62,10 +62,10 @@ function AvailabilityForm({ p }: { p?: Profile }) {
     <Screen footer={<Button label="Save availability" onPress={save} loading={busy} />}>
       <Header title="Packages & availability" />
       <Text variant="headline" style={{ marginTop: space.sm }}>
-        Durations you offer
+        Lengths you offer
       </Text>
       <Text variant="footnote" muted style={{ marginBottom: space.md }}>
-        Same prices for everyone. You receive 80% of each booking.
+        You get 80% of each booking.
       </Text>
       <PackageGrid mode="offer" hours={ALL_HOURS} selected={packages} onSelect={(h) => setPackages((cur) => (cur.includes(h) ? cur.filter((x) => x !== h) : [...cur, h].sort((a, b) => a - b)))} />
       <Text variant="headline" style={{ marginTop: space.xl }}>

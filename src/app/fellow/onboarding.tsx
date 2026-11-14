@@ -49,7 +49,11 @@ export default function CompanionOnboarding() {
   const [d, setD, clearDraft, restored] = useDraft(`companion.${user?.id ?? 'new'}`, {
     gender: user?.gender as Gender | undefined,
     visibility: user?.profileVisibility as Visibility | undefined,
-    place: { state: user?.state ?? stateOf(user?.city) ?? '', city: user?.city ?? '', area: user?.area ?? '' } as LocationValue,
+    place: {
+      state: user?.state ?? stateOf(user?.city) ?? '',
+      city: user?.city ?? '',
+      area: user?.area ?? '',
+    } as LocationValue,
     description: '',
     tags: [] as string[],
     categories: (user?.categories ?? []) as string[],
@@ -73,7 +77,12 @@ export default function CompanionOnboarding() {
       await goToLogin('/welcome');
     }
   };
-  const { i, setI, clearStep } = useStepFlow({ key: `companion.${user?.id ?? 'new'}`, count: STEPS.length, initial: 0, onLeave });
+  const { i, setI, clearStep } = useStepFlow({
+    key: `companion.${user?.id ?? 'new'}`,
+    count: STEPS.length,
+    initial: 0,
+    onLeave,
+  });
   const step = STEPS[i];
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +130,10 @@ export default function CompanionOnboarding() {
       clearDraft();
       clearStep();
       qc.invalidateQueries({ queryKey: qk.profileCheck });
-      router.replace({ pathname: '/fellow/verification', params: { sent: '1' } });
+      router.replace({
+        pathname: '/fellow/verification',
+        params: { sent: '1' },
+      });
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -129,26 +141,25 @@ export default function CompanionOnboarding() {
     }
   };
 
+  // Approved copy (design.md "simple onboarding copy"): one short title, at most one short line.
   const titles: Record<Step, string> = {
     gender: 'I am',
-    photo: 'Add a clear photo of you',
+    photo: 'Add your photo',
     visibility: 'Who can see your photo?',
     where: 'Where are you based?',
-    about: 'Tell members about you',
-    offer: 'What would you enjoy doing?',
-    durations: 'Which bookings do you want?',
+    about: 'About you',
+    offer: 'What would you like to do?',
+    durations: 'How long can you meet?',
     availability: 'When are you free?',
-    finish: 'One thing before your first booking',
+    finish: 'Almost done',
   };
   const subs: Partial<Record<Step, string>> = {
-    gender: 'Members choose who they’d like to meet.',
-    photo: 'Members see this first. Our team approves it with the rest of your profile.',
-    visibility: 'Tap one to choose. Tapping is your consent; change it any time in Privacy.',
-    where: 'Bookings come from your area first.',
-    about: 'A few friendly lines. This is what members read.',
-    offer: 'You’ll show up in these categories. Pick everything you’d enjoy.',
-    durations: 'Same prices for everyone. Longer bookings earn more.',
-    availability: 'Evenings and weekends get the most requests.',
+    photo: 'Members see this first.',
+    visibility: 'You can change this later.',
+    where: 'You’ll get bookings near you.',
+    about: 'A few lines for members.',
+    offer: 'Pick one or more.',
+    durations: 'You get 80% of each booking.',
   };
   const descError = touched && d.description.trim().length < 30 ? `Write a little more — at least 30 characters (${d.description.trim().length} so far).` : null;
 
@@ -185,14 +196,24 @@ export default function CompanionOnboarding() {
 
         <Enter key={`b-${step}`} index={1} style={styles.body}>
           {step === 'gender' ? (
-            <Options
-              items={GENDER_OPTIONS.map((g) => ({ key: g.value, title: g.label, icon: 'user' as IconName }))}
-              selected={d.gender}
-              onPick={(v) => {
-                set({ gender: v as Gender, visibility: d.visibility ?? defaultVisibility(v as Gender) });
-                next();
-              }}
-            />
+            <>
+              <Notice tone="success" text="Your answers are saved." />
+              <Options
+                items={GENDER_OPTIONS.map((g) => ({
+                  key: g.value,
+                  title: g.label,
+                  icon: 'user' as IconName,
+                }))}
+                selected={d.gender}
+                onPick={(v) => {
+                  set({
+                    gender: v as Gender,
+                    visibility: d.visibility ?? defaultVisibility(v as Gender),
+                  });
+                  next();
+                }}
+              />
+            </>
           ) : step === 'photo' ? (
             <>
               <Pressable
@@ -208,7 +229,13 @@ export default function CompanionOnboarding() {
                 style={{ alignSelf: 'center' }}
               >
                 {hasPhoto ? (
-                  <Image source={{ uri: photo?.uri ?? user?.profilePhoto ?? undefined }} style={styles.photo} contentFit="cover" />
+                  <Image
+                    source={{
+                      uri: photo?.uri ?? user?.profilePhoto ?? undefined,
+                    }}
+                    style={styles.photo}
+                    contentFit="cover"
+                  />
                 ) : (
                   <View style={[styles.photo, styles.photoEmpty]}>
                     <Icon name="camera" size={30} color={colors.moss} />
@@ -221,7 +248,7 @@ export default function CompanionOnboarding() {
                   <Icon name="camera" size={16} color={colors.onMoss} />
                 </View>
               </Pressable>
-              {['Your face clearly visible — no sunglasses or filters', 'Just you in the photo', 'Smile — friendly photos get more bookings'].map((t) => (
+              {['Face clearly visible', 'Just you', 'A smile helps'].map((t) => (
                 <View key={t} style={styles.tickRow}>
                   <Icon name="shieldCheck" size={16} color={colors.moss} />
                   <Text variant="footnote" style={{ flex: 1 }}>
@@ -241,7 +268,7 @@ export default function CompanionOnboarding() {
               items={(['locked', 'open'] as Visibility[]).map((v) => ({
                 key: v,
                 title: `${VISIBILITY_COPY[v].title}${d.gender && defaultVisibility(d.gender) === v ? ' · recommended' : ''}`,
-                body: VISIBILITY_COPY[v].body,
+                body: v === 'locked' ? 'Only people who’ve booked you' : VISIBILITY_COPY[v].body,
                 icon: (v === 'locked' ? 'lock' : 'eye') as IconName,
               }))}
               selected={d.visibility}
@@ -252,7 +279,17 @@ export default function CompanionOnboarding() {
             />
           ) : step === 'where' ? (
             <>
-              <LocationFields value={d.place} onChange={(place) => set({ place })} error={touched ? { area: d.place.city && !d.place.area ? 'Choose the area you’re based in.' : null } : undefined} />
+              <LocationFields
+                value={d.place}
+                onChange={(place) => set({ place })}
+                error={
+                  touched
+                    ? {
+                        area: d.place.city && !d.place.area ? 'Choose the area you’re based in.' : null,
+                      }
+                    : undefined
+                }
+              />
               <Button label="Next" iconRight="arrowRight" disabled={!d.place.state || !d.place.city} onPress={() => (d.place.area ? next() : setTouched(true))} />
             </>
           ) : step === 'about' ? (
@@ -271,22 +308,45 @@ export default function CompanionOnboarding() {
               <Text variant="subhead">Interests and languages</Text>
               <View style={styles.wrap}>
                 {INTERESTS.map((t) => (
-                  <Chip key={t} label={t} selected={d.tags.includes(t)} onPress={() => set({ tags: d.tags.includes(t) ? d.tags.filter((x) => x !== t) : [...d.tags, t] })} />
+                  <Chip
+                    key={t}
+                    label={t}
+                    selected={d.tags.includes(t)}
+                    onPress={() =>
+                      set({
+                        tags: d.tags.includes(t) ? d.tags.filter((x) => x !== t) : [...d.tags, t],
+                      })
+                    }
+                  />
                 ))}
               </View>
               <Button label="Next" iconRight="arrowRight" onPress={() => (d.description.trim().length >= 30 ? next() : setTouched(true))} />
             </>
           ) : step === 'offer' ? (
             <>
-              <CategoryTiles audience="companion" selected={d.categories} onToggle={(k) => set({ categories: d.categories.includes(k) ? d.categories.filter((x) => x !== k) : [...d.categories, k] })} />
+              <CategoryTiles
+                audience="companion"
+                selected={d.categories}
+                onToggle={(k) =>
+                  set({
+                    categories: d.categories.includes(k) ? d.categories.filter((x) => x !== k) : [...d.categories, k],
+                  })
+                }
+              />
               <Button label={d.categories.length ? `Next · ${d.categories.length} chosen` : 'Pick at least one'} iconRight="arrowRight" disabled={!d.categories.length} onPress={next} />
             </>
           ) : step === 'durations' ? (
             <>
-              <PackageGrid mode="offer" hours={ALL_HOURS} selected={d.packages} onSelect={(h) => set({ packages: d.packages.includes(h) ? d.packages.filter((x) => x !== h) : [...d.packages, h].sort((a, b) => a - b) })} />
-              <Text variant="footnote" muted>
-                <Brand /> keeps 20%; you receive 80% of every booking, paid after it’s completed.
-              </Text>
+              <PackageGrid
+                mode="offer"
+                hours={ALL_HOURS}
+                selected={d.packages}
+                onSelect={(h) =>
+                  set({
+                    packages: d.packages.includes(h) ? d.packages.filter((x) => x !== h) : [...d.packages, h].sort((a, b) => a - b),
+                  })
+                }
+              />
               <Button label="Next" iconRight="arrowRight" disabled={!d.packages.length} onPress={next} />
             </>
           ) : step === 'availability' ? (
@@ -299,11 +359,11 @@ export default function CompanionOnboarding() {
               <IdLaterNotice />
               <View style={styles.summary}>
                 <Line label="Based in" value={[d.place.area, d.place.city, d.place.state].filter(Boolean).join(', ')} />
-                <Line label="Offers" value={d.categories.map(categoryTitle).join(', ')} />
-                <Line label="Durations" value={d.packages.map((h) => `${h} h (you get ${formatINR(companionShareOf(priceFor(h) ?? 0))})`).join(' · ')} />
+                <Line label="You’d like to do" value={d.categories.map(categoryTitle).join(', ')} />
+                <Line label="Lengths" value={d.packages.map((h) => `${h} h (you get ${formatINR(companionShareOf(priceFor(h) ?? 0))})`).join(' · ')} />
               </View>
               <Text variant="footnote" muted>
-                Our team reviews every companion before they go live — usually within 24 hours. By sending you agree to the <Brand /> Code of Conduct.
+                By sending, you agree to the <Brand /> Code of Conduct.
               </Text>
               {error ? <Notice tone="danger" text={`${error} Your answers are saved — try again.`} /> : null}
               <Button label="Send for approval" iconRight="arrowRight" loading={busy} onPress={submit} haptic />
@@ -317,7 +377,14 @@ export default function CompanionOnboarding() {
 
 function Line({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ gap: 2, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line }}>
+    <View
+      style={{
+        gap: 2,
+        paddingVertical: space.sm,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.line,
+      }}
+    >
       <Text variant="caption" muted>
         {label}
       </Text>
@@ -362,19 +429,78 @@ function Options({ items, selected, onPick }: { items: { key: string; title: str
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.xs, minHeight: 52 },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.xs,
+    minHeight: 52,
+  },
   dots: { flexDirection: 'row', gap: 5 },
-  dot: { width: 14, height: 4, borderRadius: 2, backgroundColor: colors.mistDeep },
+  dot: {
+    width: 14,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.mistDeep,
+  },
   dotOn: { backgroundColor: colors.moss },
-  head: { paddingHorizontal: GUTTER, gap: space.xs, marginTop: space.md, marginBottom: space.xl },
+  head: {
+    paddingHorizontal: GUTTER,
+    gap: space.xs,
+    marginTop: space.md,
+    marginBottom: space.xl,
+  },
   body: { paddingHorizontal: GUTTER, gap: space.lg },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   photo: { width: 148, height: 148, borderRadius: 74 },
-  photoEmpty: { backgroundColor: colors.paper, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  cam: { position: 'absolute', right: 6, bottom: 6, width: 36, height: 36, borderRadius: 18, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.mist },
+  photoEmpty: {
+    backgroundColor: colors.paper,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.mossSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  cam: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.moss,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.mist,
+  },
   tickRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  summary: { backgroundColor: colors.paper, borderRadius: radius.lg, paddingHorizontal: space.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
-  option: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.line },
+  summary: {
+    backgroundColor: colors.paper,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    minHeight: 64,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+  },
   optionOn: { borderColor: colors.moss, backgroundColor: colors.green50 },
-  optionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.mossSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

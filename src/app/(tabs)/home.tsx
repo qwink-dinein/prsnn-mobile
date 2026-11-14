@@ -3,13 +3,12 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
-import { useLiveCompanions , Notice, Skeleton } from '@/components/ui/states';
-import { colors, GUTTER, radius, space } from '@/theme/tokens';
+import { useLiveCompanions, Notice, Skeleton } from '@/components/ui/states';
+import { colors, GUTTER, radius, shadow, space } from '@/theme/tokens';
 import { Screen, Section, Logo, BellButton, EmptyState, ErrorState } from '@/components/ui/layout';
 import { Enter, PressScale } from '@/components/ui/motion';
-import { CategoryCard } from '@/components/CategoryTiles';
+import { HomeCategories } from '@/components/HomeCategories';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
 import { Text } from '@/components/ui/Text';
@@ -20,6 +19,10 @@ import { CATEGORIES, categoryOf } from '@/domain/categories';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+};
 
 /** Screen 6 · Home / Discover (companions see their dashboard here instead). */
 export default function HomeTab() {
@@ -59,19 +62,14 @@ function Discover() {
         </View>
       </View>
 
-      <Enter index={0}>
-        <View style={styles.hero}>
-          <Image source={require('../../../assets/images/together.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" />
-          <LinearGradient colors={['rgba(24,27,52,0.05)', 'rgba(24,27,52,0.78)']} style={StyleSheet.absoluteFill} />
-          <View style={styles.heroText}>
-            <Text variant="title1" color={colors.paper}>
-              Good company, from ₹399
-            </Text>
-            <Text variant="footnote" color={colors.paper} style={{ opacity: 0.92 }}>
-              People near you · pay safely · public places only
-            </Text>
-          </View>
-        </View>
+      <Enter index={0} style={{ paddingHorizontal: GUTTER, marginTop: space.md }}>
+        <Text variant="footnote" muted>
+          {greeting()}
+          {user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
+        </Text>
+        <Text variant="title2" accessibilityRole="header" style={{ marginTop: 2 }}>
+          Who would you like to meet?
+        </Text>
       </Enter>
 
       {user?.photoStatus === 'pending' || user?.photoStatus === 'changes_requested' ? (
@@ -85,15 +83,9 @@ function Discover() {
         </View>
       ) : null}
 
-      <Section title="What would you like to do?" style={{ paddingHorizontal: GUTTER, marginTop: space.xl }}>
-        <View style={styles.cats}>
-          {CATEGORIES.map((c, i) => (
-            <Enter key={c.key} index={i + 1} style={i === 0 ? { width: '100%' } : styles.catCell}>
-              <CategoryCard c={c} showPrice fill wide={i === 0} onPress={() => router.push(`/category/${c.key}`)} />
-            </Enter>
-          ))}
-        </View>
-      </Section>
+      <Enter index={1} style={{ paddingHorizontal: GUTTER, marginTop: space.md }}>
+        <HomeCategories />
+      </Enter>
 
       {plans.data?.length ? (
         <>
@@ -177,7 +169,7 @@ function Discover() {
             </View>
           ))}
         </View>
-        <View style={[styles.how, { backgroundColor: colors.green50 }]}>
+        <View style={[styles.how, { backgroundColor: colors.champagneMist }]}>
           <View style={styles.howRow}>
             <Icon name="shieldCheck" size={20} color={colors.moss} />
             <Text variant="headline">Safety, built in</Text>
@@ -195,17 +187,11 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingTop: space.sm },
   topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   city: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space.sm },
-  badge: { position: 'absolute', top: 11, right: 12, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.clay, borderWidth: 1.5, borderColor: colors.mist },
-  search: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginHorizontal: GUTTER, marginTop: space.lg, minHeight: 50, paddingHorizontal: space.lg, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
-  hero: { height: 150, marginHorizontal: GUTTER, marginTop: space.lg, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.mistDeep },
-  heroText: { padding: space.lg, gap: 2 },
-  cats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  catCell: { width: '48.5%', flexGrow: 1 },
-  plan: { width: 200, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  plan: { width: 200, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   planPhoto: { width: '100%', height: 96, backgroundColor: colors.mistDeep },
-  loved: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.green50, borderWidth: 1, borderColor: colors.mossSoft },
+  loved: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.champagneMist, borderWidth: 1, borderColor: colors.line },
   lovedIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
-  how: { gap: space.sm, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  how: { gap: space.sm, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, ...shadow.card },
   howRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   num: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center' },
 });

@@ -26,11 +26,11 @@ import { isStaff } from '@/domain/admin';
 
 type Step = 'name' | 'contact' | 'where' | 'categories' | 'gender' | 'meet' | 'photo' | 'visibility';
 
-const MEET: { value: SeeGender; title: string; body: string }[] = [
-  { value: 'woman', title: 'Women companions', body: 'Only women companions are shown to you.' },
-  { value: 'man', title: 'Men companions', body: 'Only men companions are shown to you.' },
-  { value: 'nonbinary', title: 'Non-binary companions', body: 'Only non-binary companions are shown to you.' },
-  { value: 'everyone', title: 'Anyone', body: 'All companions are shown to you.' },
+const MEET: { value: SeeGender; title: string; body?: string }[] = [
+  { value: 'woman', title: 'Women' },
+  { value: 'man', title: 'Men' },
+  { value: 'nonbinary', title: 'Non-binary' },
+  { value: 'everyone', title: 'Anyone' },
 ];
 
 const COUNTRIES = ['United Kingdom', 'United States', 'United Arab Emirates', 'Canada', 'Australia', 'Singapore', 'Germany', 'France', 'Saudi Arabia', 'Qatar', 'Other'];
@@ -53,7 +53,11 @@ export default function SetupProfile() {
     name: user?.fullName ?? '',
     contactPhone: user?.contactPhone ? `+${user.contactPhone}` : '',
     country: user?.country ?? '',
-    place: { state: user?.state ?? stateOf(user?.city) ?? '', city: user?.city ?? '', area: user?.area ?? '' } as LocationValue,
+    place: {
+      state: user?.state ?? stateOf(user?.city) ?? '',
+      city: user?.city ?? '',
+      area: user?.area ?? '',
+    } as LocationValue,
     categories: (user?.categories ?? []) as string[],
     gender: user?.gender as Gender | undefined,
     see: user?.seeGender as SeeGender | undefined,
@@ -98,7 +102,12 @@ export default function SetupProfile() {
       await goToLogin('/welcome');
     }
   };
-  const { i, setI, clearStep } = useStepFlow({ key: `setup.${user?.id ?? 'new'}`, count: steps.length, initial: firstMissing, onLeave });
+  const { i, setI, clearStep } = useStepFlow({
+    key: `setup.${user?.id ?? 'new'}`,
+    count: steps.length,
+    initial: firstMissing,
+    onLeave,
+  });
   const step = steps[i];
   const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -152,24 +161,25 @@ export default function SetupProfile() {
   const phoneDigits = d.contactPhone.replace(/\D/g, '');
   const phoneError = touched && (phoneDigits.length < 8 || phoneDigits.length > 15 || !d.contactPhone.trim().startsWith('+')) ? 'Add your mobile with the country code, like +44 7700 900123.' : null;
 
+  // Approved copy (design.md "simple onboarding copy"): one short title, at most one short line.
   const titles: Record<Step, string> = {
-    name: 'What should we call you?',
+    name: 'What’s your name?',
     contact: 'Your mobile number',
-    where: 'Where are you?',
-    categories: 'What can we help you with?',
+    where: 'Where are you based?',
+    categories: 'What would you like to do?',
     gender: 'I am',
     meet: 'Who would you like to meet?',
-    photo: 'Add a clear photo of you',
+    photo: 'Add your photo',
     visibility: 'Who can see your photo?',
   };
   const subs: Partial<Record<Step, string>> = {
-    name: simple ? (user?.role === 'companion' ? 'Members see your first name.' : 'Shown to the team in the activity log.') : 'Companions see your first name when you book.',
-    contact: 'With your country code. For booking updates and safety alerts — never shown to anyone.',
-    where: 'We show companions and popular plans near you. Change it any time.',
-    categories: 'Tap all that fit. Home opens on them.',
-    meet: 'Only these companions are shown to you. Change it any time in Privacy.',
-    photo: 'Our team approves every photo. You can keep using prsnn while it’s reviewed.',
-    visibility: 'Tap one to choose it. Tapping is your consent to this setting; change it any time in Privacy.',
+    name: simple ? (user?.role === 'companion' ? 'Members see only your first name.' : undefined) : 'Companions see only your first name.',
+    contact: 'We never show it to anyone.',
+    where: 'We’ll show people near you.',
+    categories: 'Pick one or more.',
+    meet: 'You can change this later.',
+    photo: 'Our team checks every photo.',
+    visibility: 'You can change this later.',
   };
 
   return (
@@ -207,6 +217,7 @@ export default function SetupProfile() {
         <Enter key={`b-${step}`} index={1}>
           {step === 'name' ? (
             <View style={styles.body}>
+              <Notice tone="success" text="Your answers are saved." />
               <TextField
                 label="Full name"
                 value={d.name}
@@ -225,7 +236,7 @@ export default function SetupProfile() {
           ) : step === 'contact' ? (
             <View style={styles.body}>
               <Text variant="footnote" color={colors.gray600}>
-                Country you live in
+                Your country
               </Text>
               <View style={styles.chips}>
                 {COUNTRIES.map((c) => (
@@ -243,30 +254,64 @@ export default function SetupProfile() {
                 autoComplete="tel"
                 error={phoneError}
               />
-              <Button label="Next" iconRight="arrowRight" disabled={!d.country || phoneDigits.length < 8} onPress={() => (phoneError === null && d.contactPhone.trim().startsWith('+') ? next() : setTouched(true))} />
+              <Button
+                label="Next"
+                iconRight="arrowRight"
+                disabled={!d.country || phoneDigits.length < 8}
+                onPress={() => (phoneError === null && d.contactPhone.trim().startsWith('+') ? next() : setTouched(true))}
+              />
             </View>
           ) : step === 'where' ? (
             <View style={styles.body}>
-              <LocationFields value={d.place} onChange={(place) => set({ place })} error={touched ? { area: d.place.city && !d.place.area ? 'Choose your area so we can show companions nearby.' : null } : undefined} />
+              <LocationFields
+                value={d.place}
+                onChange={(place) => set({ place })}
+                error={
+                  touched
+                    ? {
+                        area: d.place.city && !d.place.area ? 'Choose your area so we can show companions nearby.' : null,
+                      }
+                    : undefined
+                }
+              />
               <Button label="Next" iconRight="arrowRight" disabled={!d.place.state || !d.place.city} onPress={() => (d.place.area ? next() : setTouched(true))} />
             </View>
           ) : step === 'categories' ? (
             <View style={styles.body}>
-              <CategoryTiles selected={d.categories} onToggle={(k) => set({ categories: d.categories.includes(k) ? d.categories.filter((x) => x !== k) : [...d.categories, k] })} />
+              <CategoryTiles
+                selected={d.categories}
+                onToggle={(k) =>
+                  set({
+                    categories: d.categories.includes(k) ? d.categories.filter((x) => x !== k) : [...d.categories, k],
+                  })
+                }
+              />
               <Button label={d.categories.length ? `Next · ${d.categories.length} chosen` : 'Pick at least one'} iconRight="arrowRight" disabled={!d.categories.length} onPress={next} />
             </View>
           ) : step === 'gender' ? (
             <Options
-              items={GENDER_OPTIONS.map((g) => ({ key: g.value, title: g.label, icon: 'user' as IconName }))}
+              items={GENDER_OPTIONS.map((g) => ({
+                key: g.value,
+                title: g.label,
+                icon: 'user' as IconName,
+              }))}
               selected={d.gender}
               onPick={(v) => {
-                set({ gender: v as Gender, visibility: d.visibility ?? defaultVisibility(v as Gender) });
+                set({
+                  gender: v as Gender,
+                  visibility: d.visibility ?? defaultVisibility(v as Gender),
+                });
                 next();
               }}
             />
           ) : step === 'meet' ? (
             <Options
-              items={MEET.map((m) => ({ key: m.value, title: m.title, body: m.body, icon: 'users' as IconName }))}
+              items={MEET.map((m) => ({
+                key: m.value,
+                title: m.title,
+                body: m.body,
+                icon: 'users' as IconName,
+              }))}
               selected={d.see}
               onPick={(v) => {
                 set({ see: v as SeeGender });
@@ -289,7 +334,13 @@ export default function SetupProfile() {
                 style={styles.photoBox}
               >
                 {photo || (user?.profilePhoto && user.photoStatus !== 'changes_requested') ? (
-                  <Image source={{ uri: photo?.uri ?? user?.profilePhoto ?? undefined }} style={styles.photo} contentFit="cover" />
+                  <Image
+                    source={{
+                      uri: photo?.uri ?? user?.profilePhoto ?? undefined,
+                    }}
+                    style={styles.photo}
+                    contentFit="cover"
+                  />
                 ) : (
                   <View style={[styles.photo, styles.photoEmpty]}>
                     <Icon name="camera" size={30} color={colors.moss} />
@@ -303,7 +354,7 @@ export default function SetupProfile() {
                 </View>
               </Pressable>
               <View style={{ gap: 8 }}>
-                {['Your face clearly visible — no sunglasses or filters', 'Just you in the photo', 'Good light: daylight or a bright room', 'You choose who sees it on the next step'].map((t) => (
+                {['Face clearly visible', 'Just you', 'Good light'].map((t) => (
                   <View key={t} style={styles.tickRow}>
                     <Icon name="shieldCheck" size={16} color={colors.moss} />
                     <Text variant="footnote" style={{ flex: 1 }}>
@@ -320,7 +371,11 @@ export default function SetupProfile() {
               <Button
                 label="Next"
                 iconRight="arrowRight"
-                onPress={() => (photo || (user?.photoStatus && user.photoStatus !== 'none' && user.photoStatus !== 'changes_requested') ? next() : setError('Add a clear photo of you to continue. It helps companions trust who they’re meeting.'))}
+                onPress={() =>
+                  photo || (user?.photoStatus && user.photoStatus !== 'none' && user.photoStatus !== 'changes_requested')
+                    ? next()
+                    : setError('Add a clear photo of you to continue. It helps companions trust who they’re meeting.')
+                }
               />
             </View>
           ) : (
@@ -404,25 +459,99 @@ function Options({ items, selected, onPick, busy }: { items: { key: string; titl
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.mist },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.xs, minHeight: 52 },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.xs,
+    minHeight: 52,
+  },
   dots: { flexDirection: 'row', gap: 6 },
-  dot: { width: 18, height: 4, borderRadius: 2, backgroundColor: colors.mistDeep },
+  dot: {
+    width: 18,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.mistDeep,
+  },
   dotOn: { backgroundColor: colors.moss },
-  head: { paddingHorizontal: GUTTER, gap: space.xs, marginTop: space.md, marginBottom: space.xl },
+  head: {
+    paddingHorizontal: GUTTER,
+    gap: space.xs,
+    marginTop: space.md,
+    marginBottom: space.xl,
+  },
   body: { paddingHorizontal: GUTTER, gap: space.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
+  chip: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   chipOn: { backgroundColor: colors.moss, borderColor: colors.moss },
   photoBox: { alignSelf: 'center' },
   photo: { width: 148, height: 148, borderRadius: 74 },
-  photoEmpty: { backgroundColor: colors.paper, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  cam: { position: 'absolute', right: 6, bottom: 6, width: 36, height: 36, borderRadius: 18, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.mist },
+  photoEmpty: {
+    backgroundColor: colors.paper,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.mossSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  cam: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.moss,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.mist,
+  },
   tickRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  option: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.line },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    minHeight: 64,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+  },
   optionOn: { borderColor: colors.moss, backgroundColor: colors.green50 },
   optionPressed: { backgroundColor: colors.green50, borderColor: colors.moss },
-  optionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center' },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.gray300, alignItems: 'center', justifyContent: 'center' },
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.mossSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.gray300,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioOn: { borderColor: colors.moss },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.moss },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.moss,
+  },
 });

@@ -17,8 +17,8 @@ export const SEE_OPTIONS: { value: SeeGender; label: string }[] = [
 export const defaultVisibility = (g?: Gender | null): Visibility => (g === 'man' ? 'open' : 'locked');
 
 export const VISIBILITY_COPY: Record<Visibility, { title: string; body: string }> = {
-  open: { title: 'Open', body: 'Everyone can see your photo and full name.' },
-  locked: { title: 'Locked', body: 'People see a blurred placeholder with a lock and your first name. Your photo shows only to someone with a confirmed, paid booking with you.' },
+  open: { title: 'Open', body: 'Everyone' },
+  locked: { title: 'Locked', body: 'Only people you’ve booked with' },
 };
 
 export const seeLabel = (s?: SeeGender | null) => SEE_OPTIONS.find((o) => o.value === s)?.label ?? 'Everyone';
