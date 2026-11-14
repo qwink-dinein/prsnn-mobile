@@ -53,4 +53,18 @@ Nothing here is built yet. Keep adding to this list; build everything in one go.
   - Also refresh `me` straight after the actions that change it: ID submitted, accept (`id_check` answer), resubmit for review, privacy save, and on any notification of type `approval` / `action_needed` (e.g. "Your ID is verified").
   - Safety net in the accept flow: if the server accepts without asking for an ID, never send the person to the ID screen; if the server says "Verify your ID", refresh `me` first and only then show the ID screen.
   - Test: approve an ID from the admin app while the companion's app is open on the dashboard → within seconds the request shows "Accept", no log out.
+- **ACID everywhere** (owner, 2026-11-14). Every change that touches money, bookings or status must be all-or-nothing, consistent, isolated from concurrent requests and durable.
+  - Already true: each Supabase RPC runs in one Postgres transaction; booking creation is idempotent; acceptance is a single conditional update; refunds are claimed once; queues use `for update skip locked`.
+  - Audit and fix the gaps (backend migrations + e2e tests):
+    - **Multi-step client flows** become one server call: e.g. photo upload + profile save, ID upload + submit, booking create + pay. Uploads go to a pending path and are only linked by the RPC; orphaned files are cleaned up.
+    - **Row locks / guards** on every state change (`select … for update` or a conditional `update … where status = …` with a row-count check) for accept, decline, cancel, refund, reassign, complete, admin edits, panic raise/resolve, price changes.
+    - **Notifications and WhatsApp**: today a notification is marked sent before the message is delivered, so a failed send is lost. Change to an outbox with `attempts` / `sent_at` / `last_error`: mark sent only after Waplify/Expo succeed, retry with backoff.
+    - **Money totals** (collected, refunded, payouts) derived from bookings in the same transaction as the change, never from a second write.
+    - **Constraints** that make bad states impossible: one live offer per booking, one assigned companion, one open panic per booking, non-negative amounts, refund ≤ amount paid, unique idempotency keys.
+    - **Concurrency tests** in `scripts/e2e-supabase.mjs`: two companions accepting at once, double-tap pay, cancel during accept, two admins refunding at once; each must leave exactly one valid result.
+  - Document the guarantees in `API.md`.
+- **App icon = the approved prsnn. logo** (owner, 2026-11-14). Today `assets/icon.png`, `adaptive-icon.png` and `splash-icon.png` are the old moss "p." on cream.
+  - New icon: **"p." in Outfit Bold, white p and champagne dot (`#C9B68E`) on midnight (`#181B34`)**, as approved in `preview/wordmark-dot.html`. Produce iOS 1024×1024 (no transparency), Android adaptive foreground with safe-zone padding on a midnight background, monochrome Android 13 themed icon, notification icon (white silhouette), favicon.
+  - Splash: the full "prsnn." wordmark (white with champagne dot) centred on midnight; `app.json` `backgroundColor`, `splash.backgroundColor` and `android.adaptiveIcon.backgroundColor` set to `#181B34`.
+  - Shows on the home screen, app switcher, Settings, notifications and the store listing. Needs a new build (icons can't change over the air).
 - **Fit every device.** Small phones (iPhone SE 375×667, small Android 360 wide), large phones (Pro Max 430 wide), foldables, and tablets (iPad / Android tablets, portrait and landscape): content width capped and centred on tablets, grids add columns on wide screens, no fixed heights that clip text, safe areas respected. Check every screen at 360, 375, 430, 768 and 1024 wide before shipping.
