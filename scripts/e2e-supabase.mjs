@@ -140,5 +140,16 @@ console.log('9. Who is told what (WhatsApp: offer → companion only, confirmed 
 // The 5 AM reminder and the 12-field panic alert run as the database itself:
 // check them with prsnn-backend/supabase/tests/round3-notify.sql (always rolls back).
 
+console.log('10. Live badges, chat read, staff preview log');
+r = await rpc(mem, 'unread_counts');
+ok(r.data?.messages >= 1 && r.data?.perChat?.[bid] >= 1, 'member has the companion’s message unread', r.data);
+ok(typeof r.data?.notifications === 'number' && typeof r.data?.bookings === 'number', 'bell and bookings counts returned', r.data);
+r = await rpc(mem, 'mark_chat_read', { bid }); ok(!r.error, 'opening the chat marks it read', r);
+r = await rpc(mem, 'unread_counts'); ok(!r.data?.perChat?.[bid], 'that chat’s badge clears', r.data);
+ok(!!(await rpc(mem2, 'mark_chat_read', { bid })).error, 'cannot mark someone else’s chat read');
+ok((await rpc(mem, 'admin_log_preview', { as_role: 'member', start_at: 'home' })).error === 'Access denied', 'members cannot log a staff preview');
+r = await rpc(sup, 'admin_log_preview', { as_role: 'companion', start_at: 'chat' }); ok(!r.error, 'staff preview recorded', r);
+r = await rpc(sup, 'admin_activity', { before_at: null }); ok(r.data?.[0]?.action === 'app.preview' && r.data[0].after?.as === 'companion', 'activity log shows the preview', r.data?.[0]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

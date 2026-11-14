@@ -37,6 +37,14 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ **WhatsApp `prsnn_session_reminder`** (#8) and **`prsnn_panic_alert`** (#7) approved by Meta (2026-11-14); secrets `WAPLIFY_TPL_SESSION_REMINDER` and `WAPLIFY_TPL_PANIC_ALERT` set by the owner
 - ⏳ Website (prsnn-frontend) still sends its own messages through the old Express API; it follows these rules once it moves to Supabase
 
+- ✅ **Round 4** (2026-11-15): new look (porcelain / midnight / champagne, Urbanist, Outfit “prsnn.” logo, new app icon and splash) · Wallet Home categories and price cards · companions see all 12 lengths with “You get” · simple sign-up copy · SOS in the chat header, keyboard hides from the chat · live number badges (bell, Messages, Bookings/Requests) · status changes reach the phone without logging out · back steps through sign-up and the step is remembered · ACID constraints, row locks and a delivery outbox · admin “View the app as…” on sample data · every card outlined, text never spills
+- 🔑 **New app icon and splash need a new build** (icons can't change over the air)
+- ⏳ Run `scripts/e2e-supabase.mjs` (needs `E2E_PASSWORD`) after `e2e-reset.sql`: §10 covers badges, chat read and the preview log (not run in this session: no password here)
+- 💡 Admin: “See their profile as members do” (read-only real public profile) from Users → a companion
+- 💡 Concurrency e2e (two companions accepting at once, double-tap pay, two admins refunding): constraints and row locks are in; the parallel test script isn't written yet
+- 💡 Remember the step in booking checkout and the companion ID check (setup and companion sign-up already do)
+- 💡 Price tag on 4 hours says “Suggested”, not “Popular”, until real booking data says so
+
 ## Before the first real build
 
 - ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.

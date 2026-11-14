@@ -217,3 +217,34 @@ same. Email sign-ups' `contactPhone` is used when there is no login number.
 
 Checks: `scripts/e2e-supabase.mjs` §9 and `prsnn-backend/supabase/tests/round3-notify.sql`
 (one transaction, always rolled back).
+
+## Round 4 (2026-11-15)
+
+**Live badges.** `chat_reads (booking_id, user_id, last_read_at)` with RLS (own rows only).
+`mark_chat_read(bid)`: participants only, never moves backwards. `unread_counts()` →
+`{ notifications, messages, perChat: { bookingId: n }, bookings }` (members: bookings that need
+payment; companions: live paid offers). The app recounts on Realtime events on `notifications`,
+`messages`, `booking_offers` and `bookings` (all in the `supabase_realtime` publication, RLS
+limits rows), on foreground and every 60 s (`src/lib/live.ts`). `profiles` is in the publication
+too: a staff change to someone's profile (ID approved, suspended, role) reaches their phone in
+seconds without logging out.
+
+**ACID guarantees.** Every RPC runs in one Postgres transaction. Added:
+- constraints: one live offer per booking (`booking_offers_one_live`), one open panic per booking,
+  non-negative amounts, refund ≤ amount paid, companion share ≤ price, accepted ⇒ companion set;
+- `select … for update` on the booking row before any change in `admin_delete_booking`,
+  `admin_mark_paid`, `admin_override_fee`, `admin_refund`, `admin_retry_refund`, `complete_booking`,
+  `open_dispute`, `simulate_payment`, `private.mark_paid` (accept/decline/cancel already used
+  conditional updates with row-count checks);
+- delivery outbox: `claim_notifications()` / `claim_whatsapp()` lease rows for 2 minutes (at most 5
+  attempts); `functions/notify` reports what the provider accepted with
+  `report_notifications([{id, push, wa, error?}])` / `report_whatsapp([{id, ok, error?}])`. A row is
+  marked sent only after delivery; push and WhatsApp are tracked separately so a retry never
+  repeats the channel that worked. Service role only.
+
+**Staff app preview.** `admin_log_preview(as_role 'member'|'companion', start_at text)`: staff only;
+writes `app.preview` to the activity log. The preview itself runs on the app's sample data
+(`src/lib/preview.tsx`); nothing else reaches the server.
+
+Checks: `scripts/e2e-supabase.mjs` §10 and `prsnn-backend/supabase/tests/round4-acid.sql`
+(rolled back).
