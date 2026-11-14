@@ -15,3 +15,13 @@ export function needsSetup(u: SessionUser | null | undefined): boolean {
   if (!u.phone && !u.contactPhone) return true;
   return !hasIdentity(u) || !u.city || !u.categories?.length || !u.photoStatus || u.photoStatus === 'none';
 }
+
+/**
+ * The furthest step a multi-step form may reopen on: the first one whose answer is missing
+ * (or the last step when everything is answered). Used so a remembered step never lands past
+ * a question whose answer didn't survive (for example a photo picked but not yet uploaded).
+ */
+export function firstUnanswered<T extends string>(steps: readonly T[], answered: Partial<Record<T, boolean>>): number {
+  const i = steps.findIndex((s) => !answered[s]);
+  return i < 0 ? Math.max(0, steps.length - 1) : i;
+}

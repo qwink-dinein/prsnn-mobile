@@ -29,6 +29,7 @@ import { errorMessage, type UploadFile } from '@/lib/api';
 import { pickImage } from '@/lib/pickImage';
 import { useSession } from '@/state/session';
 import { useStepFlow } from '@/lib/stepFlow';
+import { firstUnanswered } from '@/domain/setup';
 import { useConfirm } from '@/components/ui/confirm';
 import { goToLogin } from '@/lib/flow';
 
@@ -77,14 +78,26 @@ export default function CompanionOnboarding() {
       await goToLogin('/welcome');
     }
   };
+  const [photo, setPhoto] = useState<UploadFile | null>(null);
+  const answeredUpTo = firstUnanswered(STEPS, {
+    gender: !!d.gender,
+    photo: !!photo || (!!user?.profilePhoto && user.photoStatus !== 'changes_requested'),
+    visibility: !!d.visibility,
+    where: !!d.place.city && !!d.place.area,
+    about: d.description.trim().length >= 30,
+    offer: d.categories.length > 0,
+    durations: d.packages.length > 0,
+    availability: Object.values(d.avail.days).some(Boolean),
+  });
   const { i, setI, clearStep } = useStepFlow({
     key: `companion.${user?.id ?? 'new'}`,
     count: STEPS.length,
     initial: 0,
     onLeave,
+    ready: restored,
+    maxStep: answeredUpTo,
   });
   const step = STEPS[i];
-  const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);

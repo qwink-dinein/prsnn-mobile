@@ -24,7 +24,9 @@ export function CompanionDashboard() {
   const month = useMemo(() => earningsFor(q.data ?? [], now.getFullYear(), now.getMonth()), [q.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const pending = (q.data ?? []).filter((b) => awaitingAnswer(b));
   const status = check.data && check.data.status !== 'not_found' ? check.data.status : user?.verification_status;
-  const live = approval === 'approved' && isLiveCompanion(status);
+  const suspended = meQ.data?.suspended ?? user?.suspended ?? false;
+  // Same rule as the server's is_live: approved, not suspended, ID check not rejected.
+  const live = approval === 'approved' && !suspended && isLiveCompanion(status);
   const verified = status === 'verified';
 
   return (
@@ -41,7 +43,7 @@ export function CompanionDashboard() {
           <View style={styles.status}>
             <View style={[styles.dot, { backgroundColor: live ? '#3FB950' : colors.clay }]} />
             <Text variant="footnote" muted>
-              {approval === 'pending' ? 'Waiting for approval' : approval === 'changes_requested' ? 'Changes requested' : approval === 'rejected' ? 'Not approved' : companionStatusLine(status)}
+              {suspended ? 'Paused by our team' : approval === 'pending' ? 'Waiting for approval' : approval === 'changes_requested' ? 'Changes requested' : approval === 'rejected' ? 'Not approved' : companionStatusLine(status)}
             </Text>
           </View>
         </View>

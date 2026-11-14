@@ -244,10 +244,34 @@ export function tabOf(b: Booking, now: Date = new Date()): BookingTab {
   return end.getTime() < now.getTime() ? 'past' : 'upcoming';
 }
 
-/** Chat opens for accepted bookings; the requester must have paid (backend socket rule). */
-export function canChat(b: Pick<Booking, 'status' | 'paymentStatus'>, isCompanion: boolean): boolean {
-  if (!['accepted', 'completed'].includes(b.status)) return false;
-  return isCompanion || b.paymentStatus === 'paid';
+/** Chat opens for confirmed, paid bookings, for both people (database rule `can_chat`). */
+export function canChat(b: Pick<Booking, 'status' | 'paymentStatus'>, _isCompanion?: boolean): boolean {
+  return ['accepted', 'completed'].includes(b.status) && b.paymentStatus === 'paid';
+}
+
+/**
+ * Can this booking still be paid? Prepaid: only while it's waiting for payment and the payment
+ * window is open (`simulate_payment` / checkout rule). Website requests: once accepted.
+ * A failed attempt can be tried again.
+ */
+export function canPay(b: Pick<Booking, 'status' | 'paymentStatus'> & Partial<Pick<Booking, 'flow' | 'allocation'>>, now: number = Date.now()): boolean {
+  if (b.paymentStatus === 'paid' || b.paymentStatus === 'refunded') return false;
+  if (b.flow === 'prepaid') {
+    const a = b.allocation;
+    if (a?.state !== 'awaiting_payment') return false;
+    return !a.paymentDeadline || new Date(a.paymentDeadline).getTime() > now;
+  }
+  return b.status === 'accepted';
+}
+
+/**
+ * The companion may mark a booking completed once the session has ended, and never while a
+ * report or a safety alert is open (database rule `complete_booking`).
+ */
+export function canComplete(b: Pick<Booking, 'status' | 'paymentStatus' | 'scheduledDate' | 'startTime' | 'duration'> & Partial<Pick<Booking, 'panic' | 'dispute'>>, now: number = Date.now()): boolean {
+  if (b.status !== 'accepted' || b.paymentStatus !== 'paid') return false;
+  if (b.panic || b.dispute?.status === 'open') return false;
+  return startsAt(b).getTime() + Number(b.duration || 60) * 60_000 <= now;
 }
 
 export interface EarningsSummary {

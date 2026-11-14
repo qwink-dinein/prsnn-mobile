@@ -1,6 +1,9 @@
 import {
   amountDuePaise,
   canChat,
+  canComplete,
+  canPay,
+  startsAt,
   durationLabel,
   earningsFor,
   endTimeOf,
@@ -109,11 +112,31 @@ describe('booking stages follow the backend flow', () => {
     expect(stageOf(booking({ status: 'accepted', paymentStatus: 'paid' }))).toBe('confirmed');
     expect(stageOf(booking({ status: 'rejected' }))).toBe('declined');
   });
-  it('only lets the requester chat after paying (socket rule)', () => {
+  it('opens chat only on confirmed, paid bookings, for both people (database rule)', () => {
     expect(canChat(booking({ status: 'accepted' }), false)).toBe(false);
-    expect(canChat(booking({ status: 'accepted' }), true)).toBe(true);
+    expect(canChat(booking({ status: 'accepted' }), true)).toBe(false);
+    expect(canChat(booking({ status: 'completed', paymentStatus: 'paid' }), true)).toBe(true);
     expect(canChat(booking({ status: 'accepted', paymentStatus: 'paid' }), false)).toBe(true);
     expect(canChat(booking({ status: 'pending' }), true)).toBe(false);
+  });
+  it('allows "Mark completed" only after the end, with no open alert or report', () => {
+    const b = booking({ status: 'accepted', paymentStatus: 'paid' });
+    const start = startsAt(b).getTime();
+    expect(canComplete(b, start + 30 * 60_000)).toBe(false); // mid-session: chat must stay open
+    expect(canComplete(b, start + 120 * 60_000)).toBe(true);
+    expect(canComplete({ ...b, panic: { id: 'p', raisedAt: '', mine: true, sends: 1 } }, start + 180 * 60_000)).toBe(false);
+    expect(canComplete({ ...b, dispute: { status: 'open' } }, start + 180 * 60_000)).toBe(false);
+    expect(canComplete({ ...b, paymentStatus: 'pending' }, start + 180 * 60_000)).toBe(false);
+  });
+  it('offers Pay only while the booking can still be paid', () => {
+    const now = Date.parse('2026-11-16T10:00:00Z');
+    const waiting = booking({ flow: 'prepaid', allocation: { state: 'awaiting_payment', paymentDeadline: '2026-11-16T10:20:00Z' } });
+    expect(canPay(waiting, now)).toBe(true);
+    expect(canPay({ ...waiting, paymentStatus: 'failed' }, now)).toBe(true); // try again after a failed attempt
+    expect(canPay(waiting, Date.parse('2026-11-16T10:21:00Z'))).toBe(false); // window closed
+    expect(canPay(booking({ flow: 'prepaid', allocation: { state: 'cancelled' } }), now)).toBe(false);
+    expect(canPay({ ...waiting, paymentStatus: 'paid' }, now)).toBe(false);
+    expect(canPay(booking({ status: 'accepted' }), now)).toBe(true); // website request
   });
   it('sorts into tabs', () => {
     const now = new Date(2026, 10, 15, 12, 0);

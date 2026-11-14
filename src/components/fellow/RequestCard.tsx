@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui/confirm';
 import { MetaLine, totalOf, whenOf } from '@/components/bookings';
-import { durationLabel, formatINR, formatMinutes, minutesLeft, personOf, startsAt } from '@/domain/booking';
+import { canComplete, durationLabel, formatINR, formatMinutes, minutesLeft, personOf, startsAt } from '@/domain/booking';
 import { companionShareOf } from '@/domain/pricing';
 import type { Booking, BookingStatus } from '@/domain/types';
 import { svc, qk } from '@/services';
@@ -32,7 +32,7 @@ function useNow(intervalMs = 30_000) {
  *  - Prepaid offer: already paid by the customer; accept within the deadline
  *    (first to accept wins), or decline so it goes to someone else.
  *  - Website request: Accept / Decline, then the customer pays.
- *  - Confirmed: Chat, and Mark completed after the start time.
+ *  - Confirmed: Chat, and Mark completed once the session has ended.
  */
 export function RequestCard({ b }: { b: Booking }) {
   const qc = useQueryClient();
@@ -177,7 +177,7 @@ export function RequestCard({ b }: { b: Booking }) {
       ) : mine ? (
         <View style={styles.actions}>
           <Button label="Chat" icon="message" variant="secondary" compact style={{ flex: 1 }} onPress={() => router.push(`/chat/${b._id}`)} />
-          {b.paymentStatus === 'paid' && started ? <Button label="Mark completed" compact style={{ flex: 1 }} loading={update.isPending} onPress={() => update.mutate('completed')} /> : null}
+          {canComplete(b, now) ? <Button label="Mark completed" compact style={{ flex: 1 }} loading={update.isPending} onPress={() => update.mutate('completed')} /> : null}
           {!started ? <Button label="Details" variant="ghost" compact style={{ flex: 1 }} onPress={() => router.push(`/booking/${b._id}`)} /> : null}
         </View>
       ) : null}

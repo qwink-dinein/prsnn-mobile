@@ -41,9 +41,11 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 🔑 **New app icon and splash need a new build** (icons can't change over the air)
 - ⏳ Run `scripts/e2e-supabase.mjs` (needs `E2E_PASSWORD`) after `e2e-reset.sql`: §10 covers badges, chat read and the preview log (not run in this session: no password here)
 - 💡 Admin: “See their profile as members do” (read-only real public profile) from Users → a companion
-- 💡 Concurrency e2e (two companions accepting at once, double-tap pay, two admins refunding): constraints and row locks are in; the parallel test script isn't written yet
 - 💡 Remember the step in booking checkout and the companion ID check (setup and companion sign-up already do)
 - 💡 Price tag on 4 hours says “Suggested”, not “Popular”, until real booking data says so
+
+- ✅ **Round 5** (2026-11-16): state-machine audit fixed — accept vs ID decision race, double panic press, duplicate sends from late delivery reports (claim tokens, give-up + staff notice), chat messages lost between history and live, companion double-booking (per-companion lock), suspended companions accepting, completion mid-session / with open alerts, unpaid website bookings auto-completed, failed test payments recorded, draft profiles approvable, Pay on closed bookings, sign-up step restore, booking status ⇔ allocation constraint
+- 💡 Load test for the per-companion lock (parallel accepts / offers) once there are enough test companions; the lock order is booking → companion everywhere
 
 ## Before the first real build
 

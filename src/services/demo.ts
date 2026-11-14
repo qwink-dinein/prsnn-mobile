@@ -264,7 +264,10 @@ export const demo: Backend = {
   },
   verifyPayment: ({ bookingId }) => demo.simulatePayment(bookingId, 'success'),
   simulatePayment: (bookingId, outcome) => {
-    if (outcome === 'failure') return fail('Test payment declined. No money was taken.');
+    if (outcome === 'failure') {
+      if (find(bookingId)) patch(bookingId, { paymentStatus: 'failed' }); // recorded, as on the server
+      return fail('Test payment declined. No money was taken.');
+    }
     const b = find(bookingId);
     if (!b) return fail('Booking not found.');
     const amountPaid = amountDuePaise(b.pricePerHour, b.duration, b.packagePrice) / 100;

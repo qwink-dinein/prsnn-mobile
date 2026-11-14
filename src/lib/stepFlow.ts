@@ -10,23 +10,42 @@ import { useDraft } from '@/components/ui/states';
  *   on the same step (the answers are kept by the screen's own draft);
  * - on the first step, calls `onLeave` (the screen asks "Finish setting up?") instead of leaving.
  */
-export function useStepFlow({ key, count, initial, onLeave }: { key: string; count: number; initial: number; onLeave: () => void }) {
+export function useStepFlow({
+  key,
+  count,
+  initial,
+  onLeave,
+  ready = true,
+  maxStep,
+}: {
+  key: string;
+  count: number;
+  initial: number;
+  onLeave: () => void;
+  /** False until the screen's own answers have loaded; the step is restored only after that. */
+  ready?: boolean;
+  /** The furthest step the saved answers support (the first unanswered one): never restore past it. */
+  maxStep?: number;
+}) {
   const navigation = useNavigation();
   const [saved, setSaved, clearSaved, restored] = useDraft(`${key}.step`, { step: initial });
   const [i, setIState] = useState(initial);
   const applied = useRef(false);
 
-  // Restore the remembered step once it has loaded from storage.
+  // Restore the remembered step once both it and the answers have loaded. If the person has
+  // already moved (tapped before storage answered), their tap wins.
   useEffect(() => {
-    if (restored && !applied.current) {
+    if (restored && ready && !applied.current) {
       applied.current = true;
-      setIState(Math.max(0, Math.min(count - 1, saved.step)));
+      const limit = Math.min(count - 1, maxStep ?? count - 1);
+      setIState(Math.max(0, Math.min(limit, saved.step)));
     }
-  }, [restored, saved.step, count]);
+  }, [restored, ready, saved.step, count, maxStep]);
 
   const setI = useCallback(
     (n: number | ((p: number) => number)) =>
       setIState((cur) => {
+        applied.current = true; // a step the person chose is never overwritten by the restore
         const v = Math.max(0, Math.min(count - 1, typeof n === 'function' ? n(cur) : n));
         setSaved({ step: v });
         return v;

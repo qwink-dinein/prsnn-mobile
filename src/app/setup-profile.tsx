@@ -15,6 +15,7 @@ import { CategoryTiles } from '@/components/CategoryTiles';
 import { svc } from '@/services';
 import { errorMessage, type UploadFile } from '@/lib/api';
 import { goHome, goToLogin } from '@/lib/flow';
+import { firstUnanswered } from '@/domain/setup';
 import { useStepFlow } from '@/lib/stepFlow';
 import { useConfirm } from '@/components/ui/confirm';
 import { pickImage } from '@/lib/pickImage';
@@ -102,14 +103,27 @@ export default function SetupProfile() {
       await goToLogin('/welcome');
     }
   };
+  const [photo, setPhoto] = useState<UploadFile | null>(null);
+  // Answers on this phone (draft) or already saved on the account.
+  const answeredUpTo = firstUnanswered(steps, {
+    name: d.name.trim().length >= 2,
+    contact: !needsContact || d.contactPhone.replace(/\D/g, '').length >= 8,
+    where: !!d.place.city && !!d.place.area,
+    categories: d.categories.length > 0,
+    gender: !!d.gender,
+    meet: !!d.see,
+    photo: !!photo || (!!user?.photoStatus && user.photoStatus !== 'none' && user.photoStatus !== 'changes_requested'),
+    visibility: !!d.visibility,
+  });
   const { i, setI, clearStep } = useStepFlow({
     key: `setup.${user?.id ?? 'new'}`,
     count: steps.length,
     initial: firstMissing,
     onLeave,
+    ready: restored,
+    maxStep: answeredUpTo,
   });
   const step = steps[i];
-  const [photo, setPhoto] = useState<UploadFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState(false);

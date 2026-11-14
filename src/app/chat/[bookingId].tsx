@@ -25,14 +25,14 @@ export default function Chat() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const me = useSession((s) => s.user);
   const booking = useQuery({ queryKey: qk.booking(bookingId), queryFn: () => svc.booking(bookingId) });
-  const { messages, status, error, ended, send } = useChat(bookingId, me?.id ?? '');
+  const { messages, status, error, send } = useChat(bookingId, me?.id ?? '');
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const b = booking.data;
   const isCompanion = b ? idOf(b.companionId) === me?.id : false;
   const other = b ? personOf(isCompanion ? b.requesterId : b.companionId) : null;
-  const closed = ended || (b ? b.status !== 'accepted' : false);
+  const closed = b ? b.status !== 'accepted' : false;
 
   useEffect(() => {
     if (messages.length) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
@@ -67,8 +67,16 @@ export default function Chat() {
   const [tipOpen, setTipOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const submit = () => {
-    if (send(text)) setText('');
+  // The box clears at once; if the message didn't reach the server, the text comes back.
+  const [sending, setSending] = useState(false);
+  const submit = async () => {
+    const draft = text;
+    if (!draft.trim() || sending) return;
+    setText('');
+    setSending(true);
+    const ok = await send(draft);
+    setSending(false);
+    if (!ok) setText((cur) => (cur ? cur : draft));
   };
 
   return (
@@ -172,8 +180,8 @@ export default function Chat() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Send"
-              disabled={!text.trim() || status !== 'open'}
-              onPress={submit}
+              disabled={!text.trim() || status !== 'open' || sending}
+              onPress={() => void submit()}
               style={[styles.send, (!text.trim() || status !== 'open') && { opacity: 0.4 }]}
             >
               <Icon name="send" size={20} color={colors.onMoss} />

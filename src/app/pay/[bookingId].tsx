@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { RazorpaySheet, openWebCheckout, type CheckoutOptions, type RazorpaySuccess } from '@/components/RazorpaySheet';
 import { SimulatedCheckout } from '@/components/SimulatedCheckout';
 import { totalOf, whenOf } from '@/components/bookings';
-import { formatINR, companionOf, minutesLeft } from '@/domain/booking';
+import { canPay, formatINR, companionOf, minutesLeft } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -68,6 +68,9 @@ export default function Pay() {
     } catch (e) {
       setSimulated(false);
       setError(errorMessage(e));
+      // A failed attempt is recorded on the booking ("Payment failed"); paying again still works.
+      void qc.invalidateQueries({ queryKey: qk.booking(bookingId) });
+      void qc.invalidateQueries({ queryKey: qk.myBookings });
     }
   };
 
@@ -102,7 +105,7 @@ export default function Pay() {
     <Screen
       footer={
         <View style={{ gap: space.xs }}>
-          <Button label={`Pay ${formatINR(totalOf(b))}`} icon="lock" onPress={pay} loading={busy} haptic disabled={b.paymentStatus === 'paid'} />
+          <Button label={`Pay ${formatINR(totalOf(b))}`} icon="lock" onPress={pay} loading={busy} haptic disabled={!canPay(b)} />
           <View style={styles.secure}>
             <Icon name="shieldCheck" size={14} color={colors.gray500} />
             <Text variant="caption" muted>
@@ -156,11 +159,12 @@ export default function Pay() {
         })}
       </Card>
 
-      {b.flow === 'prepaid' && b.allocation?.state === 'awaiting_payment' && b.allocation.paymentDeadline ? (
+      {canPay(b) && b.flow === 'prepaid' && b.allocation?.paymentDeadline ? (
         <Text variant="footnote" muted style={{ marginTop: space.lg }}>
           Finish paying within {minutesLeft(b.allocation.paymentDeadline)} min, or this booking lapses (nothing is charged). After payment we confirm your companion; if nobody can make it, you’re refunded in full.
         </Text>
-      ) : b.flow === 'prepaid' && b.allocation?.state && b.allocation.state !== 'awaiting_payment' && b.paymentStatus !== 'paid' ? (
+      ) : null}
+      {!canPay(b) && b.paymentStatus !== 'paid' ? (
         <Text variant="footnote" color={colors.danger} style={{ marginTop: space.lg }}>
           This booking can no longer be paid. Please book again.
         </Text>

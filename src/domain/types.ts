@@ -41,6 +41,8 @@ export interface SessionUser {
   photoNote?: string | null;
   /** Companions: profile approval before going live. */
   approvalStatus?: ApprovalStatus;
+  /** Suspended by staff: not listed, can't accept bookings. */
+  suspended?: boolean;
   approvalNote?: string | null;
   categories?: string[];
 }

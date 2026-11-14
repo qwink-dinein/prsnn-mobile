@@ -248,3 +248,44 @@ writes `app.preview` to the activity log. The preview itself runs on the app's s
 
 Checks: `scripts/e2e-supabase.mjs` §10 and `prsnn-backend/supabase/tests/round4-acid.sql`
 (rolled back).
+
+## Round 5 (2026-11-16) · state-machine fixes
+
+**One companion, one schedule.** `private.lock_companion(cid)` (transaction lock per companion) is
+taken by `next_offer`, `accept_offer` and `admin_reassign_booking` before they check overlaps, so
+two parallel paths can't give one companion overlapping bookings or offers. `accept_offer` also
+locks the companion's profile (`FOR SHARE`) before reading the ID status, so it can't interleave
+with `admin_decide_verification`, and refuses companions who aren't live (suspended, approval
+withdrawn: "Your profile isn’t live right now…"). `admin_reassign_booking` needs an approved, live,
+verified companion with no overlapping booking or live offer.
+
+**Suspending a companion** (`admin_suspend_user`) withdraws their live offers and offers bookings
+held for their ID check to someone else (members are told). Confirmed bookings stay for staff.
+
+**Panic.** `raise_panic` locks the booking: two presses at once return the same alert.
+
+**Completion.** `complete_booking`: confirmed and paid, after the session has **ended**, no open
+report, no open safety alert. `tick` completes paid bookings only; website requests accepted but
+never paid are cancelled (`cancel_reason = 'not_paid'`) 2 h after their end.
+
+**Payments.** A failed test payment sets `payment_status = 'failed'`; the booking stays payable until
+its window closes. The app's `canPay` mirrors this.
+
+**Profiles.** `admin_decide_profile` refuses a profile still in `draft` ("hasn’t been sent for review").
+
+**Delivery.** `claim_notifications()` / `claim_whatsapp()` return a `claimToken` per row; `report_*`
+items must carry it (`[{id, claimToken, …}]`), so a report for an expired claim is ignored. Rows out
+of tries (5) or time (1 day; WhatsApp alerts 1 hour) get `gave_up_at`, and staff get one
+`delivery_failed` notice per batch.
+
+**Booking states.** Constraint `bookings_prepaid_states`: pending ⇔ awaiting payment / finding /
+ID check; accepted, completed ⇔ assigned; cancelled ⇔ cancelled / failed.
+
+**App.** Chat merges history with live messages and reloads it on every (re)connect; a failed send
+puts the text back. Chat opens only on confirmed, paid bookings (`canChat`, both sides). "Mark
+completed" shows only when `canComplete`. Sign-up restores the remembered step only after the
+answers load, never over a tap, and never past the first unanswered question (`firstUnanswered`).
+The companion dashboard shows "Paused by our team" when suspended.
+
+Checks: `scripts/e2e-supabase.mjs` §11, `prsnn-backend/supabase/tests/round5-states.sql`
+(13 checks, rolled back; all pass) and `round4-acid.sql` (updated for claim tokens; all pass).

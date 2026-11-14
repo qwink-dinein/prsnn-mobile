@@ -151,5 +151,17 @@ ok((await rpc(mem, 'admin_log_preview', { as_role: 'member', start_at: 'home' })
 r = await rpc(sup, 'admin_log_preview', { as_role: 'companion', start_at: 'chat' }); ok(!r.error, 'staff preview recorded', r);
 r = await rpc(sup, 'admin_activity', { before_at: null }); ok(r.data?.[0]?.action === 'app.preview' && r.data[0].after?.as === 'companion', 'activity log shows the preview', r.data?.[0]);
 
+console.log('11. State rules (round 5)');
+r = await rpc(comp, 'complete_booking', { bid }); ok(/session has ended/.test(r.error ?? ''), 'cannot mark completed before the session ends', r);
+r = await book(key + 'f', day(5), '11:00', '60'); const bf = r.data?.booking?._id; ok(!!bf, 'booked for the payment test', r);
+r = await rpc(mem, 'simulate_payment', { bid: bf, outcome: 'failure' }); ok(r.data?.failed === true, 'test payment fails', r);
+r = await rpc(mem, 'get_booking', { bid: bf }); ok(r.data?.paymentStatus === 'failed' && r.data?.allocation?.state === 'awaiting_payment', 'failure recorded, still payable', r.data && { p: r.data.paymentStatus, a: r.data.allocation });
+r = await rpc(mem, 'simulate_payment', { bid: bf, outcome: 'success' }); ok(r.data?.booking?.paymentStatus === 'paid', 'paying again works', r);
+await rpc(mem, 'cancel_booking', { bid: bf });
+r = await rpc(sup, 'admin_suspend_user', { uid: compId, on_off: true, reason: 'e2e' }); ok(!r.error, 'companion suspended', r);
+r = await rpc(comp, 'accept_offer', { bid: bf }); ok(/isn’t live/.test(r.error ?? ''), 'a suspended companion cannot accept', r);
+r = await rpc(sup, 'admin_suspend_user', { uid: compId, on_off: false, reason: null }); ok(!r.error, 'companion restored', r);
+// Locks and the rest of the rules: prsnn-backend/supabase/tests/round5-states.sql (rolled back).
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
