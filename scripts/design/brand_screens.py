@@ -142,18 +142,19 @@ CSS = '''*{box-sizing:border-box}body{margin:0;background:#CFCDC8;font-family:"H
 .pop{position:absolute;top:-8px;right:8px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px}
 .bub{max-width:78%;padding:8px 11px;font-size:12.5px;line-height:1.35}
 '''
-NOTE = {'hour': 'Dark graphite with champagne. The most premium; the whole app is in dark mode.',
-        'pearl': 'Soft pearl and aubergine. Light, warm and calm.',
-        'two': 'Porcelain and midnight with lilac and blush. Light, modern and friendly.',
-        'club': 'Linen and racing green with brass. Light and classic; the closest to today.'}
-rows = ''.join(f'<div class="row" style="background:{"#2B2E33" if k == "hour" else "transparent"};{"color:#E8E6E1" if k == "hour" else ""}"><h2>{t["name"]}</h2>'
-               f'<p style="{"color:#A9ACB2" if k == "hour" else ""}">{NOTE[k]}</p><div class="strip">'
-               + ''.join(f'<div class="cell">{phone(t, fn)}<span class="l" style="{"color:#A9ACB2" if k == "hour" else ""}">{lab}</span></div>' for lab, fn in SCREENS) + '</div></div>'
-               for k, t in T.items())
-link = 'https://fonts.googleapis.com/css2?' + '&'.join('family=' + f for f in FONTS) + '&display=swap'
-html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>prsnn screens by colour</title>'
-        f'<link href="{link}" rel="stylesheet"><style>{CSS}</style></head><body><div class="intro"><h1>The same six screens in each colour direction</h1>'
-        '<p>Welcome, home, a companion with prices, checkout, chat and the confirmation, so you can compare Hour, Pearl, Two and Club on the screens people use every day.</p></div>'
-        f'{rows}</body></html>')
-(ROOT / 'preview/brand-screens.html').write_text(html)
-print('wrote preview/brand-screens.html')
+if __name__ == '__main__':
+    NOTE = {'hour': 'Dark graphite with champagne. The most premium; the whole app is in dark mode.',
+            'pearl': 'Soft pearl and aubergine. Light, warm and calm.',
+            'two': 'Porcelain and midnight with lilac and blush. Light, modern and friendly.',
+            'club': 'Linen and racing green with brass. Light and classic; the closest to today.'}
+    rows = ''.join(f'<div class="row" style="background:{"#2B2E33" if k == "hour" else "transparent"};{"color:#E8E6E1" if k == "hour" else ""}"><h2>{t["name"]}</h2>'
+                   f'<p style="{"color:#A9ACB2" if k == "hour" else ""}">{NOTE[k]}</p><div class="strip">'
+                   + ''.join(f'<div class="cell">{phone(t, fn)}<span class="l" style="{"color:#A9ACB2" if k == "hour" else ""}">{lab}</span></div>' for lab, fn in SCREENS) + '</div></div>'
+                   for k, t in T.items())
+    link = 'https://fonts.googleapis.com/css2?' + '&'.join('family=' + f for f in FONTS) + '&display=swap'
+    html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>prsnn screens by colour</title>'
+            f'<link href="{link}" rel="stylesheet"><style>{CSS}</style></head><body><div class="intro"><h1>The same six screens in each colour direction</h1>'
+            '<p>Welcome, home, a companion with prices, checkout, chat and the confirmation, so you can compare Hour, Pearl, Two and Club on the screens people use every day.</p></div>'
+            f'{rows}</body></html>')
+    (ROOT / 'preview/brand-screens.html').write_text(html)
+    print('wrote preview/brand-screens.html')
