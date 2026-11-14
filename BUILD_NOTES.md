@@ -18,4 +18,10 @@ Nothing here is built yet. Keep adding to this list; build everything in one go.
   - Become a companion: the last note runs under the "Apply now" button.
   - Category page: the first tick line sits tight under the photo header.
   Fix across **all** screens: every row wraps or shrinks text instead of overflowing (flex rows with `minWidth: 0`, `flexShrink`, `numberOfLines` where a single line is required), prices and pills never squeezed off the edge, footers never cover content (scroll padding = footer height), and long names, translated text and large Dynamic Type sizes still fit.
+- **Every card must look like a clear, separate card** (owner, 2026-11-14; seen on Become a companion, where the four perks run together as loose text on the background). Rules for all screens:
+  - Each block of related content sits in its own card: white (`#FFFFFF`) on the porcelain background, radius 20, a hairline outline (`rgba(24,27,52,.08)`) plus a soft shadow, and 16 pt inner padding. Nothing floats as loose text between cards.
+  - Lists of points (perks, steps, terms, how it works) are either one card with dividers between rows, or one card per point. Never bare text on the background.
+  - At least 12 pt gap between cards and 20 pt between sections; each section has a short title above its card.
+  - Tinted cards (champagne mist for tips, red for safety) keep the same outline and padding, so they read as cards, not highlights.
+  - Cards never touch the bottom button: the scroll area ends above the pinned footer.
 - **Fit every device.** Small phones (iPhone SE 375×667, small Android 360 wide), large phones (Pro Max 430 wide), foldables, and tablets (iPad / Android tablets, portrait and landscape): content width capped and centred on tablets, grids add columns on wide screens, no fixed heights that clip text, safe areas respected. Check every screen at 360, 375, 430, 768 and 1024 wide before shipping.
