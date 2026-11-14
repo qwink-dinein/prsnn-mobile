@@ -24,4 +24,12 @@ Nothing here is built yet. Keep adding to this list; build everything in one go.
   - At least 12 pt gap between cards and 20 pt between sections; each section has a short title above its card.
   - Tinted cards (champagne mist for tips, red for safety) keep the same outline and padding, so they read as cards, not highlights.
   - Cards never touch the bottom button: the scroll area ends above the pinned footer.
+- **Live number badges** (owner, 2026-11-14): show the real count, updated in real time (no app restart or pull-to-refresh), and cleared when seen.
+  - **Bell** (Home header, companion dashboard, admin): number of unread notifications (1, 2, 3 … then "9+"). Today it's only a dot. Opening Notifications marks them read and the badge clears.
+  - **Messages tab**: number of unread chat messages across all chats; each chat row in Messages also shows its own count. Opening a chat clears that chat's count.
+  - **Bookings / Requests tab**: members, bookings that need you (payment not finished, accepted · pay to confirm); companions, booking offers waiting for your answer (paid offers still live). Clears as you act on them.
+  - **Admin**: overview tiles and the admin rows (approvals, ID checks, disputes, panic alerts) keep their live counts; open panic alerts show first.
+  - Badges: champagne circle with midnight number, ring in the tab-bar colour, never covering the icon label; hidden at 0; accessibility label reads e.g. "Messages, 3 unread".
+  - How: Supabase Realtime subscriptions on `notifications`, `messages` and `bookings`/`booking_offers` for the signed-in person (RLS already limits rows), plus refresh on app foreground; React Query caches updated from the events.
+  - **Backend needed (migration + API.md + e2e):** messages have no read tracking today. Add `chat_reads (booking_id, user_id, last_read_at)` with RLS, an RPC `mark_chat_read(bid)` and `unread_counts()` returning `{ notifications, messages, perChat, bookings }`; cover in `scripts/e2e-supabase.mjs`.
 - **Fit every device.** Small phones (iPhone SE 375×667, small Android 360 wide), large phones (Pro Max 430 wide), foldables, and tablets (iPad / Android tablets, portrait and landscape): content width capped and centred on tablets, grids add columns on wide screens, no fixed heights that clip text, safe areas respected. Check every screen at 360, 375, 430, 768 and 1024 wide before shipping.
