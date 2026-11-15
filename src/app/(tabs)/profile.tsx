@@ -91,8 +91,9 @@ export default function ProfileTab() {
 
       <View style={styles.group}>
         <ListRow icon="help" label="Help & support" onPress={() => Linking.openURL(LINKS.support)} />
-        <ListRow icon="shield" label="Code of conduct" onPress={() => Linking.openURL(LINKS.conduct)} />
-        <ListRow icon="doc" label="Terms & privacy" onPress={() => Linking.openURL(LINKS.terms)} last />
+        <ListRow icon="shield" label="Community guidelines" onPress={() => Linking.openURL(LINKS.conduct)} />
+        <ListRow icon="flag" label="Complaints & grievances" onPress={() => Linking.openURL(LINKS.grievance)} />
+        <ListRow icon="doc" label="Terms, privacy & policies" onPress={() => Linking.openURL(LINKS.legal)} last />
       </View>
 
       {preview ? (

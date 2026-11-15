@@ -131,7 +131,7 @@ export default function Login() {
 
       <Enter index={7}>
       <Text variant="caption" muted center style={styles.legal}>
-        By continuing, you agree to get login codes and booking updates on WhatsApp, and to our{' '}
+        By continuing, you confirm you’re 18 or older, agree to get login codes and booking updates on WhatsApp, and agree to our{' '}
         <Text variant="caption" color={colors.moss} onPress={() => Linking.openURL(LINKS.terms)} accessibilityRole="link">
           Terms of Service
         </Text>{' '}

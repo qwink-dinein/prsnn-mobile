@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
+import { LINKS } from '@/lib/config';
 import { Screen, Header } from '@/components/ui/layout';
 import { Enter, useShake } from '@/components/ui/motion';
 import { Text } from '@/components/ui/Text';
@@ -75,6 +76,19 @@ export default function LoginEmail() {
             error={fieldError}
           />
         </Animated.View>
+      </Enter>
+      <Enter index={2}>
+        <Text variant="caption" muted center style={{ marginTop: space.xl }}>
+          By continuing, you confirm you’re 18 or older and agree to our{' '}
+          <Text variant="caption" color={colors.moss} onPress={() => Linking.openURL(LINKS.terms)} accessibilityRole="link">
+            Terms of Service
+          </Text>{' '}
+          and{' '}
+          <Text variant="caption" color={colors.moss} onPress={() => Linking.openURL(LINKS.privacy)} accessibilityRole="link">
+            Privacy Policy
+          </Text>
+          .
+        </Text>
       </Enter>
     </Screen>
   );

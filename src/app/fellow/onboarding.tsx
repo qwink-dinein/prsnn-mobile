@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LINKS } from '@/lib/config';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -12,7 +13,6 @@ import { Button } from '@/components/ui/Button';
 import { Enter, PressScale } from '@/components/ui/motion';
 import { TextField } from '@/components/ui/forms';
 import { Notice, useDraft } from '@/components/ui/states';
-import { Brand } from '@/components/ui/Brand';
 import { LocationFields, type LocationValue } from '@/components/LocationFields';
 import { CategoryTiles } from '@/components/CategoryTiles';
 import { PackageGrid } from '@/components/PackageGrid';
@@ -376,7 +376,15 @@ export default function CompanionOnboarding() {
                 <Line label="Lengths" value={d.packages.map((h) => `${h} h (you get ${formatINR(companionShareOf(priceFor(h) ?? 0))})`).join(' · ')} />
               </View>
               <Text variant="footnote" muted>
-                By sending, you agree to the <Brand /> Code of Conduct.
+                By sending, you agree to the{' '}
+                <Text variant="footnote" color={colors.moss} accessibilityRole="link" onPress={() => Linking.openURL(LINKS.companionTerms)}>
+                  Companion Terms
+                </Text>{' '}
+                and{' '}
+                <Text variant="footnote" color={colors.moss} accessibilityRole="link" onPress={() => Linking.openURL(LINKS.conduct)}>
+                  Community Guidelines
+                </Text>
+                .
               </Text>
               {error ? <Notice tone="danger" text={`${error} Your answers are saved — try again.`} /> : null}
               <Button label="Send for approval" iconRight="arrowRight" loading={busy} onPress={submit} haptic />
