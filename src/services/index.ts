@@ -52,5 +52,6 @@ export const qk = {
     broadcasts: ['admin', 'broadcasts'] as const,
     activity: ['admin', 'activity'] as const,
     enquiries: ['admin', 'enquiries'] as const,
+    signups: ['admin', 'signups'] as const,
   },
 };

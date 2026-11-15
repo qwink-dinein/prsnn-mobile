@@ -91,7 +91,7 @@ export default function AdminOverview() {
           {can(role, 'viewActivity') ? <ListRow icon="doc" label="Activity log" onPress={() => router.push('/admin/activity')} last /> : null}
         </View>
         <View style={styles.group}>
-          <ListRow icon="users" label="Interested (website)" value="Numbers left on the website" onPress={() => router.push('/admin/enquiries')} />
+          <ListRow icon="users" label="Interested" value="Website numbers and app sign-ups" onPress={() => router.push('/admin/enquiries')} />
           <ListRow icon="eye" label="View the app as…" value="A member or a companion · sample data" onPress={() => router.push('/admin/view-as')} last />
         </View>
       </View>

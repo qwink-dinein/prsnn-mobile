@@ -1,8 +1,11 @@
 import type { AdminBooking, AdminUser, AuditEntry, BroadcastRecord, CityPlan, PanicAlert, Role } from '@/domain/types';
 import { applyPricing, pricing, priceCurveError } from '@/domain/pricing';
 import { toDateKey } from '@/domain/booking';
+import { CATEGORIES } from '@/domain/categories';
 import { useSession } from '@/state/session';
 import type { Backend } from './backend';
+
+const CATEGORY_KEYS = CATEGORIES.map((c) => c.key);
 
 /**
  * Sample admin data for EXPO_PUBLIC_DEMO=1. Same rules as the server where it
@@ -282,11 +285,34 @@ export const demoAdmin: Backend['admin'] = {
     wait({
       counts: { total: 3, member: 1, companion: 1, both: 1 },
       items: [
-        { phone: '+919000000101', interest: 'member' as const, source: 'website', submissions: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { phone: '+919100000001', interest: 'member' as const, source: 'website', joinedApp: true, submissions: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
         { phone: '+919000000102', interest: 'companion' as const, source: 'website:companion', submissions: 2, createdAt: new Date(Date.now() - 864e5).toISOString(), updatedAt: new Date().toISOString() },
         { phone: '+447700900123', interest: 'both' as const, source: 'website:companion-for-a-loved-one', submissions: 1, createdAt: new Date(Date.now() - 2 * 864e5).toISOString(), updatedAt: new Date(Date.now() - 2 * 864e5).toISOString() },
       ],
     }),
+  signups: () => {
+    const list = users
+      .filter((x) => x.role === 'user' || x.role === 'companion')
+      .map((x, i) => ({
+        id: x.id,
+        fullName: x.fullName,
+        phone: x.phone ? `+${x.phone}` : null,
+        role: x.role as 'user' | 'companion',
+        categories: x.categories?.length ? x.categories : CATEGORY_KEYS.filter((_, k) => (i + k) % 3 === 0),
+        gender: x.gender ?? null,
+        seeGender: x.seeGender ?? null,
+        visibility: x.profileVisibility ?? null,
+        city: x.city ?? null,
+        area: x.area ?? null,
+        approvalStatus: x.approvalStatus ?? null,
+        verificationStatus: x.verificationStatus,
+        setupDone: !!x.fullName && !!x.city,
+        createdAt: x.createdAt ?? new Date().toISOString(),
+      }));
+    const categories: Record<string, number> = {};
+    list.filter((x) => x.role === 'user').forEach((x) => x.categories.forEach((c) => (categories[c] = (categories[c] ?? 0) + 1)));
+    return wait({ counts: { total: list.length, member: list.filter((x) => x.role === 'user').length, companion: list.filter((x) => x.role === 'companion').length, setupDone: list.filter((x) => x.setupDone).length, categories }, items: list });
+  },
   logPreview: (as: 'member' | 'companion', start: string) => {
     activity = [{ _id: `a${Date.now()}`, action: 'app.preview', role: 'superadmin', actorId: 'me', actorName: 'You', target: { kind: 'app', id: as }, after: { as, start }, at: new Date().toISOString() } as AuditEntry, ...activity];
     return wait(null);

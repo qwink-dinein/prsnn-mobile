@@ -169,6 +169,8 @@ r = await rpc(anon, 'submit_enquiry', { phone_number: '+91 12345', interest_choi
 { const { error } = await anon.from('enquiries').select('phone'); ok(!!error, 'nobody can read the list directly'); }
 ok((await rpc(mem, 'admin_enquiries', { lim: 10 })).error === 'Access denied', 'members cannot read the list');
 r = await rpc(sup, 'admin_enquiries', { lim: 50 }); ok(r.data?.items?.some((e) => e.phone === '+919000000777' && e.interest === 'companion'), 'staff see it', r.data?.counts);
+ok((await rpc(mem, 'admin_signups', { lim: 10 })).error === 'Access denied', 'members cannot read app sign-ups');
+r = await rpc(sup, 'admin_signups', { lim: 500 }); ok(Array.isArray(r.data?.items) && r.data.items.every((u) => ['user', 'companion'].includes(u.role) && Array.isArray(u.categories)) && r.data.counts.total >= r.data.items.length, 'staff see app sign-ups with what they chose', r.data?.counts);
 r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(6), startTime: '11:00', duration: '60', idempotencyKey: key + 'hv1', acceptTerms: true, category: 'dont_go_alone', meetingPlace: 'My flat, Road 1', homeVisit: true } });
 ok(/only for Companion for a Loved One/.test(r.error ?? ''), 'home visit refused outside Loved One', r);
 // Address privacy for offered vs confirmed companions: prsnn-backend/supabase/tests (rolled back).

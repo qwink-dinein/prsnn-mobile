@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
 import { restoreSession, useSession } from '@/state/session';
 import { sameLogin } from '@/domain/login';
-import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType } from '@/domain/types';
+import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType, Gender, SeeGender, Visibility, ApprovalStatus } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
 
@@ -433,6 +433,7 @@ export const backend = {
     activity: (before?: string) => rpc<AuditEntry[]>('admin_activity', { before_at: before ?? null }),
     /** Website interest list (mobile + member/companion/both), newest first. Staff only. */
     enquiries: (limit = 200) => rpc<EnquiryList>('admin_enquiries', { lim: limit }),
+    signups: (limit = 500) => rpc<SignupList>('admin_signups', { lim: limit }),
     /** Records a staff "View the app as…" preview in the activity log (the preview itself is sample data). */
     logPreview: (as: 'member' | 'companion', start: string) => rpc<null>('admin_log_preview', { as_role: as, start_at: start }),
     approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),
@@ -450,7 +451,29 @@ export const backend = {
 
 export interface EnquiryList {
   counts: { total: number; member: number; companion: number; both: number };
-  items: { phone: string; interest: 'member' | 'companion' | 'both'; source: string; submissions: number; createdAt: string; updatedAt: string }[];
+  items: { phone: string; interest: 'member' | 'companion' | 'both'; source: string; submissions: number; createdAt: string; updatedAt: string; joinedApp?: boolean }[];
+}
+
+/** Admin · Interested · App: what each person chose when they signed up in the app. */
+export interface SignupItem {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  role: 'user' | 'companion';
+  categories: string[];
+  gender: Gender | null;
+  seeGender: SeeGender | null;
+  visibility: Visibility | null;
+  city: string | null;
+  area: string | null;
+  approvalStatus: ApprovalStatus | null;
+  verificationStatus: string;
+  setupDone: boolean;
+  createdAt: string;
+}
+export interface SignupList {
+  counts: { total: number; member: number; companion: number; setupDone: number; categories: Record<string, number> };
+  items: SignupItem[];
 }
 
 export type Backend = typeof backend;

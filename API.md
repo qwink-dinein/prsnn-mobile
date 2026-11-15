@@ -296,8 +296,13 @@ Checks: `scripts/e2e-supabase.mjs` §11, `prsnn-backend/supabase/tests/round5-st
 source, submissions, created_at, updated_at)`, RLS on with no policies (no direct access).
 `submit_enquiry(phone_number, interest_choice, src)`: anyone (anon) may call; Indian numbers must be
 10 digits starting 6–9; one row per number (a repeat updates interest and counts, ignored within
-10 s); throttled to 60 sign-ups a minute. `admin_enquiries(lim)`: staff only → `{ counts, items }`.
-In the app: Admin → Interested (website).
+10 s); throttled to 60 sign-ups a minute. `admin_enquiries(lim)`: staff only → `{ counts, items }`;
+each item has `joinedApp` (that number has since signed up in the app).
+`admin_signups(lim)` (migration `20261116150000_admin_signups.sql`): staff only → `{ counts: { total,
+member, companion, setupDone, categories: { key: n } }, items: [{ id, fullName, phone (E.164), role,
+categories, gender, seeGender, visibility, city, area, approvalStatus, verificationStatus, setupDone,
+createdAt }] }`, newest first: what each member or companion chose when they signed up in the app.
+In the app: Admin → Interested (tabs: Website, App sign-ups; a sign-up opens that user).
 
 **Home visits.** `bookings.home_visit` (only when `category = 'loved_one'` and a recipient is set;
 constraint `bookings_home_visit_loved_one`). `create_prepaid_booking` takes `homeVisit: true` and then
