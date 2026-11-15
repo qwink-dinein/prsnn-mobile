@@ -335,7 +335,7 @@ companions, shown to member and confirmed companion, refused outside Loved One).
 
 ## Round 8 (2026-11-16): consent log and house rules
 
-- `20261116170000_consents.sql` (**written, not applied yet**). Table `public.consents` (user_id, phone at
+- `20261116170000_consents.sql` (applied 2026-11-16; 8 live checks pass, rolled back). Table `public.consents` (user_id, phone at
   the time, kind, version, booking_id, source app|web|system, user_agent, accepted_at, withdrawn_at), RLS on
   with no direct access; rows survive account deletion (user_id cleared).
   - `record_consents(kinds text[], ver text)` (signed in): kinds `terms`, `privacy`, `age_18`,
