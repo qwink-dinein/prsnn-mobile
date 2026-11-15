@@ -322,8 +322,7 @@ companions, shown to member and confirmed companion, refused outside Loved One).
 
 ## Round 7 (2026-11-16): launch hardening
 
-- `20261116160000_hardening.sql` (**written, not applied yet**: the apply is waiting for the owner's
-  confirmation in the Supabase prompt). Companion browsing (`list_companions`, `get_companion`) for
+- `20261116160000_hardening.sql` (applied 2026-11-16). Companion browsing (`list_companions`, `get_companion`) for
   signed-in users only (no anonymous scraping); indexes on the foreign keys the advisors flagged;
   drops the duplicate `notifications_unpushed` index.
 - `supabase/tests/round6-payment-flow.sql`: the whole booking on the simulated payment, as the e2e

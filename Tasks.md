@@ -57,7 +57,7 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 
 Full detail in `docs/compliance/COMPLIANCE.md` and `docs/compliance/STORE_SUBMISSION.md`.
 
-- 🔑 Approve the two pending Supabase prompts (or say "apply"): `20261116160000_hardening.sql` and the round 6 payment test.
+- 🔑 Approve the round 6 payment test in the Supabase prompt (or say "apply"). Hardening and the consent log are applied.
 - 🔑 Supabase Auth → enable **Leaked password protection** (advisor warning; dashboard only).
 - 🔑 Domain: confirm `prsnn.com` (or tell us the real one). Deploy the website with `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPPORT_EMAIL` (shown as the Grievance Officer contact), and the store URLs once the apps are live.
 - 🔑 App builds: set `EXPO_PUBLIC_SITE_URL` and `EXPO_PUBLIC_SUPPORT_EMAIL` in EAS, run `eas init`, then build. Upload the FCM key (Android push) and create the APNs key (iOS).
