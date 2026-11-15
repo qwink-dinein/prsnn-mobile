@@ -332,3 +332,22 @@ companions, shown to member and confirmed companion, refused outside Loved One).
 - Chat "typing…" uses a Realtime broadcast on the booking's chat channel (`event: 'typing'`,
   `payload.from` = sender id). Nothing is stored.
 - `payment_mode()` is read by the payment screen to show the "Test mode, no money moves" notice.
+
+## Round 8 (2026-11-16): consent log and house rules
+
+- `20261116170000_consents.sql` (**written, not applied yet**). Table `public.consents` (user_id, phone at
+  the time, kind, version, booking_id, source app|web|system, user_agent, accepted_at, withdrawn_at), RLS on
+  with no direct access; rows survive account deletion (user_id cleared).
+  - `record_consents(kinds text[], ver text)` (signed in): kinds `terms`, `privacy`, `age_18`,
+    `whatsapp_updates`, `house_rules`, `companion_terms`; same kind + version again is a no-op → `my_consents()`.
+  - `my_consents()` → `[{ kind, version, acceptedAt }]`, latest per kind (booking terms excluded).
+  - `admin_user_consents(uid)` (staff) → every agreement, newest first, with source and booking.
+  - Server checks: a member can't create a booking without `house_rules`; a companion can't move to
+    review (`approval_status → pending`) without `companion_terms` and `house_rules`.
+  - Logged automatically: `booking_terms` on every booking a member makes, `photo_visibility` when
+    `visibility_consent_at` changes, `enquiry_contact` (source web, phone) on the website interest form.
+- App: sign-in records terms, privacy, 18+ (and WhatsApp for phone sign-ups) after the code is verified;
+  the booking review's tick covers the house rules (recorded before the booking); companion application and
+  resubmission record Companion Terms + house rules. `/rules` screen, Profile → House rules, Home card,
+  Admin → user → Agreements.
+- Same NOT_FOR / HOUSE_RULES text in `src/domain/rules.ts` and the website's `_lib/content.js`.

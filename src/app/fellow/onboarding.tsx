@@ -122,6 +122,8 @@ export default function CompanionOnboarding() {
     setBusy(true);
     setError(null);
     try {
+      // "By sending, you agree to the Companion Terms and Community Guidelines": saved with a timestamp.
+      await svc.recordConsents(['companion_terms', 'house_rules']);
       const r = await svc.onboardCompanion({
         fullName: user?.fullName ?? '',
         phoneNumber: user?.phone?.replace(/^91/, '') ?? '',

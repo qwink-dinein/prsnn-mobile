@@ -1,3 +1,4 @@
+import type { ConsentKind } from '@/domain/rules';
 import { router } from 'expo-router';
 import type { SessionUser } from '@/domain/types';
 import type { AuthResult } from '@/services';
@@ -52,8 +53,10 @@ export function afterPin(user: SessionUser | null = useSession.getState().user) 
  * After OTP / email / PIN sign-in. The PIN comes first, straight after the
  * number (or email) is verified; then setup for anything unanswered; then home.
  */
-export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean; viaPin?: boolean } = {}) {
+export async function afterAuth(res: AuthResult, opts: { resetPin?: boolean; viaPin?: boolean; consents?: ConsentKind[] } = {}) {
   await useSession.getState().signIn(res.token, res.user);
+  // The sign-in screen's agreement line (terms, privacy, 18+, WhatsApp): saved with a timestamp.
+  if (opts.consents?.length) await svc.recordConsents(opts.consents).catch(() => {});
   // Refresh from the server (photo/approval status, categories, city) without blocking on errors.
   try {
     const fresh = await svc.me();

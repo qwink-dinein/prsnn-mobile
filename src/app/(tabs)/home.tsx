@@ -9,6 +9,7 @@ import { colors, GUTTER, radius, shadow, space } from '@/theme/tokens';
 import { Screen, Section, Logo, BellButton, EmptyState, ErrorState } from '@/components/ui/layout';
 import { Enter, PressScale } from '@/components/ui/motion';
 import { HomeCategories } from '@/components/HomeCategories';
+import { RulesCard } from '@/components/RulesCard';
 import { CommunityBanner } from '@/components/CommunityBanner';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
@@ -87,6 +88,7 @@ function Discover() {
       <Enter index={1} style={{ marginTop: space.md }}>
         <HomeCategories />
       </Enter>
+      <RulesCard style={{ marginHorizontal: GUTTER, marginTop: space.lg, marginBottom: space.sm }} />
 
       {plans.data?.length ? (
         <>

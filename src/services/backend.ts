@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
 import { restoreSession, useSession } from '@/state/session';
 import { sameLogin } from '@/domain/login';
+import { LEGAL_VERSION, type Consent, type ConsentKind } from '@/domain/rules';
 import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType, Gender, SeeGender, Visibility, ApprovalStatus } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
@@ -227,6 +228,9 @@ export const backend = {
   },
   /** The signed-in person, fresh from the server (photo and approval status included). */
   me: async () => sessionUser(await rpc<SessionUser>('me')),
+  /** Record agreements the person just gave (timestamped on the server, with the policy version). */
+  recordConsents: (kinds: ConsentKind[]) => rpc<Consent[]>('record_consents', { kinds, ver: LEGAL_VERSION }),
+  myConsents: () => rpc<Consent[]>('my_consents'),
   // Web email accounts didn't move to Supabase: everyone uses their mobile number.
   emailLogin: async (_email: string, _password: string): Promise<AuthResult> => {
     throw new Error('Email login has moved. Log in with your mobile number.');
@@ -436,6 +440,7 @@ export const backend = {
     /** Website interest list (mobile + member/companion/both), newest first. Staff only. */
     enquiries: (limit = 200) => rpc<EnquiryList>('admin_enquiries', { lim: limit }),
     signups: (limit = 500) => rpc<SignupList>('admin_signups', { lim: limit }),
+    userConsents: (id: string) => rpc<{ kind: string; version: string; source: string; bookingId: string | null; acceptedAt: string; withdrawnAt: string | null }[]>('admin_user_consents', { uid: id }),
     /** Records a staff "View the app as…" preview in the activity log (the preview itself is sample data). */
     logPreview: (as: 'member' | 'companion', start: string) => rpc<null>('admin_log_preview', { as_role: as, start_at: start }),
     approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),

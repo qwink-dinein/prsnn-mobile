@@ -16,6 +16,7 @@ import { amountDuePaise, canHomeVisit, durationLabel, endTimeOf, formatINR, form
 import { hourlyFor, hoursLabel, priceFor, savingFor } from '@/domain/pricing';
 import type { Duration, Relation } from '@/domain/types';
 import { svc, qk } from '@/services';
+import { missingConsents } from '@/domain/rules';
 import { errorMessage } from '@/lib/api';
 
 const RELATIONS: { value: Relation; label: string }[] = [
@@ -69,9 +70,16 @@ export default function Checkout() {
   };
   const firstError = Object.values(errors).find(Boolean) ?? null;
 
+  // House rules: agreed once (the tick below covers them); saved with a timestamp before the booking.
+  const consents = useQuery({ queryKey: qk.consents, queryFn: () => svc.myConsents() });
+  const needRules = missingConsents(consents.data, ['house_rules']).length > 0;
   const create = useMutation({
-    mutationFn: () =>
-      svc.createPrepaidBooking({
+    mutationFn: async () => {
+      if (needRules) {
+        await svc.recordConsents(['house_rules']);
+        void qc.invalidateQueries({ queryKey: qk.consents });
+      }
+      return svc.createPrepaidBooking({
         companionId: p.id,
         scheduledDate: p.date,
         startTime: p.time,
@@ -85,7 +93,8 @@ export default function Checkout() {
         meetingPlace: d.place.trim(),
         homeVisit,
         recipient: d.forWho === 'other' ? { relation: d.relation as Relation, name: d.rName.trim(), phone: rDigits, city: d.rCity.trim() || q.data?.city || null, state: q.data?.state ?? null } : null,
-      }),
+      });
+    },
     onSuccess: ({ booking }) => {
       clearDraft();
       qc.invalidateQueries({ queryKey: qk.myBookings });
@@ -298,7 +307,11 @@ export default function Checkout() {
       <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: agree, disabled: !policy.data }} disabled={!policy.data} onPress={() => setAgree(!agree)} style={styles.agree}>
         <View style={[styles.box, agree && styles.boxOn]}>{agree ? <Icon name="check" size={14} color={colors.onMoss} strokeWidth={2.4} /> : null}</View>
         <Text variant="footnote" style={{ flex: 1 }}>
-          I’ve read and agree to the price, the cancellation and refund terms, and that my booking may go to a similar companion if {first} can’t make it.
+          I’ve read and agree to the price, the cancellation and refund terms, the{' '}
+          <Text variant="footnote" color={colors.moss} style={{ textDecorationLine: 'underline' }} accessibilityRole="link" onPress={() => router.push('/rules')}>
+            house rules
+          </Text>
+          , and that my booking may go to a similar companion if {first} can’t make it. prsnn is company only: not a date, errands, therapy or care.
         </Text>
       </Pressable>
     </Screen>

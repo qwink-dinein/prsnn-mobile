@@ -124,6 +124,7 @@ export default function AdminUserDetail() {
           </View>
         </View>
         {u.suspended && u.suspendedReason ? <KV k="Suspended for" v={u.suspendedReason} /> : null}
+        <Agreements id={u.id} />
 
         {editable ? (
           <Card style={{ gap: space.md }}>
@@ -255,9 +256,60 @@ export default function AdminUserDetail() {
 }
 
 const styles = StyleSheet.create({
+  consent: { flexDirection: 'row', paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   safe: { flex: 1, backgroundColor: colors.mist },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   row2: { flexDirection: 'row', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
 });
+
+const CONSENT_LABEL: Record<string, string> = {
+  terms: 'Terms of Service',
+  privacy: 'Privacy Policy',
+  age_18: '18 or older',
+  whatsapp_updates: 'WhatsApp updates',
+  house_rules: 'House rules',
+  companion_terms: 'Companion Terms',
+  booking_terms: 'Booking terms',
+  photo_visibility: 'Photo open to everyone',
+  enquiry_contact: 'Website: contact me',
+};
+
+/** Every agreement this person gave, with the date, time and policy version (proof of consent). */
+function Agreements({ id }: { id: string }) {
+  const q = useQuery({ queryKey: qk.admin.userConsents(id), queryFn: () => svc.admin.userConsents(id) });
+  return (
+    <Card style={{ gap: space.sm }}>
+      <Text variant="headline">Agreements</Text>
+      {q.isLoading ? (
+        <Text variant="footnote" muted>
+          Loading…
+        </Text>
+      ) : q.isError ? (
+        <Text variant="footnote" color={colors.danger} onPress={() => void q.refetch()}>
+          Couldn’t load agreements. {errorMessage(q.error)} Tap to retry.
+        </Text>
+      ) : !q.data?.length ? (
+        <Text variant="footnote" muted>
+          No agreements recorded yet. People who signed up before the consent log are asked again at their next sign-in, booking or application.
+        </Text>
+      ) : (
+        q.data.map((c, i) => (
+          <View key={`${c.kind}-${c.acceptedAt}-${i}`} style={styles.consent}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text variant="callout">
+                {CONSENT_LABEL[c.kind] ?? c.kind}
+                {c.bookingId ? ` · #${c.bookingId.slice(-6).toUpperCase()}` : ''}
+              </Text>
+              <Text variant="caption" muted>
+                {new Date(c.acceptedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })} · v{c.version} · {c.source}
+                {c.withdrawnAt ? ' · withdrawn' : ''}
+              </Text>
+            </View>
+          </View>
+        ))
+      )}
+    </Card>
+  );
+}

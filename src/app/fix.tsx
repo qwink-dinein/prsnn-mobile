@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { LINKS } from '@/lib/config';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { useQueryClient } from '@tanstack/react-query';
@@ -42,7 +43,10 @@ export default function Fix() {
     setError(null);
     try {
       let fresh = await svc.saveProfile({ ...(isProfile ? { categories: d.categories, ...(d.description.trim() ? { description: d.description.trim() } : {}) } : {}) }, photo);
-      if (isProfile) fresh = await svc.resubmitForReview();
+      if (isProfile) {
+        await svc.recordConsents(['companion_terms', 'house_rules']);
+        fresh = await svc.resubmitForReview();
+      }
       await updateUser({ ...fresh, hasPin: user?.hasPin });
       clearDraft();
       qc.invalidateQueries({ queryKey: ['me'] });
@@ -105,6 +109,17 @@ export default function Fix() {
           <TextField label="About you (optional — leave empty to keep it)" value={d.description} onChangeText={(v) => setD((c) => ({ ...c, description: v }))} multiline maxLength={600} placeholder="What do you enjoy? What kind of company are you?" />
           <Text variant="subhead">What you offer</Text>
           <CategoryTiles audience="companion" selected={d.categories} onToggle={(k) => setD((c) => ({ ...c, categories: c.categories.includes(k) ? c.categories.filter((x) => x !== k) : [...c.categories, k] }))} />
+          <Text variant="footnote" muted>
+            By sending, you agree to the{' '}
+            <Text variant="footnote" color={colors.moss} accessibilityRole="link" onPress={() => Linking.openURL(LINKS.companionTerms)}>
+              Companion Terms
+            </Text>{' '}
+            and the{' '}
+            <Text variant="footnote" color={colors.moss} accessibilityRole="link" onPress={() => router.push('/rules')}>
+              house rules
+            </Text>
+            .
+          </Text>
         </View>
       ) : null}
 

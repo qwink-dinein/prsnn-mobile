@@ -28,15 +28,27 @@ const sub = await client('e2e-sub@prsnn.test');
 const mem2 = await client('e2e-member2@prsnn.test');
 const id = async (c) => (await c.auth.getUser()).data.user.id;
 const [compId, memId] = [await id(comp), await id(mem)];
+let r0;
 
 console.log('1. Who can call what');
 ok((await rpc(anon, 'admin_overview')).error, 'logged-out: admin refused');
-ok(!(await rpc(anon, 'list_companions')).error, 'logged-out: can browse companions');
+ok((await rpc(anon, 'list_companions')).error, 'logged-out: cannot browse companions');
 ok((await rpc(anon, 'my_bookings')).error, 'logged-out: no bookings');
 const meSup = await rpc(sup, 'sync_my_role');
 ok(meSup.data?.role === 'superadmin', 'superadmin from phone list', meSup);
 ok((await rpc(mem, 'admin_overview')).error === 'Access denied', 'member: admin refused');
 { const { data } = await anon.from('settings').select('value').eq('key', 'pricing').single(); ok(data?.value?.packagePrices?.['1'] === 399, 'prices readable by everyone'); }
+
+console.log('1b. Consents are recorded with a timestamp');
+ok((await rpc(anon, 'record_consents', { kinds: ['terms'] })).error, 'logged-out: cannot record consent');
+ok(/Unknown/.test((await rpc(mem, 'record_consents', { kinds: ['booking_terms'] })).error ?? ''), 'booking terms only via a booking');
+for (const c of [mem, mem2]) await rpc(c, 'record_consents', { kinds: ['terms', 'privacy', 'age_18', 'whatsapp_updates', 'house_rules'] });
+r0 = await rpc(comp, 'record_consents', { kinds: ['terms', 'privacy', 'age_18', 'house_rules', 'companion_terms'] });
+ok(r0.data?.some((x) => x.kind === 'companion_terms' && x.acceptedAt), 'companion terms recorded with time', r0);
+r0 = await rpc(mem, 'my_consents');
+ok(['terms', 'privacy', 'age_18', 'house_rules'].every((k) => r0.data?.some((x) => x.kind === k)), 'member sees their agreements', r0);
+ok(Array.isArray((await rpc(sup, 'admin_user_consents', { uid: memId })).data), 'staff can see a user’s agreements');
+ok((await rpc(mem, 'admin_user_consents', { uid: memId })).error === 'Access denied', 'members cannot read the consent log');
 
 console.log('2. Profiles');
 let r = await rpc(mem, 'update_my_profile', { p: { fullName: 'Riya Test', gender: 'woman', seeGender: 'everyone', profileVisibility: 'open', visibilityConsent: true, city: 'Hyderabad', area: 'Gachibowli' } });

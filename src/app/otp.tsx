@@ -1,3 +1,4 @@
+import { signInConsents } from '@/domain/rules';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -35,7 +36,7 @@ export default function Otp() {
     setBusy(true);
     setError(null);
     try {
-      await afterAuth(byEmail ? await svc.verifyEmailOtp(email, value) : await svc.verifyOtp(phone, value, role), { resetPin: reset === '1' });
+      await afterAuth(byEmail ? await svc.verifyEmailOtp(email, value) : await svc.verifyOtp(phone, value, role), { resetPin: reset === '1', consents: signInConsents(!!byEmail) });
     } catch (e) {
       setError(errorMessage(e));
       setCode('');

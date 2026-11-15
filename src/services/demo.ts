@@ -5,6 +5,7 @@ import { useSession } from '@/state/session';
 import { needsIdToAccept } from '@/domain/verification';
 import type { Backend, AuthResult } from './backend';
 import { demoAdmin, demoRoleFor } from './demoAdmin';
+import { LEGAL_VERSION, type Consent } from '@/domain/rules';
 
 /**
  * Sample data for EXPO_PUBLIC_DEMO=1 (design review, preview, screenshots).
@@ -12,6 +13,10 @@ import { demoAdmin, demoRoleFor } from './demoAdmin';
  * filter, locked profiles, prepaid allocation) closely enough to try every
  * flow. Nothing here is sent anywhere. State resets on reload.
  */
+
+/** Sample user has agreed at sign-in; house rules are asked for on the first booking. */
+const demoConsents: Consent[] = (['terms', 'privacy', 'age_18', 'whatsapp_updates'] as const).map((kind) => ({ kind, version: LEGAL_VERSION, acceptedAt: new Date(Date.now() - 864e5).toISOString() }));
+
 const wait = <T>(v: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(v), ms));
 const fail = (message: string) => new Promise<never>((_, j) => setTimeout(() => j(new Error(message)), 250));
 const allDays = { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true };
@@ -161,6 +166,12 @@ export const demo: Backend = {
     });
   },
   markChatRead: () => wait({ message: 'Read' }),
+  recordConsents: (kinds) => {
+    const now = new Date().toISOString();
+    kinds.forEach((kind) => { if (!demoConsents.some((c) => c.kind === kind)) demoConsents.push({ kind, version: LEGAL_VERSION, acceptedAt: now }); });
+    return wait([...demoConsents]);
+  },
+  myConsents: () => wait([...demoConsents]),
   markNotificationsRead: () => {
     notifications = notifications.map((n) => ({ ...n, isRead: true }));
     return wait({ message: 'Read' });

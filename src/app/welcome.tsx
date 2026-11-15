@@ -26,7 +26,7 @@ export default function Welcome() {
             Life is better{'\n'}with good company.
           </Text>
           <Text variant="body" color={colors.gray600} style={{ maxWidth: 300 }}>
-            Find ID-checked companions near you for walks, coffee, events and more.
+            Find ID-checked companions near you for walks, coffee, events and more. Platonic company only: not dating, errands or therapy.
           </Text>
         </View>
         <View style={{ gap: space.sm }}>

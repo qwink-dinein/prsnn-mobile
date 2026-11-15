@@ -313,6 +313,12 @@ export const demoAdmin: Backend['admin'] = {
     list.filter((x) => x.role === 'user').forEach((x) => x.categories.forEach((c) => (categories[c] = (categories[c] ?? 0) + 1)));
     return wait({ counts: { total: list.length, member: list.filter((x) => x.role === 'user').length, companion: list.filter((x) => x.role === 'companion').length, setupDone: list.filter((x) => x.setupDone).length, categories }, items: list });
   },
+  userConsents: () =>
+    wait([
+      { kind: 'booking_terms', version: '2026-11-16', source: 'app', bookingId: 'b1', acceptedAt: new Date(Date.now() - 2 * 864e5).toISOString(), withdrawnAt: null },
+      { kind: 'house_rules', version: '2026-11-16', source: 'app', bookingId: null, acceptedAt: new Date(Date.now() - 2 * 864e5).toISOString(), withdrawnAt: null },
+      ...(['terms', 'privacy', 'age_18', 'whatsapp_updates'] as const).map((kind) => ({ kind, version: '2026-11-16', source: 'app', bookingId: null, acceptedAt: new Date(Date.now() - 30 * 864e5).toISOString(), withdrawnAt: null })),
+    ]),
   logPreview: (as: 'member' | 'companion', start: string) => {
     activity = [{ _id: `a${Date.now()}`, action: 'app.preview', role: 'superadmin', actorId: 'me', actorName: 'You', target: { kind: 'app', id: as }, after: { as, start }, at: new Date().toISOString() } as AuditEntry, ...activity];
     return wait(null);

@@ -28,6 +28,7 @@ export type { AuthResult, PaymentIntent, CompanionForm, IdForm, UnreadCounts } f
 export const qk = {
   me: ['me'] as const,
   unread: ['unread'] as const,
+  consents: ['consents'] as const,
   companions: ['companions'] as const,
   companion: (id: string) => ['companion', id] as const,
   myBookings: ['bookings', 'mine'] as const,
@@ -53,5 +54,6 @@ export const qk = {
     activity: ['admin', 'activity'] as const,
     enquiries: ['admin', 'enquiries'] as const,
     signups: ['admin', 'signups'] as const,
+    userConsents: (id: string) => ['admin', 'userConsents', id] as const,
   },
 };
