@@ -10,7 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { useSession } from '@/state/session';
 import { goToLogin } from '@/lib/flow';
 
-const PHOTOS = [require('../../assets/images/coffee.jpg'), require('../../assets/images/together.jpg'), require('../../assets/images/walks.jpg'), require('../../assets/images/study.jpg')];
+const PHOTOS = [require('../../assets/images/cat/community.jpg'), require('../../assets/images/cat/loved-one.jpg'), require('../../assets/images/cat/dont-go-alone.jpg'), require('../../assets/images/cat/new-in-town.jpg')];
 
 /** Screen 1 · Splash: photo collage, wordmark, then on to onboarding. */
 export default function Splash() {

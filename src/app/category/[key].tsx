@@ -60,11 +60,16 @@ export default function CategoryPage() {
                 <IconButton name="chevronLeft" label="Back" color={colors.paper} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
               </SafeAreaView>
               <View style={styles.heroText}>
+                <View style={styles.heroPill}>
+                  <Text variant="caption" color={colors.midnight} style={{ fontWeight: '600' }}>
+                    {c.title}
+                  </Text>
+                </View>
                 <Text variant="largeTitle" color={colors.paper} accessibilityRole="header">
-                  {c.title}
+                  {c.pain}
                 </Text>
                 <Text variant="callout" color={colors.paper} style={{ opacity: 0.92 }}>
-                  {c.line}.
+                  {c.promise}
                 </Text>
               </View>
             </View>
@@ -155,7 +160,8 @@ export default function CategoryPage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { height: 260, justifyContent: 'space-between', backgroundColor: colors.mistDeep },
+  hero: { height: 320, justifyContent: 'space-between', backgroundColor: colors.mistDeep },
+  heroPill: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.92)', marginBottom: 6 },
   heroText: { padding: GUTTER, paddingBottom: space.xxl, gap: 4 },
   sheet: { marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.mist, padding: GUTTER, paddingTop: space.xl, gap: space.md },
   ticks: { gap: space.sm, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },

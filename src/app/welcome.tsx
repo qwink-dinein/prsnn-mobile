@@ -17,7 +17,7 @@ export default function Welcome() {
   };
   return (
     <View style={styles.fill}>
-      <Image source={require('../../assets/images/coffee.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center" />
+      <Image source={require('../../assets/images/cat/community.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center" />
       <LinearGradient colors={[colors.mist, 'rgba(241,241,244,0.85)', 'rgba(241,241,244,0)']} locations={[0, 0.4, 0.62]} style={StyleSheet.absoluteFill} />
       <LinearGradient colors={['rgba(24,27,52,0)', 'rgba(24,27,52,0.55)']} locations={[0.65, 1]} style={StyleSheet.absoluteFill} />
       <SafeAreaView style={styles.content} edges={['top', 'bottom']}>

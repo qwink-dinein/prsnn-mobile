@@ -9,6 +9,7 @@ import { colors, GUTTER, radius, shadow, space } from '@/theme/tokens';
 import { Screen, Section, Logo, BellButton, EmptyState, ErrorState } from '@/components/ui/layout';
 import { Enter, PressScale } from '@/components/ui/motion';
 import { HomeCategories } from '@/components/HomeCategories';
+import { CommunityBanner } from '@/components/CommunityBanner';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
 import { Text } from '@/components/ui/Text';
@@ -83,7 +84,7 @@ function Discover() {
         </View>
       ) : null}
 
-      <Enter index={1} style={{ paddingHorizontal: GUTTER, marginTop: space.md }}>
+      <Enter index={1} style={{ marginTop: space.md }}>
         <HomeCategories />
       </Enter>
 
@@ -153,6 +154,8 @@ function Discover() {
           </View>
           <Icon name="chevronRight" size={18} color={colors.moss} />
         </PressScale>
+
+        <CommunityBanner />
 
         <View style={styles.how}>
           <Text variant="headline">How prsnn works</Text>
