@@ -318,3 +318,17 @@ place / At their home" for loved-one bookings made for someone else (`canHomeVis
 Checks: `scripts/e2e-supabase.mjs` §12; rolled-back SQL checks run on the project (enquiries:
 validation, one row per number, no anon read; home visits: address hidden from offered
 companions, shown to member and confirmed companion, refused outside Loved One).
+
+
+## Round 7 (2026-11-16): launch hardening
+
+- `20261116160000_hardening.sql` (**written, not applied yet**: the apply is waiting for the owner's
+  confirmation in the Supabase prompt). Companion browsing (`list_companions`, `get_companion`) for
+  signed-in users only (no anonymous scraping); indexes on the foreign keys the advisors flagged;
+  drops the duplicate `notifications_unpushed` index.
+- `supabase/tests/round6-payment-flow.sql`: the whole booking on the simulated payment, as the e2e
+  accounts (book → failed test payment → paid → offered → accepted → chat opens with numbers hidden →
+  member notified). One transaction that always rolls back. **Not run yet** (same confirmation prompt).
+- Chat "typing…" uses a Realtime broadcast on the booking's chat channel (`event: 'typing'`,
+  `payload.from` = sender id). Nothing is stored.
+- `payment_mode()` is read by the payment screen to show the "Test mode, no money moves" notice.

@@ -53,6 +53,22 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - 💡 A real photo for "Companion for a Loved One" (an older person with a companion); the current image is an illustration
 - 💡 Website guide articles (seo/README.md §3.8), one every two weeks
 
+## Launch checklist · owner actions (2026-11-16)
+
+Full detail in `docs/compliance/COMPLIANCE.md` and `docs/compliance/STORE_SUBMISSION.md`.
+
+- 🔑 Approve the two pending Supabase prompts (or say "apply"): `20261116160000_hardening.sql` and the round 6 payment test.
+- 🔑 Supabase Auth → enable **Leaked password protection** (advisor warning; dashboard only).
+- 🔑 Domain: confirm `prsnn.com` (or tell us the real one). Deploy the website with `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPPORT_EMAIL` (shown as the Grievance Officer contact), and the store URLs once the apps are live.
+- 🔑 App builds: set `EXPO_PUBLIC_SITE_URL` and `EXPO_PUBLIC_SUPPORT_EMAIL` in EAS, run `eas init`, then build. Upload the FCM key (Android push) and create the APNs key (iOS).
+- 🔑 Store accounts: Google Play Console and Apple Developer; two review logins (member, companion) typed only into the consoles.
+- 🔑 Business: incorporate (company/LLP), PAN/TAN, Telangana Shops & Establishments, then put the legal entity name and full registered address on `/grievance` and in `legal.jsx`.
+- 🔑 Tax: CA advice on GST registration, TCS (s.52 CGST) and TDS (s.194-O) for companion payouts.
+- 🔑 Payments: Razorpay KYC, then keys as Supabase secrets and switch `payment_mode` from `simulated`. Until then every payment is a test.
+- 🔑 Safety rota: every person answering panic alerts added as an admin with a WhatsApp number.
+- 🔑 A lawyer reads the policies before launch.
+- 🖼 Replace the AI category photos with real, consented photos (or keep them clearly as illustrations).
+
 ## Before the first real build
 
 - ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.
