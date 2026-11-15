@@ -17,8 +17,6 @@ export const DEMO = process.env.EXPO_PUBLIC_DEMO === '1';
 
 /** The public website (legal pages live there so the app and site always show the same text). */
 export const SITE_URL = trim(process.env.EXPO_PUBLIC_SITE_URL || 'https://prsnn.com');
-/** Optional support address, set at build time (kept out of the repo). Without it, Help opens the grievance page. */
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || '';
 
 export const LINKS = {
   website: SITE_URL,
@@ -30,5 +28,6 @@ export const LINKS = {
   grievance: `${SITE_URL}/grievance`,
   childSafety: `${SITE_URL}/child-safety`,
   legal: `${SITE_URL}/legal`,
-  support: SUPPORT_EMAIL ? `mailto:${SUPPORT_EMAIL}` : `${SITE_URL}/grievance`,
+  /** Help & support: the website page that shows the support email after a tap (it's never in the app). */
+  support: `${SITE_URL}/support`,
 };

@@ -17,7 +17,7 @@ The app links to these pages (`src/lib/config.ts` → `LINKS`), so the app and s
 | Publish terms, privacy policy and user agreement | Done | `/terms`, `/privacy` |
 | Tell users what they must not host or share (Rule 3(1)(b)) | Done | `/terms` §5A |
 | Remove unlawful content on court or government order | Done (process) | `/terms` §5A, `/grievance` |
-| Grievance Officer: name and contact published | Done | `/grievance` (name: founder; email from `NEXT_PUBLIC_SUPPORT_EMAIL`) |
+| Grievance Officer: name and contact published | Done | `/grievance` + `/support` (name: founder; the email is shown on `/support` after a tap, from `NEXT_PUBLIC_SUPPORT_EMAIL`) |
 | Acknowledge complaints in 24 h, resolve in 15 days | Done (process) | `/grievance`; Admin → Disputes |
 | Act within 24 h on intimate-image or impersonation complaints | Done (process) | `/grievance` |
 | Keep records after removal (180 days) and user data as law requires | Done (policy) | `/delete-account`, deletion keeps a minimal record |

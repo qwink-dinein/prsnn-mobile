@@ -1,7 +1,7 @@
 # Graph Report - prsnn-mobile  (2026-11-15)
 
 ## Corpus Check
-- 174 files · ~303,524 words
+- 174 files · ~303,514 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 2, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8f7b8130`
+- Built from commit: `9f5c8c04`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -90,14 +90,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `day()` --calls--> `toDateKey()`  [EXTRACTED]
   src/services/demo.ts → src/domain/booking.ts
-- `Discover()` --calls--> `CompanionCard()`  [EXTRACTED]
-  src/app/(tabs)/home.tsx → src/components/companions.tsx
-- `Discover()` --calls--> `HomeCategories()`  [EXTRACTED]
-  src/app/(tabs)/home.tsx → src/components/HomeCategories.tsx
-- `Discover()` --calls--> `EmptyState()`  [EXTRACTED]
-  src/app/(tabs)/home.tsx → src/components/ui/layout.tsx
-- `Discover()` --calls--> `ErrorState()`  [EXTRACTED]
-  src/app/(tabs)/home.tsx → src/components/ui/layout.tsx
+- `SessionState` --references--> `SessionUser`  [EXTRACTED]
+  src/state/session.ts → src/domain/types.ts
+- `IdForm` --references--> `IdType`  [EXTRACTED]
+  src/services/backend.ts → src/domain/types.ts
+- `Prefs` --references--> `Role`  [EXTRACTED]
+  src/state/session.ts → src/domain/types.ts
+- `PanicScreen()` --calls--> `hasLocalPin()`  [EXTRACTED]
+  src/app/panic/[bookingId].tsx → src/lib/pin.ts
 
 ## Import Cycles
 - None detected.
@@ -344,17 +344,17 @@ Nodes (3): composer(), header(), svg()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Text()` connect `Text` to `admin.tsx`, `colors`, `components/bookings.tsx`, `expo-router`, `layout.tsx`, `LocationFields.tsx`, `react-native`, `booking.ts`, `search.tsx`, `IdentityForm.tsx`, `Text`, `companion/[id].tsx`, `onboarding.tsx`, `Button.tsx`, `privacy.tsx`, `Text.tsx`, `preview.tsx`, `pay/[bookingId].tsx`, `review.tsx`, `formatINR`, `app/_layout.tsx`, `states.tsx`, `profile.tsx`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Why does `react-native` connect `react-native` to `admin.tsx`, `colors`, `components/bookings.tsx`, `session.ts`, `expo-router`, `config.ts`, `layout.tsx`, `LocationFields.tsx`, `booking.ts`, `search.tsx`, `IdentityForm.tsx`, `Text`, `companion/[id].tsx`, `onboarding.tsx`, `Button.tsx`, `privacy.tsx`, `Text.tsx`, `preview.tsx`, `pay/[bookingId].tsx`, `review.tsx`, `formatINR`, `Text`, `app/_layout.tsx`, `states.tsx`, `dependencies`, `profile.tsx`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **What connects `expo/tsconfig.base`, `COMMUNITY_IMAGE` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
 - **Should `types.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.0728744939271255 - nodes in this community are weakly interconnected._
-- **Why does `react-native` connect `react-native` to `admin.tsx`, `colors`, `components/bookings.tsx`, `session.ts`, `expo-router`, `config.ts`, `layout.tsx`, `LocationFields.tsx`, `booking.ts`, `search.tsx`, `IdentityForm.tsx`, `Text`, `companion/[id].tsx`, `onboarding.tsx`, `Button.tsx`, `privacy.tsx`, `Text.tsx`, `preview.tsx`, `pay/[bookingId].tsx`, `review.tsx`, `formatINR`, `Text`, `app/_layout.tsx`, `states.tsx`, `dependencies`, `profile.tsx`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `Text()` connect `Text` to `admin.tsx`, `colors`, `components/bookings.tsx`, `expo-router`, `layout.tsx`, `LocationFields.tsx`, `react-native`, `booking.ts`, `search.tsx`, `IdentityForm.tsx`, `Text`, `companion/[id].tsx`, `onboarding.tsx`, `Button.tsx`, `privacy.tsx`, `Text.tsx`, `preview.tsx`, `pay/[bookingId].tsx`, `review.tsx`, `formatINR`, `app/_layout.tsx`, `states.tsx`, `profile.tsx`?**
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
 - **Should `admin.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12280701754385964 - nodes in this community are weakly interconnected._
 - **Why does `@supabase/supabase-js` connect `chat/[bookingId].tsx` to `config.ts`, `e2e-supabase.mjs`, `dependencies`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Should `colors` be split into smaller, more focused modules?**
   _Cohesion score 0.11554748941318814 - nodes in this community are weakly interconnected._

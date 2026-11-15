@@ -59,8 +59,8 @@ Full detail in `docs/compliance/COMPLIANCE.md` and `docs/compliance/STORE_SUBMIS
 
 - 🔑 Approve the round 6 payment test in the Supabase prompt (or say "apply"). Hardening and the consent log are applied.
 - 🔑 Supabase Auth → enable **Leaked password protection** (advisor warning; dashboard only).
-- 🔑 Domain: confirm `prsnn.com` (or tell us the real one). Deploy the website with `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPPORT_EMAIL` (shown as the Grievance Officer contact), and the store URLs once the apps are live.
-- 🔑 App builds: set `EXPO_PUBLIC_SITE_URL` and `EXPO_PUBLIC_SUPPORT_EMAIL` in EAS, run `eas init`, then build. Upload the FCM key (Android push) and create the APNs key (iOS).
+- 🔑 Domain: confirm `prsnn.com` (or tell us the real one). Deploy the website with `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPPORT_EMAIL` (shown only on /support after a tap), and the store URLs once the apps are live.
+- 🔑 App builds: set `EXPO_PUBLIC_SITE_URL` in EAS if the domain isn't prsnn.com (the support email lives only on the website's /support page), run `eas init`, then build. Upload the FCM key (Android push) and create the APNs key (iOS).
 - 🔑 Store accounts: Google Play Console and Apple Developer; two review logins (member, companion) typed only into the consoles.
 - 🔑 Business: incorporate (company/LLP), PAN/TAN, Telangana Shops & Establishments, then put the legal entity name and full registered address on `/grievance` and in `legal.jsx`.
 - 🔑 Tax: CA advice on GST registration, TCS (s.52 CGST) and TDS (s.194-O) for companion payouts.
