@@ -7,6 +7,7 @@ import { Text } from './ui/Text';
 import { Icon, type IconName } from './ui/Icon';
 import { Avatar, Card, Pill } from './ui/layout';
 import { Button } from './ui/Button';
+import { FillLine, Pop } from './ui/motion';
 
 export const STAGE_LABEL: Record<Stage, { label: string; tone: 'neutral' | 'success' | 'warning' | 'danger' }> = {
   awaiting: { label: 'Awaiting confirmation', tone: 'warning' },
@@ -117,10 +118,12 @@ export function PrepaidStatus({ b }: { b: Booking }) {
       {steps.map((st, i) => (
         <View key={st.label} style={styles.step} accessible accessibilityLabel={`${st.label}${st.detail ? `, ${st.detail}` : ''}, ${st.state === 'done' ? 'done' : st.state === 'now' ? 'in progress' : st.state === 'stop' ? 'stopped' : 'not yet'}`}>
           <View style={styles.rail}>
-            <View style={[styles.node, st.state === 'done' && styles.nodeDone, st.state === 'now' && styles.nodeNow, st.state === 'stop' && styles.nodeStop]}>
-              {st.state === 'done' ? <Icon name="check" size={12} color={colors.onMoss} strokeWidth={2.6} /> : st.state === 'stop' ? <Icon name="close" size={12} color={colors.onMoss} strokeWidth={2.6} /> : null}
-            </View>
-            {i < steps.length - 1 ? <View style={[styles.line, st.state === 'done' && { backgroundColor: colors.moss }]} /> : null}
+            <Pop active={st.state === 'done'} delay={i > 0 ? 300 : 0}>
+              <View style={[styles.node, st.state === 'done' && styles.nodeDone, st.state === 'now' && styles.nodeNow, st.state === 'stop' && styles.nodeStop]}>
+                {st.state === 'done' ? <Icon name="check" size={12} color={colors.onMoss} strokeWidth={2.6} /> : st.state === 'stop' ? <Icon name="close" size={12} color={colors.onMoss} strokeWidth={2.6} /> : null}
+              </View>
+            </Pop>
+            {i < steps.length - 1 ? <FillLine filled={st.state === 'done'} color={colors.moss} track={colors.gray200} style={styles.line} /> : null}
           </View>
           <View style={{ flex: 1, paddingBottom: i < steps.length - 1 ? space.lg : 0 }}>
             <Text variant="callout" color={st.state === 'todo' ? colors.gray500 : colors.ink} style={{ fontFamily: st.state === 'now' ? 'Urbanist-SemiBold' : undefined }}>

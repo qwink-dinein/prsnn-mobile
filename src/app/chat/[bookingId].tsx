@@ -17,15 +17,23 @@ import { panicWindow } from '@/domain/safety';
 
 import { svc, qk } from '@/services';
 import { useSession } from '@/state/session';
+import { RiseIn, TypingDots } from '@/components/ui/motion';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 
-/** Screen 13 · Chat for one booking (live over Socket.io). */
+/** Screen 13 · Chat for one booking (live over Supabase Realtime). */
 export default function Chat() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const me = useSession((s) => s.user);
   const booking = useQuery({ queryKey: qk.booking(bookingId), queryFn: () => svc.booking(bookingId) });
-  const { messages, status, error, send } = useChat(bookingId, me?.id ?? '');
+  const { messages, status, error, send, otherTyping, typing } = useChat(bookingId, me?.id ?? '');
+  // Messages already there when the chat opened stay still; only new ones rise in.
+  const [known, setKnown] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (known || status !== 'open') return;
+    const t = setTimeout(() => setKnown(new Set(messages.map((m) => m._id))), 800);
+    return () => clearTimeout(t);
+  }, [known, status, messages]);
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
@@ -35,8 +43,8 @@ export default function Chat() {
   const closed = b ? b.status !== 'accepted' : false;
 
   useEffect(() => {
-    if (messages.length) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
-  }, [messages.length]);
+    if (messages.length || otherTyping) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+  }, [messages.length, otherTyping]);
 
   // Reading the chat clears its unread badge (and again as new messages arrive while it's open).
   const qc = useQueryClient();
@@ -110,6 +118,7 @@ export default function Chat() {
         <FlatList
           ref={listRef}
           data={messages}
+          extraData={known}
           keyExtractor={(m) => m._id}
           contentContainerStyle={styles.list}
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -137,18 +146,19 @@ export default function Chat() {
               ) : null}
             </Pressable>
           }
+          ListFooterComponent={otherTyping ? <TypingDots name={other?.fullName?.split(' ')[0]} /> : undefined}
           renderItem={({ item }) => {
             const mine = String(item.senderId) === me?.id;
             return (
               <Pressable onPress={Keyboard.dismiss} accessible={false} style={[styles.bubbleRow, mine && { justifyContent: 'flex-end' }]}>
-                <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
+                <RiseIn animate={!!known && !known.has(item._id)} style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
                   <Text variant="callout" color={mine ? colors.onMoss : colors.ink}>
                     {item.content}
                   </Text>
                   <Text variant="caption" color={mine ? 'rgba(255,255,255,0.7)' : colors.gray400} style={{ alignSelf: 'flex-end', marginTop: 2 }}>
                     {time(item.createdAt)}
                   </Text>
-                </View>
+                </RiseIn>
               </Pressable>
             );
           }}
@@ -169,7 +179,10 @@ export default function Chat() {
             {kb ? <IconButton name="chevronDown" label="Hide keyboard" onPress={() => Keyboard.dismiss()} style={styles.hideKb} size={20} /> : null}
             <TextInput
               value={text}
-              onChangeText={setText}
+              onChangeText={(v) => {
+                setText(v);
+                if (v) typing();
+              }}
               placeholder="Type a message…"
               placeholderTextColor={colors.gray400}
               style={styles.input}

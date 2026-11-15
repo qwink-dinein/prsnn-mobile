@@ -19,6 +19,8 @@ type Props = {
   haptic?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
+  /** Spoken label when it differs from the visible one (e.g. an animating price). */
+  accessibilityLabel?: string;
   compact?: boolean;
   /** Overrides for buttons on coloured backgrounds (e.g. the red panic screen). */
   textColor?: string;
@@ -39,13 +41,13 @@ const FG: Record<Variant, string> = {
   danger: colors.danger,
 };
 
-export function Button({ label, onPress, variant = 'primary', icon, iconRight, loading, disabled, haptic, style, accessibilityHint, compact, textColor, backgroundColor, borderColor }: Props) {
+export function Button({ label, onPress, variant = 'primary', icon, iconRight, loading, disabled, haptic, style, accessibilityHint, accessibilityLabel, compact, textColor, backgroundColor, borderColor }: Props) {
   const inactive = disabled || loading;
   const fg = textColor ?? FG[variant];
   return (
     <PressScale
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       disabled={inactive}

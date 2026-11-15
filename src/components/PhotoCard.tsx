@@ -5,6 +5,7 @@ import { colors, radius, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Text } from './ui/Text';
 import { Icon, type IconName } from './ui/Icon';
+import Animated, { Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, type SharedValue } from 'react-native-reanimated';
 import { PressScale } from './ui/motion';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
@@ -26,7 +27,10 @@ const DARK: Partial<Record<CategoryKey, true>> = { dont_go_alone: true };
  * the headline, a one-line promise, the photo fading up into the card, and a round arrow in the
  * corner so it never covers a face. The website renders the same card from the same words.
  */
-export function PhotoCard({ c, width, height, onPress, showPrice = true, style }: { c: Category; width: number; height: number; onPress?: () => void; showPrice?: boolean; style?: StyleProp<ViewStyle> }) {
+/** Swipe parallax: the photo moves 20% slower than its card in a carousel. */
+type Parallax = { scrollX: SharedValue<number>; index: number; step: number };
+
+export function PhotoCard({ c, width, height, onPress, showPrice = true, style, parallax }: { c: Category; width: number; height: number; onPress?: () => void; showPrice?: boolean; style?: StyleProp<ViewStyle>; parallax?: Parallax }) {
   const dark = !!DARK[c.key];
   const bg = dark ? colors.midnight : colors.paper;
   const fg = dark ? colors.porcelain : colors.midnight;
@@ -42,7 +46,11 @@ export function PhotoCard({ c, width, height, onPress, showPrice = true, style }
       innerStyle={[styles.card, { width, height, backgroundColor: bg }]}
     >
       <LinearGradient colors={dark ? [colors.midnight, '#2A2E4A'] : [colors.champagneMist, colors.paper]} locations={[0, 0.46]} style={StyleSheet.absoluteFill} />
-      <Image source={c.image} style={[styles.photo, { height: height * 0.6 }]} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+      {parallax ? (
+        <ParallaxPhoto c={c} width={width} height={height * 0.6} p={parallax} />
+      ) : (
+        <Image source={c.image} style={[styles.photo, { height: height * 0.6 }]} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+      )}
       <LinearGradient colors={dark ? ['#2A2E4A', 'rgba(42,46,74,0)'] : [colors.paper, 'rgba(255,255,255,0)']} style={[styles.fade, { top: height * 0.4, height: height * 0.2 }]} />
       <View style={styles.text}>
         <View style={[styles.pill, dark ? styles.pillDark : styles.pillLight]}>
@@ -63,6 +71,21 @@ export function PhotoCard({ c, width, height, onPress, showPrice = true, style }
         <Icon name="arrowRight" size={18} color={dark ? colors.midnight : colors.champagne} />
       </View>
     </PressScale>
+  );
+}
+
+function ParallaxPhoto({ c, width, height, p }: { c: Category; width: number; height: number; p: Parallax }) {
+  const reduced = useReducedMotion();
+  const drift = width * 0.07;
+  const anim = useAnimatedStyle(() => {
+    if (reduced) return { transform: [{ translateX: 0 }] };
+    const d = p.scrollX.get() - p.index * p.step;
+    return { transform: [{ translateX: interpolate(d, [-p.step, p.step], [-drift, drift], Extrapolation.CLAMP) }] };
+  });
+  return (
+    <Animated.View style={[styles.photo, { height, left: -drift, right: -drift, width: width + drift * 2 }, anim]}>
+      <Image source={c.image} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+    </Animated.View>
   );
 }
 

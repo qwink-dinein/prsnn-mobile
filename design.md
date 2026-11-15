@@ -151,6 +151,11 @@ animate-expo skill. Motion only where it does a job; tabs never animate.
 | Every button, PIN key | Scale 0.97 (keys 0.94) on press-in, 100ms | Feedback |
 | PIN boxes | Dot pops in (scale 0.5→1, 140ms) as each digit lands; 160ms pause on the 4th | State |
 | Wrong PIN, invalid number | Short horizontal shake + error haptic | Feedback |
+| Home photo cards | Photo drifts ~7% slower than its card while swiping; the page dot stretches 6→18pt with the finger | Depth, position |
+| Booking confirmed | Your photo and the companion's slide together (560ms), a green tick pops between them (+480ms), success haptic | The payoff moment |
+| Booking progress | When a step completes while open, the line fills down (420ms) and its node pops (360ms); on open, it's already drawn | State |
+| Chat | New messages rise 12pt from the input (260ms); "typing…" dots (Realtime broadcast, nothing stored) | Feedback |
+| Choosing a length | The total on Continue rolls to the new price (450ms); screen readers hear the final price | What changed |
 
 Curve: `cubic-bezier(0.23, 1, 0.32, 1)` (strong ease-out), never ease-in. With
 Reduce Motion on, entrances become a 200ms fade and nothing moves or shakes.

@@ -29,6 +29,7 @@ export default function Pay() {
   const user = useSession((s) => s.user);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: qk.booking(bookingId), queryFn: () => svc.booking(bookingId) });
+  const mode = useQuery({ queryKey: ['paymentMode'], queryFn: () => svc.paymentMode(), staleTime: 60_000 });
   const [method, setMethod] = useState('upi');
   const [checkout, setCheckout] = useState<CheckoutOptions | null>(null);
   const [simulated, setSimulated] = useState(false);
@@ -131,6 +132,15 @@ export default function Pay() {
         </Text>
       </View>
 
+      {mode.data === 'simulated' ? (
+        <View style={styles.test} accessible accessibilityLabel="Test mode. No money moves. Use this to try the booking flow.">
+          <Icon name="info" size={18} color={colors.champagneDeep} />
+          <Text variant="footnote" style={{ flex: 1 }}>
+            <Text variant="footnote" style={{ fontWeight: '700' }}>Test mode.</Text> No money moves. Pay to try the full booking flow, or simulate a failed payment.
+          </Text>
+        </View>
+      ) : null}
+
       <Text variant="title3" style={{ marginBottom: space.md }}>
         Pay with
       </Text>
@@ -197,6 +207,7 @@ export default function Pay() {
 }
 
 const styles = StyleSheet.create({
+  test: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start', padding: space.md, borderRadius: 16, backgroundColor: colors.champagneMist, marginBottom: space.lg },
   hero: { alignItems: 'center', gap: space.xs, marginVertical: space.xl },
   shield: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.mossSoft, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
   method: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.lg },

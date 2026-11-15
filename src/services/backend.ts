@@ -273,6 +273,8 @@ export const backend = {
   cityPlans: (city: string) => rpc<CityPlan[]>('city_plans_for', { city_name: city }),
 
   // ── Payments ──
+  /** 'simulated' (test checkout, no money moves) or 'razorpay'. */
+  paymentMode: () => rpc<string>('payment_mode'),
   createPaymentIntent: async (bookingId: string): Promise<PaymentIntent> => {
     const mode = await rpc<string>('payment_mode');
     if (mode !== 'simulated') throw new Error('Online payments aren’t switched on yet. Please try again later.');

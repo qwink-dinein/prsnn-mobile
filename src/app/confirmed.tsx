@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button';
 import { MetaLine, PrepaidStatus, whenOf } from '@/components/bookings';
 import { companionOf, stageOf } from '@/domain/booking';
 import { svc, qk } from '@/services';
+import { useSession } from '@/state/session';
+import { MeetPair } from '@/components/ui/motion';
 
 /**
  * Screen 12 · After payment (prepaid: "Paid — finding your companion", then
@@ -19,6 +21,7 @@ import { svc, qk } from '@/services';
 export default function Confirmed() {
   const { kind = 'request', bookingId } = useLocalSearchParams<{ kind?: 'request' | 'paid'; bookingId: string }>();
   const qc = useQueryClient();
+  const me = useSession((st) => st.user);
   const q = useQuery({
     queryKey: qk.booking(bookingId),
     queryFn: () => svc.booking(bookingId),
@@ -67,9 +70,20 @@ export default function Confirmed() {
       }
     >
       <View style={styles.hero}>
-        <View style={[styles.check, prepaid && !done && !failed && styles.waiting, failed && styles.failed]}>
-          <Icon name={done || !prepaid ? 'check' : failed ? 'rupee' : 'clock'} size={40} color={colors.onMoss} strokeWidth={2.4} />
-        </View>
+        {done && person ? (
+          <View style={{ marginBottom: space.sm }}>
+            <MeetPair
+              left={<View style={styles.ring}><Avatar uri={me?.profilePhoto} name={me?.fullName} size={84} /></View>}
+              right={<View style={styles.ring}><Avatar uri={person.profilePhotoUrl} name={person.fullName} size={84} locked={person.locked} /></View>}
+              badge={<View style={styles.badge}><Icon name="check" size={18} color={colors.onMoss} strokeWidth={3} /></View>}
+              size={92}
+            />
+          </View>
+        ) : (
+          <View style={[styles.check, prepaid && !done && !failed && styles.waiting, failed && styles.failed]}>
+            <Icon name={done || !prepaid ? 'check' : failed ? 'rupee' : 'clock'} size={40} color={colors.onMoss} strokeWidth={2.4} />
+          </View>
+        )}
         <Text variant="title1" center accessibilityRole="header" accessibilityLiveRegion="polite">
           {title}
         </Text>
@@ -104,4 +118,6 @@ const styles = StyleSheet.create({
   waiting: { backgroundColor: colors.mossMid },
   failed: { backgroundColor: colors.clay },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  ring: { padding: 4, borderRadius: 50, backgroundColor: colors.porcelain },
+  badge: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.success, borderWidth: 3, borderColor: colors.porcelain, alignItems: 'center', justifyContent: 'center' },
 });

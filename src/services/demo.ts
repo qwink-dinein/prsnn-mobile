@@ -261,6 +261,7 @@ export const demo: Backend = {
     return wait({ message: 'Thanks — our team will review this and contact you.', booking: find(id)! });
   },
 
+  paymentMode: () => wait('simulated'),
   createPaymentIntent: (bookingId) => {
     const b = find(bookingId);
     if (!b) return fail('Booking not found.');

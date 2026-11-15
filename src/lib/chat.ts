@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { isSampleMode } from '@/services';
 import { supabase } from './supabase';
 import type { ChatMessage } from '@/domain/types';
@@ -24,11 +25,26 @@ export function useChat(bookingId: string, myId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => (sample ? demoThread(bookingId, myId) : []));
   const [status, setStatus] = useState<Status>(sample ? 'open' : 'connecting');
   const [error, setError] = useState<string | null>(null);
+  // "Typing…": a Realtime broadcast on the same channel (nothing is stored). Hidden after 4 s of
+  // silence or as soon as their message arrives.
+  const [otherTyping, setOtherTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const lastSent = useRef(0);
+  const showTyping = useCallback((on: boolean) => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    setOtherTyping(on);
+    if (on) typingTimer.current = setTimeout(() => setOtherTyping(false), 4000);
+  }, []);
+  useEffect(() => () => void (typingTimer.current && clearTimeout(typingTimer.current)), []);
 
   useEffect(() => {
     if (sample) return;
     let alive = true;
-    const add = (list: ChatMessage[]) => setMessages((prev) => mergeMessages(prev, list));
+    const add = (list: ChatMessage[]) => {
+      if (list.some((m) => String(m.senderId) !== myId)) showTyping(false);
+      setMessages((prev) => mergeMessages(prev, list));
+    };
     const loadHistory = () =>
       supabase
         .from('messages')
@@ -45,6 +61,9 @@ export function useChat(bookingId: string, myId: string) {
     const channel = supabase
       .channel(`chat:${bookingId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${bookingId}` }, (payload) => add([toMessage(payload.new as Row)]))
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload?.from && payload.from !== myId) showTyping(true);
+      })
       .subscribe((s) => {
         if (!alive) return;
         if (s === 'SUBSCRIBED') {
@@ -55,11 +74,21 @@ export function useChat(bookingId: string, myId: string) {
         } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') setStatus('error');
         else if (s === 'CLOSED') setStatus('closed');
       });
+    channelRef.current = channel;
     return () => {
       alive = false;
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [bookingId, myId, sample]);
+  }, [bookingId, myId, sample, showTyping]);
+
+  /** Tell the other person I'm typing (at most every 2 s). */
+  const typing = useCallback(() => {
+    const now = Date.now();
+    if (sample || now - lastSent.current < 2000 || !channelRef.current) return;
+    lastSent.current = now;
+    void channelRef.current.send({ type: 'broadcast', event: 'typing', payload: { from: myId } });
+  }, [myId, sample]);
 
   /** Sends a message. Resolves true once the server has it; false (with `error` set) if it didn't go. */
   const send = useCallback(
@@ -68,6 +97,12 @@ export function useChat(bookingId: string, myId: string) {
       if (!message || message.length > MAX_MESSAGE_LENGTH) return false;
       if (sample) {
         setMessages((p) => [...p, { _id: `m${Date.now()}`, bookingId, senderId: myId, content: message, createdAt: new Date().toISOString() }]);
+        // Sample mode: the other side "types" and answers, so the chat can be tried end to end.
+        setTimeout(() => showTyping(true), 700);
+        setTimeout(() => {
+          showTyping(false);
+          setMessages((p) => [...p, { _id: `r${Date.now()}`, bookingId, senderId: 'other', content: 'Sounds good!', createdAt: new Date().toISOString() }]);
+        }, 2400);
         return true;
       }
       const { data, error: e } = await supabase.from('messages').insert({ booking_id: bookingId, sender_id: myId, content: message }).select('id, booking_id, sender_id, content, created_at').single();
@@ -79,10 +114,10 @@ export function useChat(bookingId: string, myId: string) {
       if (data) setMessages((prev) => mergeMessages(prev, [toMessage(data as Row)]));
       return true;
     },
-    [bookingId, myId, sample],
+    [bookingId, myId, sample, showTyping],
   );
 
-  return { messages, status, error, send };
+  return { messages, status, error, send, otherTyping, typing };
 }
 
 function demoThread(bookingId: string, myId: string): ChatMessage[] {
