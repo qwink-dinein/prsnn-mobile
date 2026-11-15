@@ -163,5 +163,15 @@ r = await rpc(comp, 'accept_offer', { bid: bf }); ok(/isn’t live/.test(r.error
 r = await rpc(sup, 'admin_suspend_user', { uid: compId, on_off: false, reason: null }); ok(!r.error, 'companion restored', r);
 // Locks and the rest of the rules: prsnn-backend/supabase/tests/round5-states.sql (rolled back).
 
+console.log('12. Website interest list, home visits');
+r = await rpc(anon, 'submit_enquiry', { phone_number: '+919000000777', interest_choice: 'companion', src: 'e2e' }); ok(r.data?.ok === true, 'website visitor leaves a number (no login)', r);
+r = await rpc(anon, 'submit_enquiry', { phone_number: '+91 12345', interest_choice: 'member', src: 'e2e' }); ok(/10-digit/.test(r.error ?? ''), 'bad number refused', r);
+{ const { error } = await anon.from('enquiries').select('phone'); ok(!!error, 'nobody can read the list directly'); }
+ok((await rpc(mem, 'admin_enquiries', { lim: 10 })).error === 'Access denied', 'members cannot read the list');
+r = await rpc(sup, 'admin_enquiries', { lim: 50 }); ok(r.data?.items?.some((e) => e.phone === '+919000000777' && e.interest === 'companion'), 'staff see it', r.data?.counts);
+r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(6), startTime: '11:00', duration: '60', idempotencyKey: key + 'hv1', acceptTerms: true, category: 'dont_go_alone', meetingPlace: 'My flat, Road 1', homeVisit: true } });
+ok(/only for Companion for a Loved One/.test(r.error ?? ''), 'home visit refused outside Loved One', r);
+// Address privacy for offered vs confirmed companions: prsnn-backend/supabase/tests (rolled back).
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

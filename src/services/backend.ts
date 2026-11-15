@@ -258,7 +258,7 @@ export const backend = {
 
   // ── Prepaid booking (pay first, then companion offers) ──
   policy: () => rpc<Policy>('booking_policy'),
-  createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; recipient?: Recipient | null }) =>
+  createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; homeVisit?: boolean; recipient?: Recipient | null }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
   acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),
   declineOffer: (id: string) => rpc<{ message: string }>('decline_offer', { bid: id }),
@@ -431,6 +431,8 @@ export const backend = {
       return (data ?? []).map((b) => ({ _id: b.id, audience: b.audience, title: b.title, body: b.body, recipients: b.recipients, sent: b.sent, failed: b.failed, createdAt: b.created_at }));
     },
     activity: (before?: string) => rpc<AuditEntry[]>('admin_activity', { before_at: before ?? null }),
+    /** Website interest list (mobile + member/companion/both), newest first. Staff only. */
+    enquiries: (limit = 200) => rpc<EnquiryList>('admin_enquiries', { lim: limit }),
     /** Records a staff "View the app as…" preview in the activity log (the preview itself is sample data). */
     logPreview: (as: 'member' | 'companion', start: string) => rpc<null>('admin_log_preview', { as_role: as, start_at: start }),
     approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),
@@ -445,6 +447,11 @@ export const backend = {
     deleteCityPlan: (id: string) => rpc<{ message: string }>('admin_delete_city_plan', { pid: id }),
   },
 };
+
+export interface EnquiryList {
+  counts: { total: number; member: number; companion: number; both: number };
+  items: { phone: string; interest: 'member' | 'companion' | 'both'; source: string; submissions: number; createdAt: string; updatedAt: string }[];
+}
 
 export type Backend = typeof backend;
 

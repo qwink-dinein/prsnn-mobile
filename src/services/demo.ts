@@ -228,6 +228,10 @@ export const demo: Backend = {
       scheduledDate: `${b.scheduledDate}T00:00:00.000Z`,
       createdAt: new Date().toISOString(),
       message: b.message,
+      category: b.category ?? null,
+      meetingPlace: b.meetingPlace,
+      homeVisit: !!b.homeVisit,
+      recipient: b.recipient ?? null,
       allocation: { state: 'awaiting_payment', paymentDeadline: inMin(30) },
     };
     bookings = [booking, ...bookings];

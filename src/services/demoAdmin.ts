@@ -278,6 +278,15 @@ export const demoAdmin: Backend['admin'] = {
   },
   broadcasts: () => superOnly() ?? wait(broadcasts),
   activity: () => superOnly() ?? wait(activity),
+  enquiries: () =>
+    wait({
+      counts: { total: 3, member: 1, companion: 1, both: 1 },
+      items: [
+        { phone: '+919000000101', interest: 'member' as const, source: 'website', submissions: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        { phone: '+919000000102', interest: 'companion' as const, source: 'website:companion', submissions: 2, createdAt: new Date(Date.now() - 864e5).toISOString(), updatedAt: new Date().toISOString() },
+        { phone: '+447700900123', interest: 'both' as const, source: 'website:companion-for-a-loved-one', submissions: 1, createdAt: new Date(Date.now() - 2 * 864e5).toISOString(), updatedAt: new Date(Date.now() - 2 * 864e5).toISOString() },
+      ],
+    }),
   logPreview: (as: 'member' | 'companion', start: string) => {
     activity = [{ _id: `a${Date.now()}`, action: 'app.preview', role: 'superadmin', actorId: 'me', actorName: 'You', target: { kind: 'app', id: as }, after: { as, start }, at: new Date().toISOString() } as AuditEntry, ...activity];
     return wait(null);

@@ -137,8 +137,10 @@ export interface Booking {
   amountPaid?: number;
   createdAt: string;
   category?: string | null;
-  /** The public place both people agreed to meet. */
+  /** The public place both people agreed to meet, or the loved one's home for a home visit. */
   meetingPlace?: string | null;
+  /** A home visit for a loved one: companions see only the area until the booking is confirmed. */
+  homeVisit?: boolean;
   /** Booked for someone else: who they are. The companion never sees the number. */
   recipient?: Recipient | null;
   /** An open panic alert on this booking, if any. */

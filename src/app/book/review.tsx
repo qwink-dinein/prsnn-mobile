@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/forms';
 import { MetaLine, formatDate } from '@/components/bookings';
 import { placeOf } from '@/components/companions';
-import { amountDuePaise, durationLabel, endTimeOf, formatINR, formatTime, rupees } from '@/domain/booking';
+import { amountDuePaise, canHomeVisit, durationLabel, endTimeOf, formatINR, formatTime, meetingPlaceError, rupees } from '@/domain/booking';
 import { hourlyFor, hoursLabel, priceFor, savingFor } from '@/domain/pricing';
 import type { Duration, Relation } from '@/domain/types';
 import { svc, qk } from '@/services';
@@ -50,6 +50,7 @@ export default function Checkout() {
     rName: '',
     rPhone: '',
     rCity: '',
+    where: 'public' as 'public' | 'home',
   });
   const set = (x: Partial<typeof d>) => setD((cur) => ({ ...cur, ...x }));
   const [agree, setAgree] = useState(false);
@@ -57,8 +58,11 @@ export default function Checkout() {
   const [key] = useState(newKey);
 
   const rDigits = d.rPhone.replace(/\D/g, '');
+  // A home visit only when it's a loved-one booking for someone else (and they chose it).
+  const homeAllowed = canHomeVisit(d.category, d.forWho === 'other');
+  const homeVisit = homeAllowed && d.where === 'home';
   const errors = {
-    place: d.place.trim().length < 3 ? 'Add a public place to meet, like a café, a mall or a park entrance.' : null,
+    place: meetingPlaceError(d.place, homeVisit),
     relation: d.forWho === 'other' && !d.relation ? 'Choose who the booking is for.' : d.forWho === 'other' && d.relation === 'other' && d.relationOther.trim().length < 2 ? 'Tell us who they are to you.' : null,
     rName: d.forWho === 'other' && d.rName.trim().length < 2 ? 'Add their name.' : null,
     rPhone: d.forWho === 'other' && !(rDigits.length === 10 || (rDigits.length >= 11 && rDigits.length <= 15)) ? 'Add their 10-digit mobile number.' : null,
@@ -79,6 +83,7 @@ export default function Checkout() {
         area: q.data?.area,
         category: d.category || null,
         meetingPlace: d.place.trim(),
+        homeVisit,
         recipient: d.forWho === 'other' ? { relation: d.relation as Relation, name: d.rName.trim(), phone: rDigits, city: d.rCity.trim() || q.data?.city || null, state: q.data?.state ?? null } : null,
       }),
     onSuccess: ({ booking }) => {
@@ -147,19 +152,6 @@ export default function Checkout() {
       </View>
 
       <Text variant="title3" style={styles.h}>
-        Where will you meet?
-      </Text>
-      <TextField
-        label="A public place"
-        value={d.place}
-        onChangeText={(v) => set({ place: v })}
-        placeholder={`e.g. a café or mall${c.area ? ` near ${c.area}` : ''}`}
-        maxLength={120}
-        error={tried ? errors.place : null}
-        hint="Public places only — cafés, malls, parks. You can fine-tune it in chat."
-      />
-
-      <Text variant="title3" style={styles.h}>
         Who is this for?
       </Text>
       <View style={styles.seg}>
@@ -187,9 +179,46 @@ export default function Checkout() {
           <TextField label="Their name" value={d.rName} onChangeText={(v) => set({ rName: v })} autoCapitalize="words" error={tried ? errors.rName : null} />
           <TextField label="Their mobile" prefix="🇮🇳  +91" value={d.rPhone} onChangeText={(v) => set({ rPhone: v.replace(/[^\d ]/g, '') })} keyboardType="phone-pad" maxLength={14} error={tried ? errors.rPhone : null} hint="Kept private: only our team sees it, for safety. The companion never does." />
           <TextField label="Their city (if not the same)" value={d.rCity} onChangeText={(v) => set({ rCity: v })} placeholder={c.city ?? ''} autoCapitalize="words" />
-          <Notice text={`You pay and get every update. They meet ${first} in a public place. Companionship only — no medical or care services.`} />
+          <Notice text={`You pay and get every update. They meet ${first} ${homeVisit ? 'at their home' : 'in a public place'}. Companionship only — no medical or care services.`} />
         </View>
       ) : null}
+
+      <Text variant="title3" style={styles.h}>
+        Where will you meet?
+      </Text>
+      {homeAllowed ? (
+        <View style={[styles.seg, { marginBottom: space.md }]} accessibilityRole="radiogroup">
+          {(['public', 'home'] as const).map((w) => (
+            <Pressable key={w} accessibilityRole="radio" accessibilityState={{ checked: d.where === w }} onPress={() => set({ where: w })} style={[styles.segItem, d.where === w && styles.segOn]}>
+              <Text variant="subhead" color={d.where === w ? colors.onMoss : colors.ink}>
+                {w === 'public' ? 'A public place' : 'At their home'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      {homeVisit ? (
+        <TextField
+          label="Their home address"
+          value={d.place}
+          onChangeText={(v) => set({ place: v })}
+          placeholder="Flat, building, street, area"
+          maxLength={200}
+          multiline
+          error={tried ? errors.place : null}
+          hint="Kept private: only you, our team and the confirmed companion see it. Companions being offered the booking see just the area."
+        />
+      ) : (
+        <TextField
+          label="A public place"
+          value={d.place}
+          onChangeText={(v) => set({ place: v })}
+          placeholder={`e.g. a café or mall${c.area ? ` near ${c.area}` : ''}`}
+          maxLength={120}
+          error={tried ? errors.place : null}
+          hint={homeAllowed ? 'Cafés, malls, parks, or choose “At their home” above.' : 'Public places only — cafés, malls, parks. You can fine-tune it in chat.'}
+        />
+      )}
 
       <View style={{ marginTop: space.lg }}>
         <TextField label="Anything else? (optional)" value={d.note} onChangeText={(v) => set({ note: v })} placeholder="Say what you’d like to do" multiline maxLength={300} />

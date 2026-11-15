@@ -47,6 +47,12 @@ Legend: ✅ done · 🔑 needs a key or account from the owner · ⏳ next · �
 - ✅ **Round 5** (2026-11-16): state-machine audit fixed — accept vs ID decision race, double panic press, duplicate sends from late delivery reports (claim tokens, give-up + staff notice), chat messages lost between history and live, companion double-booking (per-companion lock), suspended companions accepting, completion mid-session / with open alerts, unpaid website bookings auto-completed, failed test payments recorded, draft profiles approvable, Pay on closed bookings, sign-up step restore, booking status ⇔ allocation constraint
 - 💡 Load test for the per-companion lock (parallel accepts / offers) once there are enough test companions; the lock order is booking → companion everywhere
 
+- ✅ **Round 6** (2026-11-16): new website in `prsnn-frontend` (approved Wallet homepage, five category pages, Hyderabad, pricing, safety, become a companion, rent a friend, about with the founder story, terms, privacy, refunds, guidelines; robots, sitemap, llms.txt, structured data) · website interest list (`submit_enquiry`, Admin → Interested) · home visits for Companion for a Loved One with the address private until confirmed
+- 🔑 **Deploy the website**: set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPPORT_EMAIL` (and store links once live) where it's hosted, then build. Then submit the sitemap in Google Search Console and Bing Webmaster Tools, and work through `prsnn-frontend/seo/README.md` §5 (Google Business Profile, LinkedIn, Wikidata, store listings, press)
+- ⏳ **WhatsApp the app link to website sign-ups** when the app is in the stores: needs a new Meta-approved template (e.g. `prsnn_app_ready`) and a small job that messages `enquiries` rows once
+- 💡 A real photo for "Companion for a Loved One" (an older person with a companion); the current image is an illustration
+- 💡 Website guide articles (seo/README.md §3.8), one every two weeks
+
 ## Before the first real build
 
 - ✅ **Moved to Supabase** (2026-11-09): Postgres + RLS, Auth phone OTP (WhatsApp via Send SMS hook), Storage, Realtime chat, pg_cron sweeper, edge functions for push/WhatsApp/broadcast. Render, MongoDB and Cloudinary are no longer used by the app. 46-step check: `node scripts/e2e-supabase.mjs`.

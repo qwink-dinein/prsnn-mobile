@@ -289,3 +289,27 @@ The companion dashboard shows "Paused by our team" when suspended.
 
 Checks: `scripts/e2e-supabase.mjs` §11, `prsnn-backend/supabase/tests/round5-states.sql`
 (13 checks, rolled back; all pass) and `round4-acid.sql` (updated for claim tokens; all pass).
+
+## Round 6 (2026-11-16) · website, interest list, home visits
+
+**Website interest list.** `public.enquiries (phone E.164 unique, interest member|companion|both,
+source, submissions, created_at, updated_at)`, RLS on with no policies (no direct access).
+`submit_enquiry(phone_number, interest_choice, src)`: anyone (anon) may call; Indian numbers must be
+10 digits starting 6–9; one row per number (a repeat updates interest and counts, ignored within
+10 s); throttled to 60 sign-ups a minute. `admin_enquiries(lim)`: staff only → `{ counts, items }`.
+In the app: Admin → Interested (website).
+
+**Home visits.** `bookings.home_visit` (only when `category = 'loved_one'` and a recipient is set;
+constraint `bookings_home_visit_loved_one`). `create_prepaid_booking` takes `homeVisit: true` and then
+needs the full address (≥ 8 characters) as `meetingPlace`; otherwise a public place (≥ 3). In
+`booking_json`, companions who are only being offered the booking see
+`meetingPlace = "Home visit · <area>"`; the member, the confirmed companion and staff see the
+address (`private.sees_address`). `homeVisit` is in the booking JSON. App: checkout shows "A public
+place / At their home" for loved-one bookings made for someone else (`canHomeVisit`).
+
+**Website** (`prsnn-frontend`): see its README for the pages and deploy settings, and
+`seo/README.md` for the SEO/GEO plan.
+
+Checks: `scripts/e2e-supabase.mjs` §12; rolled-back SQL checks run on the project (enquiries:
+validation, one row per number, no anon read; home visits: address hidden from offered
+companions, shown to member and confirmed companion, refused outside Loved One).

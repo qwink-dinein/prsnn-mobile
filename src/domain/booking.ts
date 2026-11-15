@@ -336,3 +336,16 @@ export function matchesCategory(tags: string[] | undefined, key: CategoryKey): b
   const lower = (tags ?? []).map((t) => t.toLowerCase());
   return lower.some((t) => (cat.match as readonly string[]).some((m) => t.includes(m)));
 }
+
+/**
+ * Home visits (owner, 2026-11-15): only "Companion for a Loved One" bookings made for someone
+ * else may meet at that person's home. Everything else meets in a public place.
+ */
+export const canHomeVisit = (category: string | null | undefined, forSomeoneElse: boolean) => category === 'loved_one' && forSomeoneElse;
+
+/** What's missing in the meeting place; null when it's fine (same limits as create_prepaid_booking). */
+export function meetingPlaceError(place: string, homeVisit: boolean): string | null {
+  const p = place.trim();
+  if (homeVisit) return p.length < 8 ? 'Add their full home address.' : null;
+  return p.length < 3 ? 'Add a public place to meet, like a café, a mall or a park entrance.' : null;
+}
