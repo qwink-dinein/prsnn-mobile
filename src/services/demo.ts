@@ -324,7 +324,7 @@ export const demo: Backend = {
     // Demo only: approved a few seconds later.
     setTimeout(() => {
       void useSession.getState().updateUser({ approvalStatus: 'approved', photoStatus: 'approved' });
-      notifications = [{ _id: `n${Date.now()}`, type: 'approval', message: 'You’re approved and live. Members in Hyderabad can now book you.', isRead: false, createdAt: new Date().toISOString(), action: { kind: 'approved' } }, ...notifications];
+      notifications = [{ _id: `n${Date.now()}`, type: 'approval', message: 'You’re approved and live. Members near you can now book you.', isRead: false, createdAt: new Date().toISOString(), action: { kind: 'approved' } }, ...notifications];
     }, 9000);
     return wait({ message: 'Sent for approval.', user: { ...me, ...viewer(), role: 'companion', approvalStatus: 'pending' } as SessionUser });
   },

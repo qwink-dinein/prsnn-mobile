@@ -58,7 +58,7 @@ export default function Plans() {
         <Header title="City plans" right={<IconButton name="plus" label="Add a plan" onPress={() => setForm({ ...EMPTY })} />} />
         {form ? (
           <View style={styles.form}>
-            <TextField label="City" value={form.city} onChangeText={(v) => setForm({ ...form, city: v })} placeholder="e.g. Hyderabad" autoCapitalize="words" error={tried ? errs.city : null} />
+            <TextField label="City" value={form.city} onChangeText={(v) => setForm({ ...form, city: v })} placeholder="e.g. Bengaluru" autoCapitalize="words" error={tried ? errs.city : null} />
             <TextField label="Title" value={form.title} onChangeText={(v) => setForm({ ...form, title: v })} placeholder="e.g. Fort and heritage walk" maxLength={60} error={tried ? errs.title : null} />
             <TextField label="Details (optional)" value={form.details} onChangeText={(v) => setForm({ ...form, details: v })} placeholder="Places, what’s included, what’s extra" maxLength={120} />
             <Text variant="footnote" color={colors.gray600}>

@@ -68,7 +68,7 @@ Mature/Suggestive themes: **None**. Unrestricted web access: **No**. User-genera
 ## App review notes (both stores)
 
 ```
-prsnn books platonic companions for everyday plans in public places (Hyderabad, India).
+prsnn books platonic companions for everyday plans in public places, across India.
 It is not a dating or escort service; meetings are strictly platonic and the app enforces
 public meeting places (home visits only when a family books for a parent).
 
