@@ -1,3 +1,4 @@
+import { areaName } from '@/domain/places';
 import { useAppWidth } from '@/lib/layout';
 import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
@@ -56,7 +57,7 @@ function Discover() {
           <Pressable style={styles.city} accessibilityRole="button" accessibilityLabel={`Your area: ${user?.area || city || 'not set'}. Change it`} onPress={() => router.push('/edit-profile')}>
             <Icon name="mapPin" size={16} color={colors.moss} />
             <Text variant="subhead" numberOfLines={1} style={{ maxWidth: 120 }}>
-              {(user?.area ?? '').split(' · ')[0] || city || 'Set area'}
+              {areaName(user?.area) || city || 'Set area'}
             </Text>
             <Icon name="chevronDown" size={14} color={colors.gray500} />
           </Pressable>

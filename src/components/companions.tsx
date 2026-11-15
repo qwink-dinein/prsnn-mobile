@@ -1,3 +1,4 @@
+import { areaName } from '@/domain/places';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -15,7 +16,7 @@ import { LockedPhoto } from './LockedPhoto';
 export const fromPrice = (c: Pick<Companion, 'packages'>) => priceFor(offeredHours(c.packages)[0]) ?? 399;
 
 export const firstName = (name?: string) => (name ?? '').trim().split(/\s+/)[0] || 'Companion';
-export const placeOf = (c: Pick<Companion, 'area' | 'city'>) => [c.area, c.city].filter(Boolean).join(', ');
+export const placeOf = (c: Pick<Companion, 'area' | 'city'>) => [areaName(c.area), c.city].filter(Boolean).join(', ');
 
 export function HeartButton({ id, size = 20, onDark }: { id: string; size?: number; onDark?: boolean }) {
   const saved = useSession((s) => s.prefs.saved.includes(id));

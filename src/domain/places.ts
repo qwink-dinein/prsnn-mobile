@@ -43,3 +43,22 @@ export function searchPlaces(query: string, { state, limit = 60 }: { state?: str
 export const stateOf = (city?: string | null): string | undefined => (city ? ALL_PLACES.find((p) => p.city.toLowerCase() === city.toLowerCase())?.state : undefined);
 
 export const cityCount = ALL_PLACES.length;
+
+/**
+ * An area as people say it: "Electronics City", never "Electronics City · 560100". Strips a trailing
+ * 6-digit PIN code (with or without a "·", "-" or "," before it) from names saved by older app versions.
+ */
+export function areaName(area?: string | null): string {
+  return (area ?? '').replace(/\s*[·•,\-–(]?\s*(PIN\s*)?\d{6}\)?\s*$/i, '').trim();
+}
+
+/** One row per area name (India Post lists many offices with the same name under different PINs). */
+export function uniqueAreas<T extends { name: string }>(list: T[]): T[] {
+  const seen = new Set<string>();
+  return list.filter((l) => {
+    const k = areaName(l.name).toLowerCase();
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}

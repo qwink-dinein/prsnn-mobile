@@ -1,3 +1,4 @@
+import { areaName } from '@/domain/places';
 import type { UploadFile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
@@ -25,7 +26,7 @@ export function normaliseCompanion(raw: Record<string, any>): Companion {
     pricePerHour: raw.pricePerHour ?? raw.price_per_hour,
     packages: Array.isArray(raw.packages) ? raw.packages : undefined,
     city: raw.city,
-    area: raw.area,
+    area: areaName(raw.area) || undefined,
     state: raw.state,
     gender: raw.gender,
     locked: !!raw.locked,
@@ -140,7 +141,7 @@ function toProfile(p: Record<string, any>): Profile {
     fullName: p.full_name,
     phoneNumber: p.phone ? String(p.phone).replace(/^91/, '') : undefined,
     city: p.city ?? undefined,
-    area: p.area ?? undefined,
+    area: areaName(p.area) || undefined,
     state: p.state ?? undefined,
     profilePhotoUrl: p.profilePhotoUrl ?? undefined,
     description: p.description ?? undefined,

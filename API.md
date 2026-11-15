@@ -350,3 +350,11 @@ companions, shown to member and confirmed companion, refused outside Loved One).
   resubmission record Companion Terms + house rules. `/rules` screen, Profile → House rules, Home card,
   Admin → user → Agreements.
 - Same NOT_FOR / HOUSE_RULES text in `src/domain/rules.ts` and the website's `_lib/content.js`.
+
+## Round 9 (2026-11-16): areas without PIN codes
+
+- App: the area picker lists each area name once (no PIN), saves only the name, and every place line
+  goes through `areaName()` (src/domain/places.ts), which strips a trailing 6-digit PIN from older data.
+- `20261116180000_area_without_pincode.sql` (**written, waiting for the owner's confirmation in Supabase**):
+  strips PINs already saved in `profiles.area` and `bookings.area`, and a trigger keeps them off. Until it's
+  applied, staff screens that show raw areas may still show a PIN.

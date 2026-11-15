@@ -9,10 +9,9 @@ import { Icon } from './ui/Icon';
 import { IconButton } from './ui/layout';
 import { Button } from './ui/Button';
 import { Skeleton } from './ui/states';
-import { searchPlaces, STATE_NAMES } from '@/domain/places';
+import { areaName, searchPlaces, STATE_NAMES, uniqueAreas } from '@/domain/places';
 import { svc } from '@/services';
 import { errorMessage } from '@/lib/api';
-import type { Locality } from '@/domain/types';
 
 export interface LocationValue {
   state: string;
@@ -184,9 +183,8 @@ function AreaSheet({ visible, state, city, onClose, onPick }: { visible: boolean
     placeholderData: (prev) => prev,
   });
   const typed = q.trim();
-  const label = (l: Locality) => `${l.name} · ${l.pincode}`;
   return (
-    <Sheet visible={visible} title={`Area in ${city || 'your city'}`} onClose={onClose} query={q} setQuery={setQ} placeholder="Type an area name or a PIN code">
+    <Sheet visible={visible} title={`Area in ${city || 'your city'}`} onClose={onClose} query={q} setQuery={setQ} placeholder="Type your area">
       {res.isLoading ? (
         <View style={styles.list}>
           <Skeleton rows={6} height={52} />
@@ -204,13 +202,13 @@ function AreaSheet({ visible, state, city, onClose, onPick }: { visible: boolean
         </View>
       ) : (
         <FlatList
-          data={res.data ?? []}
-          keyExtractor={(l) => `${l.name}|${l.pincode}`}
+          data={uniqueAreas(res.data ?? [])}
+          keyExtractor={(l) => `${l.name}|${l.district}`}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.list}
-          ListHeaderComponent={!debounced ? <Text variant="caption" muted style={{ paddingVertical: space.sm }}>Popular areas in {city}. Type to search every area, or a PIN code.</Text> : undefined}
-          renderItem={({ item }) => <Row title={item.name} sub={`${item.district} · PIN ${item.pincode}`} onPress={() => onPick(label(item))} />}
-          ListEmptyComponent={<NoMatch q={typed} what="area" hint="Try fewer letters, a nearby landmark, or your 6-digit PIN code." onUse={typed.length >= 2 ? () => onPick(titleCase(typed)) : undefined} />}
+          ListHeaderComponent={!debounced ? <Text variant="caption" muted style={{ paddingVertical: space.sm }}>Popular areas in {city}. Type to search every area.</Text> : undefined}
+          renderItem={({ item }) => <Row title={areaName(item.name)} sub={item.district && item.district.toLowerCase() !== areaName(item.name).toLowerCase() ? item.district : undefined} onPress={() => onPick(areaName(item.name))} />}
+          ListEmptyComponent={<NoMatch q={typed} what="area" hint="Try fewer letters or a nearby landmark." onUse={typed.length >= 2 ? () => onPick(titleCase(typed)) : undefined} />}
           ListFooterComponent={debounced && (res.data?.length ?? 0) > 0 && typed.length >= 2 ? <Button label={`Not listed? Use “${titleCase(typed)}”`} variant="ghost" compact onPress={() => onPick(titleCase(typed))} /> : undefined}
         />
       )}
