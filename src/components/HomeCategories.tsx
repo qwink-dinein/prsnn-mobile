@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { Extrapolation, interpolate, interpolateColor, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
@@ -44,7 +44,9 @@ export function HomeCategories() {
         scrollEventThrottle={16}
         accessibilityRole="list"
         renderItem={({ item, index }: { item: Category; index: number }) => (
-          <PhotoCard c={item} width={cardW} height={cardH} parallax={{ scrollX, index, step }} onPress={() => router.push(`/category/${item.key}`)} />
+          <DeckCard index={index} step={step} scrollX={scrollX}>
+            <PhotoCard c={item} width={cardW} height={cardH} parallax={{ scrollX, index, step }} onPress={() => router.push(`/category/${item.key}`)} />
+          </DeckCard>
         )}
       />
       <View style={styles.dots} accessible accessibilityLabel={`Card ${page + 1} of ${CATEGORIES.length}`}>
@@ -54,6 +56,25 @@ export function HomeCategories() {
       </View>
     </View>
   );
+}
+
+/**
+ * The same deck feel as the website: the card under your finger is full size; as it slides away it
+ * eases down, tilts slightly and settles lower, and the next one rises into place. Driven by the
+ * scroll position on the UI thread, so it follows the finger exactly. Reduced motion: flat.
+ */
+function DeckCard({ index, step, scrollX, children }: { index: number; step: number; scrollX: SharedValue<number>; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const style = useAnimatedStyle(() => {
+    if (reduced) return {};
+    const d = interpolate(scrollX.get() / step - index, [-1, 0, 1], [-1, 0, 1], Extrapolation.CLAMP);
+    const a = Math.abs(d);
+    return {
+      transform: [{ translateY: a * 18 }, { rotate: `${d * 4}deg` }, { scale: 1 - a * 0.08 }],
+      opacity: 1 - a * 0.25,
+    };
+  });
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 /** A page dot that widens from 6 to 18pt as its card comes into place, following the finger. */

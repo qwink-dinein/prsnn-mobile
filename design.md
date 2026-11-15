@@ -151,7 +151,7 @@ animate-expo skill. Motion only where it does a job; tabs never animate.
 | Every button, PIN key | Scale 0.97 (keys 0.94) on press-in, 100ms | Feedback |
 | PIN boxes | Dot pops in (scale 0.5→1, 140ms) as each digit lands; 160ms pause on the 4th | State |
 | Wrong PIN, invalid number | Short horizontal shake + error haptic | Feedback |
-| Home photo cards | Photo drifts ~7% slower than its card while swiping; the page dot stretches 6→18pt with the finger | Depth, position |
+| Home photo cards | Deck: the card under the finger is full size; neighbours sit 8% smaller, 4° tilted and 18pt lower, and trade places as you swipe (UI thread, follows the finger). Photo drifts ~7% slower than its card; the page dot stretches 6→18pt | Depth, position |
 | Booking confirmed | Your photo and the companion's slide together (560ms), a green tick pops between them (+480ms), success haptic | The payoff moment |
 | Booking progress | When a step completes while open, the line fills down (420ms) and its node pops (360ms); on open, it's already drawn | State |
 | Chat | New messages rise 12pt from the input (260ms); "typing…" dots (Realtime broadcast, nothing stored) | Feedback |
