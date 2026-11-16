@@ -14,6 +14,7 @@ env on Render.
 | 6 | `prsnn_booking_unfulfilled` | Utility | member | nobody accepted → full refund | `WAPLIFY_TPL_BOOKING_UNFULFILLED` |
 | 7 | `prsnn_panic_alert` | Utility | **every admin** | panic button pressed; repeats every 5 min until resolved | `WAPLIFY_TPL_PANIC_ALERT` |
 | 8 | `prsnn_session_reminder` | Utility | member **and** companion | 5:00 AM on the day of a confirmed, paid session | `WAPLIFY_TPL_SESSION_REMINDER` |
+| 9 | `prsnn_admin_booking_paid` | Utility | **every admin** | a member pays for a booking (real Razorpay payment) | `WAPLIFY_TPL_ADMIN_BOOKING_PAID` |
 
 **Who gets which message (2026-11-14).** Each booking message goes to one side only:
 the companion gets #2 when a member books (the member is not messaged — they know they
@@ -307,3 +308,41 @@ Please be there on time and meet only in public places. You can chat in the app 
 
 After Meta approves it, add the secret **`WAPLIFY_TPL_SESSION_REMINDER` = `prsnn_session_reminder`**
 (Supabase → Edge Functions → Secrets). Until then the reminder arrives as a push and in the bell.
+
+
+## 9 · `prsnn_admin_booking_paid` (Utility → every admin) · env `WAPLIFY_TPL_ADMIN_BOOKING_PAID`
+
+Sent to every admin number (all sub-admins and superadmins, and the superadmin list) the moment a member's
+real Razorpay payment for a booking is captured. Admins also get an in-app notification and push at once
+(that part needs no template). Category **Utility** (about an existing booking, not promotional). No header,
+no footer, no buttons. Language English.
+
+**Body**
+```
+New paid booking on {{1}}: {{2}} paid ₹{{3}} for booking {{4}}.
+
+Companion: {{5}}
+Date: {{6}}
+Time: {{7}}
+Booking: {{8}}
+Place: {{9}}
+
+The booking has been offered to the companion. Open the admin panel in the app for details.
+```
+
+| Variable | What | Sample |
+|---|---|---|
+| {{1}} | brand | prsnn |
+| {{2}} | member's name | Karan Malhotra |
+| {{3}} | amount paid (no ₹, Indian commas) | 1,299 |
+| {{4}} | booking reference | #A6F7ED |
+| {{5}} | companion's name | Ayesha Khan |
+| {{6}} | date | Sat 21 Nov 2026 |
+| {{7}} | start – end | 3:00 PM – 7:00 PM |
+| {{8}} | length · kind of company | 4 hours · Don't Go Alone |
+| {{9}} | meeting place | Inorbit Mall, Madhapur, Hyderabad |
+
+**After Meta approves it:** add the Supabase secret **`WAPLIFY_TPL_ADMIN_BOOKING_PAID` = `prsnn_admin_booking_paid`**
+(or the exact approved name), then switch it on with
+`update private.config set value = 'on' where key = 'admin_paid_whatsapp';` (until then nothing is queued, so
+nothing fails). Migration `20261116200000_admin_paid_alert.sql`.

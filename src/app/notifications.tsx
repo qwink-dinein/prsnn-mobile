@@ -41,6 +41,8 @@ function open(n: AppNotification) {
   else if (a.kind === 'review') router.push('/admin/approvals');
   else if (a.kind === 'panic' && a.alertId) router.push({ pathname: '/admin/panic/[id]', params: { id: a.alertId } });
   else if (a.kind === 'panic_resolved' && a.bookingId) router.push(`/booking/${a.bookingId}`);
+  // Staff: a new paid booking opens it in the admin view.
+  else if (a.kind === 'booking' && a.bookingId) router.push({ pathname: '/admin/booking/[id]', params: { id: a.bookingId } });
 }
 const inFilter = (n: AppNotification, f: Filter) => f === 'all' || (f === 'bookings' ? n.type.startsWith('booking') || n.type === 'dispute' || n.type === 'panic' : n.type === 'payment_completed' || n.type === 'refund');
 

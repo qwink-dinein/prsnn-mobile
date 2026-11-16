@@ -1,7 +1,7 @@
 # Graph Report - prsnn-mobile  (2026-11-16)
 
 ## Corpus Check
-- 177 files · ~304,140 words
+- 177 files · ~304,170 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 2, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ac364e56`
+- Built from commit: `f033ebfc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -90,10 +90,10 @@
   src/app/fellow/onboarding.tsx → src/domain/categories.ts
 - `Chat()` --calls--> `typing`  [EXTRACTED]
   src/app/chat/[bookingId].tsx → src/components/ui/motion.tsx
-- `Pay()` --calls--> `RazorpaySheet()`  [EXTRACTED]
-  src/app/pay/[bookingId].tsx → src/components/RazorpaySheet.tsx
-- `RazorpaySheet()` --calls--> `Header()`  [EXTRACTED]
-  src/components/RazorpaySheet.tsx → src/components/ui/layout.tsx
+- `Notifications()` --calls--> `Button()`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/Button.tsx
+- `Notifications()` --calls--> `useConfirm()`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/confirm.tsx
 
 ## Import Cycles
 - None detected.
@@ -317,7 +317,7 @@ Cohesion: 0.28
 Nodes (5): DEMO, SITE_URL, SUPABASE_KEY, SUPABASE_URL, supabase
 
 ## Knowledge Gaps
-- **2 isolated node(s):** `expo/tsconfig.base`, `COMMUNITY_IMAGE`
+- **2 isolated node(s):** `COMMUNITY_IMAGE`, `expo/tsconfig.base`
   These have ≤1 connection - possible missing edges. (Counts symbols only; 388 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -325,16 +325,16 @@ Nodes (5): DEMO, SITE_URL, SUPABASE_KEY, SUPABASE_URL, supabase
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Text()` connect `Text` to `states.tsx`, `layout.tsx`, `booking.ts`, `role.tsx`, `Text.tsx`, `Text`, `formatINR`, `admin.tsx`, `companion/[id].tsx`, `useSession`, `app/_layout.tsx`, `privacy.tsx`, `IdentityForm.tsx`, `errorMessage`, `PackageGrid.tsx`, `Icon`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **What connects `expo/tsconfig.base`, `COMMUNITY_IMAGE` to the rest of the system?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **What connects `COMMUNITY_IMAGE`, `expo/tsconfig.base` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
 - **Should `types.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.06923076923076923 - nodes in this community are weakly interconnected._
-- **Why does `react-native` connect `layout.tsx` to `states.tsx`, `booking.ts`, `session.ts`, `package.json`, `Text`, `companion/[id].tsx`, `useSession`, `privacy.tsx`, `IdentityForm.tsx`, `errorMessage`, `PackageGrid.tsx`, `Icon`, `role.tsx`, `Text.tsx`, `pay/[bookingId].tsx`, `Text`, `formatINR`, `admin.tsx`, `app/_layout.tsx`, `push.ts`, `config.ts`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `@supabase/supabase-js` connect `package.json` to `config.ts`, `Text.tsx`, `e2e-supabase.mjs`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Should `states.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12473118279569892 - nodes in this community are weakly interconnected._
-- **Why does `@supabase/supabase-js` connect `package.json` to `config.ts`, `Text.tsx`, `e2e-supabase.mjs`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Why does `react-native` connect `layout.tsx` to `states.tsx`, `booking.ts`, `session.ts`, `package.json`, `Text`, `companion/[id].tsx`, `useSession`, `privacy.tsx`, `IdentityForm.tsx`, `errorMessage`, `PackageGrid.tsx`, `Icon`, `role.tsx`, `Text.tsx`, `pay/[bookingId].tsx`, `Text`, `formatINR`, `admin.tsx`, `app/_layout.tsx`, `push.ts`, `config.ts`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **Should `layout.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.09694749694749695 - nodes in this community are weakly interconnected._
