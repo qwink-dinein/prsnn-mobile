@@ -21,3 +21,7 @@ graphify-out/*
 dist-single/
 preview/app.html
 __pycache__/
+
+# Firebase config for Android push (kept out of git; use the EAS file variable GOOGLE_SERVICES_JSON)
+google-services.json
+GoogleService-Info.plist
