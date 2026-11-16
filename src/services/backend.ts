@@ -172,6 +172,17 @@ async function withDocLinks(users: Record<string, any>[]): Promise<AdminUser[]> 
 
 // ───────── the service ─────────
 
+/** The `payments` edge function (Razorpay orders and verification), with its error message passed through. */
+async function payments<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('payments', { body });
+  if (error) {
+    const ctx = (error as { context?: Response }).context;
+    const msg = ctx && typeof ctx.json === 'function' ? ((await ctx.json().catch(() => null)) as { error?: string } | null)?.error : null;
+    throw new Error(msg || (/fetch|network/i.test(error.message) ? NETWORK : 'Payments are busy right now. Please try again.'));
+  }
+  return data as T;
+}
+
 export const backend = {
   // ── Auth: phone OTP (WhatsApp, SMS backup) through Supabase Auth; PIN unlocks this device ──
   sendOtp: async (phone: string, channel: 'whatsapp' | 'sms' = 'whatsapp') => {
@@ -282,13 +293,18 @@ export const backend = {
   paymentMode: () => rpc<string>('payment_mode'),
   createPaymentIntent: async (bookingId: string): Promise<PaymentIntent> => {
     const mode = await rpc<string>('payment_mode');
-    if (mode !== 'simulated') throw new Error('Online payments aren’t switched on yet. Please try again later.');
-    const b = await rpc<Booking>('get_booking', { bid: bookingId });
-    if (b.paymentStatus === 'paid') throw new Error('This booking is already paid.');
-    return { mode: 'simulated', orderId: `sim_${bookingId}`, amount: (b.packagePrice ?? 0) * 100, currency: 'INR' };
+    if (mode === 'simulated') {
+      const b = await rpc<Booking>('get_booking', { bid: bookingId });
+      if (b.paymentStatus === 'paid') throw new Error('This booking is already paid.');
+      return { mode: 'simulated', orderId: `sim_${bookingId}`, amount: (b.packagePrice ?? 0) * 100, currency: 'INR' };
+    }
+    // Real payments: the server creates a Razorpay order for the booking's price (never the app's number).
+    return payments<PaymentIntent>({ action: 'order', bookingId });
   },
-  verifyPayment: async (_p: { bookingId: string; razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }): Promise<{ message: string; booking: Booking }> => {
-    throw new Error('Online payments aren’t switched on yet.');
+  /** Server checks Razorpay's signature and the captured payment, then confirms the booking. */
+  verifyPayment: async (p: { bookingId: string; razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }): Promise<{ message: string; booking: Booking }> => {
+    await payments<{ ok: true }>({ action: 'verify', bookingId: p.bookingId, orderId: p.razorpayOrderId, paymentId: p.razorpayPaymentId, signature: p.razorpaySignature });
+    return { message: 'Payment received.', booking: await rpc<Booking>('get_booking', { bid: p.bookingId }) };
   },
   simulatePayment: async (bookingId: string, outcome: 'success' | 'failure' = 'success') => {
     const r = await rpc<{ message: string; booking: Booking; failed?: boolean }>('simulate_payment', { bid: bookingId, outcome });

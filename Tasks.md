@@ -64,7 +64,7 @@ Full detail in `docs/compliance/COMPLIANCE.md` and `docs/compliance/STORE_SUBMIS
 - 🔑 Store accounts: Google Play Console and Apple Developer; two review logins (member, companion) typed only into the consoles.
 - 🔑 Business: incorporate (company/LLP), PAN/TAN, Telangana Shops & Establishments, then put the legal entity name and full registered address on `/grievance` and in `legal.jsx`.
 - 🔑 Tax: CA advice on GST registration, TCS (s.52 CGST) and TDS (s.194-O) for companion payouts.
-- 🔑 Payments: Razorpay KYC, then keys as Supabase secrets and switch `payment_mode` from `simulated`. Until then every payment is a test.
+- 🔑 Payments (built 2026-11-16): add RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / RAZORPAY_WEBHOOK_SECRET as Supabase edge-function secrets, add the webhook in Razorpay, test with test keys, then switch `payment_mode` to `razorpay`. See API.md Round 10.
 - 🔑 Safety rota: every person answering panic alerts added as an admin with a WhatsApp number.
 - 🔑 A lawyer reads the policies before launch.
 - 🖼 Replace the AI category photos with real, consented photos (or keep them clearly as illustrations).

@@ -358,3 +358,20 @@ companions, shown to member and confirmed companion, refused outside Loved One).
 - `20261116180000_area_without_pincode.sql` (applied 2026-11-16 by the owner in the SQL editor; checked: 0 profiles and 0 bookings with a PIN):
   strips PINs already saved in `profiles.area` and `bookings.area`, and a trigger keeps them off. Until it's
   applied, staff screens that show raw areas may still show a PIN. (Done.)
+
+## Round 10 (2026-11-16): real payments with Razorpay
+
+- Migration `20261116190000_razorpay.sql` (applied; 8 live checks pass, rolled back). Service-role-only functions:
+  `pay_prepare(bid, uid)` (amount in paise from the database), `pay_set_order`, `pay_confirm(order_id, payment_id,
+  amount_paise)` (exact amount or the booking is flagged for staff, never marked paid; repeat calls are no-ops),
+  `pay_failed`, `refunds_claim(lim)` (claimed once, 15-minute lease), `refunds_report`, `refunds_failed_by_provider`.
+  pg_cron `send-refunds` every 2 minutes while Razorpay refunds are pending.
+- Edge functions (deployed): `payments` (verify_jwt; `order` creates the Razorpay order, `verify` checks the
+  checkout signature, fetches the payment from Razorpay, captures if only authorised, then `pay_confirm`),
+  `razorpay-webhook` (no JWT; HMAC of the raw body with RAZORPAY_WEBHOOK_SECRET; payment.captured/failed,
+  refund.processed/failed), `refunds` (sends queued refunds, speed normal).
+- Secrets (Supabase → Edge Functions → Secrets, never the app or repo): RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET,
+  RAZORPAY_WEBHOOK_SECRET. Switch on with `update private.config set value = 'razorpay' where key = 'payment_mode';`
+  (back to 'simulated' to pause). The app reads `payment_mode()`; no app update needed to switch.
+- App: `createPaymentIntent` / `verifyPayment` call `payments`; checkout stays Razorpay Standard Checkout in a
+  WebView; UPI app links (upi://, intent://, phonepe://…) open the UPI app (`externalTarget`, src/domain/payments.ts).

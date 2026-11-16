@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { Modal, Platform, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Platform, StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/theme/tokens';
 import { Header } from './ui/layout';
+import { externalTarget } from '@/domain/payments';
 
 export interface RazorpaySuccess {
   razorpay_payment_id: string;
@@ -64,6 +65,13 @@ export function RazorpaySheet({ visible, options, onSuccess, onDismiss }: Props)
               javaScriptEnabled
               domStorageEnabled
               setSupportMultipleWindows={false}
+              // UPI apps (GPay, PhonePe, Paytm…) and bank pages open outside the checkout page.
+              onShouldStartLoadWithRequest={(r) => {
+                const target = externalTarget(r.url);
+                if (!target) return true;
+                Linking.openURL(target).catch(() => onDismiss('That UPI app isn’t installed. Pick another app or pay by card.'));
+                return false;
+              }}
               style={styles.fill}
             />
           )}
