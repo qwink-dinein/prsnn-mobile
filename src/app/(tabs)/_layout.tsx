@@ -1,10 +1,25 @@
-import { Redirect, Tabs } from 'expo-router';
-import { Platform } from 'react-native';
+import { useEffect } from 'react';
+import { Tabs } from 'expo-router';
+import { Platform, View } from 'react-native';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useSession } from '@/state/session';
 import { badgeLabel, useUnread } from '@/lib/live';
+import { goToLogin } from '@/lib/flow';
+
+/**
+ * Signed out while on a tab (Log out, an expired session, a sign-out elsewhere). Whatever signed the
+ * person out already sends them to the PIN or login screen; this only steps in if nothing did. It used
+ * to redirect to the welcome screen at once, which flashed the welcome photo before the PIN screen.
+ */
+function SignedOut() {
+  useEffect(() => {
+    const t = setTimeout(() => void goToLogin('/welcome'), 400);
+    return () => clearTimeout(t);
+  }, []);
+  return <View style={{ flex: 1, backgroundColor: colors.mist }} />;
+}
 
 const tab = (icon: IconName) =>
   function TabIcon({ color, focused }: { color: unknown; focused: boolean }) {
@@ -15,7 +30,7 @@ export default function TabsLayout() {
   const token = useSession((s) => s.token);
   const isCompanion = useSession((s) => s.user?.role === 'companion');
   const unread = useUnread();
-  if (!token) return <Redirect href="/welcome" />;
+  if (!token) return <SignedOut />;
   const bookingsBadge = badgeLabel(unread.bookings);
   const messagesBadge = badgeLabel(unread.messages);
 
