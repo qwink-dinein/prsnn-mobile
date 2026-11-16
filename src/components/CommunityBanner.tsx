@@ -7,12 +7,17 @@ import { Text } from './ui/Text';
 import { PressScale } from './ui/motion';
 import { COMMUNITY_IMAGE } from '@/domain/categories';
 
-/** "Real people. Real connections." (same photo and words as the website). */
+/**
+ * "Real people. Real connections." (same photo and words as the website). The photo sits on top and
+ * fades into midnight, with the words below it, so no face is ever under the text.
+ */
 export function CommunityBanner() {
   return (
     <PressScale accessibilityRole="button" accessibilityLabel="Real people. Real connections. Every companion is approved and ID-checked. Learn about becoming a companion" onPress={() => router.push('/fellow/apply')} innerStyle={styles.card}>
-      <Image source={COMMUNITY_IMAGE} style={styles.photo} contentFit="cover" accessibilityIgnoresInvertColors />
-      <LinearGradient colors={['rgba(24,27,52,0.15)', 'rgba(24,27,52,0.92)']} locations={[0.2, 0.75]} style={StyleSheet.absoluteFill} />
+      <View style={styles.photoBox}>
+        <Image source={COMMUNITY_IMAGE} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center" accessibilityIgnoresInvertColors />
+        <LinearGradient colors={['rgba(24,27,52,0)', colors.midnight]} locations={[0.55, 1]} style={StyleSheet.absoluteFill} />
+      </View>
       <View style={styles.text}>
         <Text variant="title2" color={colors.porcelain}>
           Real people.{'\n'}Real connections.
@@ -31,8 +36,8 @@ export function CommunityBanner() {
 }
 
 const styles = StyleSheet.create({
-  card: { height: 300, borderRadius: radius.xxl - 2, overflow: 'hidden', backgroundColor: colors.midnight, justifyContent: 'flex-end' },
-  photo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  text: { padding: space.lg, gap: space.sm },
+  card: { borderRadius: radius.xxl - 2, overflow: 'hidden', backgroundColor: colors.midnight },
+  photoBox: { width: '100%', aspectRatio: 1600 / 781 },
+  text: { paddingHorizontal: space.lg, paddingBottom: space.lg, paddingTop: space.xs, gap: space.sm },
   cta: { alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: space.lg, borderRadius: 14, backgroundColor: colors.champagne, justifyContent: 'center', marginTop: space.xs },
 });
