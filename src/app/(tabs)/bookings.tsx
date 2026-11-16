@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, space } from '@/theme/tokens';
 import { EmptyState, ErrorState, Loading, Segmented } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { BookingCard } from '@/components/bookings';
 import { RequestCard } from '@/components/fellow/RequestCard';
-import { awaitingAnswer, isMineAsCompanion, startsAt, tabOf, type BookingTab } from '@/domain/booking';
+import { awaitingAnswer, isMineAsCompanion, sideOf, startsAt, tabOf, type BookingTab } from '@/domain/booking';
 import type { Booking } from '@/domain/types';
-import { svc, qk } from '@/services';
+import { useAllMyBookings } from '@/lib/myBookings';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
 
@@ -20,20 +19,25 @@ const TABS: { value: BookingTab; label: string }[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
-/** Screen 14 · My bookings (companions see the requests they received). */
+/**
+ * Screen 14 · My bookings. Companions see the requests they received and, alongside them, any
+ * bookings they made themselves as a member (the side is read per booking, never from the role).
+ */
 export default function BookingsTab() {
-  const isCompanion = useSession((s) => s.user?.role === 'companion');
+  const meId = useSession((s) => s.user?.id);
   const [tab, setTab] = useState<BookingTab>('upcoming');
-  const q = useQuery({ queryKey: isCompanion ? qk.incoming : qk.myBookings, queryFn: isCompanion ? svc.incomingBookings : svc.myBookings });
+  const q = useAllMyBookings();
+  const isCompanion = q.isCompanion;
 
   const list = useMemo(() => {
     const now = new Date();
     // Companions: offers that ended without them (declined, expired, taken) sit under "Cancelled".
-    const tabFor = (b: Booking) => (isCompanion && b.flow === 'prepaid' && !isMineAsCompanion(b) && !awaitingAnswer(b, now) ? 'cancelled' : tabOf(b, now));
+    const asCompanion = (b: Booking) => sideOf(b, meId) === 'companion';
+    const tabFor = (b: Booking) => (asCompanion(b) && b.flow === 'prepaid' && !isMineAsCompanion(b) && !awaitingAnswer(b, now) ? 'cancelled' : tabOf(b, now));
     const rows = (q.data ?? []).filter((b) => tabFor(b) === tab);
     // Upcoming: soonest first. Past/cancelled: most recent first.
     return rows.sort((a, b) => (tab === 'upcoming' ? 1 : -1) * (startsAt(a).getTime() - startsAt(b).getTime()));
-  }, [q.data, tab, isCompanion]);
+  }, [q.data, tab, meId]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -53,7 +57,7 @@ export default function BookingsTab() {
           keyExtractor={(b) => b._id}
           contentContainerStyle={{ padding: GUTTER, gap: space.md, paddingBottom: space.huge }}
           refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.moss} />}
-          renderItem={({ item }) => (isCompanion ? <RequestCard b={item} /> : <BookingCard b={item} />)}
+          renderItem={({ item }) => (sideOf(item, meId) === 'companion' ? <RequestCard b={item} /> : <BookingCard b={item} />)}
           ListEmptyComponent={
             tab === 'upcoming' ? (
               isCompanion ? (

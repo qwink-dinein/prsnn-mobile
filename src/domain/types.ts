@@ -95,6 +95,8 @@ export type RefundStatus = 'none' | 'pending' | 'processed' | 'failed';
 
 export interface Booking {
   _id: string;
+  /** Short reference shown to people, e.g. ABDFC7 (from the server). */
+  ref?: string;
   requesterId: PersonRef | string;
   /** Request flow: the companion asked. Prepaid: empty until a companion accepts. */
   companionId?: PersonRef | string | null;

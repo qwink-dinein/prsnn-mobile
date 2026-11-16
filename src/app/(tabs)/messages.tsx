@@ -1,28 +1,34 @@
 import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, GUTTER, space } from '@/theme/tokens';
 import { Avatar, EmptyState, ErrorState, Loading } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { whenOf } from '@/components/bookings';
-import { canChat, isMineAsCompanion, personOf, startsAt } from '@/domain/booking';
-import { svc, qk } from '@/services';
+import { canChat, isMineAsCompanion, personOf, sideOf, startsAt } from '@/domain/booking';
+import { useAllMyBookings } from '@/lib/myBookings';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
 import { badgeLabel, useUnread } from '@/lib/live';
 import { fonts } from '@/theme/fonts';
 
-/** Conversations: one per confirmed booking (chat opens once the booking is accepted and paid). */
+/**
+ * Conversations: one per confirmed booking (chat opens once the booking is accepted and paid). A
+ * companion also sees the chats of bookings they made as a member; the side is read per booking.
+ */
 export default function MessagesTab() {
-  const isCompanion = useSession((s) => s.user?.role === 'companion');
-  const q = useQuery({ queryKey: isCompanion ? qk.incoming : qk.myBookings, queryFn: isCompanion ? svc.incomingBookings : svc.myBookings });
+  const meId = useSession((s) => s.user?.id);
+  const q = useAllMyBookings();
+  const isCompanion = q.isCompanion;
   const { perChat } = useUnread();
   const threads = useMemo(
-    () => (q.data ?? []).filter((b) => canChat(b, isCompanion) && (!isCompanion || isMineAsCompanion(b))).sort((a, b) => startsAt(b).getTime() - startsAt(a).getTime()),
-    [q.data, isCompanion],
+    () =>
+      (q.data ?? [])
+        .filter((b) => canChat(b) && (sideOf(b, meId) === 'member' || isMineAsCompanion(b)))
+        .sort((a, b) => startsAt(b).getTime() - startsAt(a).getTime()),
+    [q.data, meId],
   );
 
   return (
@@ -41,7 +47,8 @@ export default function MessagesTab() {
           contentContainerStyle={{ paddingHorizontal: GUTTER, paddingBottom: space.huge }}
           refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.moss} />}
           renderItem={({ item, index }) => {
-            const other = personOf(isCompanion ? item.requesterId : item.companionId);
+            const asMember = sideOf(item, meId) === 'member';
+            const other = personOf(asMember ? item.companionId : item.requesterId);
             const n = perChat[item._id] ?? 0;
             const badge = badgeLabel(n);
             return (
@@ -58,6 +65,8 @@ export default function MessagesTab() {
                   </Text>
                   <Text variant="footnote" muted numberOfLines={1}>
                     {whenOf(item)}
+                    {item.ref ? ` · #${item.ref}` : ''}
+                    {isCompanion ? (asMember ? ' · you booked' : ' · your client') : ''}
                   </Text>
                 </View>
                 {badge ? (
@@ -74,7 +83,7 @@ export default function MessagesTab() {
             <EmptyState
               icon="message"
               title="No conversations yet"
-              body={isCompanion ? 'Chats open when you accept a request.' : 'Chat opens once your companion accepts and you’ve paid.'}
+              body={isCompanion ? 'Chats open when you accept a request, or when a companion you booked accepts.' : 'Chat opens once your companion accepts and you’ve paid.'}
             />
           }
         />

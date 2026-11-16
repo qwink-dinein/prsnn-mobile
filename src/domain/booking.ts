@@ -304,6 +304,27 @@ export interface EarningsSummary {
 /** A companion's own booking: website requests to them, or prepaid offers they accepted. */
 export const isMineAsCompanion = (b: Booking) => b.flow !== 'prepaid' || b.myOffer?.status === 'accepted';
 
+/**
+ * Which side of a booking I'm on. Someone can be both: a companion who also books companions as a
+ * member. Decided per booking (who booked it), never from the account's role.
+ */
+export const sideOf = (b: Pick<Booking, 'requesterId'>, meId: string | undefined): 'member' | 'companion' => (meId && idOf(b.requesterId) === meId ? 'member' : 'companion');
+
+/**
+ * A companion's bookings from both sides: requests they received and bookings they made as a member.
+ * Each booking once (received first), so the lists and chats never miss one side.
+ */
+export function mergeBookings(received: Booking[] | undefined, made: Booking[] | undefined): Booking[] {
+  const out: Booking[] = [];
+  const seen = new Set<string>();
+  for (const b of [...(received ?? []), ...(made ?? [])]) {
+    if (seen.has(b._id)) continue;
+    seen.add(b._id);
+    out.push(b);
+  }
+  return out;
+}
+
 /** Waiting for the companion's answer: a live prepaid offer or a pending website request. */
 export function awaitingAnswer(b: Booking, now: Date = new Date()): boolean {
   if (b.flow === 'prepaid') return b.myOffer?.status === 'offered' && new Date(b.myOffer.expiresAt).getTime() > now.getTime();
