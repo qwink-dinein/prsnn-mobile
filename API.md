@@ -355,6 +355,6 @@ companions, shown to member and confirmed companion, refused outside Loved One).
 
 - App: the area picker lists each area name once (no PIN), saves only the name, and every place line
   goes through `areaName()` (src/domain/places.ts), which strips a trailing 6-digit PIN from older data.
-- `20261116180000_area_without_pincode.sql` (**written, waiting for the owner's confirmation in Supabase**):
+- `20261116180000_area_without_pincode.sql` (applied 2026-11-16 by the owner in the SQL editor; checked: 0 profiles and 0 bookings with a PIN):
   strips PINs already saved in `profiles.area` and `bookings.area`, and a trigger keeps them off. Until it's
-  applied, staff screens that show raw areas may still show a PIN.
+  applied, staff screens that show raw areas may still show a PIN. (Done.)
