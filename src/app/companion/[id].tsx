@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppWidth } from '@/lib/layout';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,7 +14,8 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { HeartButton, firstName, fromPrice, placeOf } from '@/components/companions';
 import { hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
-import { availableDayNames, CATEGORIES, DEFAULT_END, DEFAULT_START, formatINR, formatTime, matchesCategory } from '@/domain/booking';
+import { availableDayNames, CATEGORIES, DEFAULT_END, DEFAULT_START, formatINR, formatTime, matchesCategory, toDateKey } from '@/domain/booking';
+import { BookingPicker, type BookingChoice } from '@/components/BookingPicker';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -25,6 +27,8 @@ export default function CompanionProfile() {
   const insets = useSafeAreaInsets();
   const { width } = useAppWidth();
   const q = useQuery({ queryKey: qk.companion(id), queryFn: () => svc.companion(id) });
+  const [choice, setChoice] = useState<BookingChoice>({ hours: null, date: null, time: null });
+  const ready = !!(choice.hours && choice.date && choice.time);
 
   if (q.isLoading) return <Loading />;
   if (q.isError || !q.data)
@@ -123,50 +127,52 @@ export default function CompanionProfile() {
             {c.description || `${firstName(c.fullName)} hasn’t written a bio yet.`}
           </Text>
 
-          <Text variant="title3" style={styles.h}>
-            Durations & prices
-          </Text>
-          <View style={styles.tags}>
-            {offeredHours(c.packages).map((h) => (
-              <View key={h} style={styles.pkg}>
-                <Text variant="caption" muted>
-                  {hoursLabel(h)}
-                </Text>
-                <Text variant="subhead">{formatINR(priceFor(h) ?? 0)}</Text>
-              </View>
-            ))}
-          </View>
-
-          <Text variant="title3" style={styles.h}>
-            Availability
-          </Text>
-          <View style={styles.infoCard}>
-            <View style={styles.meta}>
-              <Icon name="calendar" size={18} color={colors.moss} />
-              <Text variant="callout">{days.length ? days.join(' · ') : 'No days set yet'}</Text>
-            </View>
-            <View style={styles.meta}>
-              <Icon name="clock" size={18} color={colors.moss} />
-              <Text variant="callout">
-                {formatTime(c.startTime || DEFAULT_START)} – {formatTime(c.endTime || DEFAULT_END)}
+          {isMe ? null : (
+            <>
+              <Text variant="title3" style={styles.h}>
+                Book {firstName(c.fullName)}
               </Text>
-            </View>
-          </View>
+              <View style={styles.meta}>
+                <Icon name="calendar" size={16} color={colors.gray500} />
+                <Text variant="footnote" muted style={{ flex: 1 }}>
+                  {days.length ? `${days.join(' · ')} · ${formatTime(c.startTime || DEFAULT_START)} – ${formatTime(c.endTime || DEFAULT_END)}` : 'No days set yet'}
+                </Text>
+              </View>
+              {days.length ? <BookingPicker c={c} onChange={setChoice} /> : null}
+            </>
+          )}
         </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm }]}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text variant="title3">From {formatINR(fromPrice(c))}</Text>
-          <Text variant="caption" muted>
-            for {hoursLabel(offeredHours(c.packages)[0] ?? 1)} · longer costs less per hour
-          </Text>
+          {choice.hours ? (
+            <>
+              <Text variant="title3">{formatINR(priceFor(choice.hours) ?? 0)}</Text>
+              <Text variant="caption" muted numberOfLines={1}>
+                {hoursLabel(choice.hours)}
+                {ready ? ` · ${choice.date!.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}, ${formatTime(choice.time!)}` : ' · longer costs less per hour'}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text variant="title3">From {formatINR(fromPrice(c))}</Text>
+              <Text variant="caption" muted>
+                for {hoursLabel(offeredHours(c.packages)[0] ?? 1)} · longer costs less per hour
+              </Text>
+            </>
+          )}
         </View>
         <Button
-          label={isMe ? 'This is you' : 'Book now'}
-          disabled={isMe || !days.length}
-          onPress={() => router.push({ pathname: '/book/[id]', params: { id: c.id, ...(category ? { category } : {}) } })}
-          style={{ flex: 1.6 }}
+          label={isMe ? 'This is you' : !days.length ? 'Not available' : !choice.date ? 'Pick a day' : !choice.time ? 'Pick a time' : 'Continue'}
+          disabled={isMe || !ready}
+          onPress={() =>
+            router.push({
+              pathname: '/book/review',
+              params: { id: c.id, date: toDateKey(choice.date!), time: choice.time!, duration: String(choice.hours! * 60), ...(category ? { category } : {}) },
+            })
+          }
+          style={{ flex: 1.3 }}
         />
       </View>
     </View>

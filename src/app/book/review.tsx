@@ -149,16 +149,22 @@ export default function Checkout() {
       <Card style={styles.block}>
         <MetaLine icon="calendar" text={formatDate(p.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} />
         <MetaLine icon="clock" text={`${formatTime(p.time)} – ${formatTime(endTimeOf(p.time, p.duration))} (${durationLabel(p.duration)})`} />
+        {p.category && CATEGORIES.some((k) => k.key === p.category) ? <MetaLine icon="sparkle" text={CATEGORIES.find((k) => k.key === p.category)!.title} /> : null}
       </Card>
 
-      <Text variant="title3" style={styles.h}>
-        What’s it for?
-      </Text>
-      <View style={styles.chips}>
-        {CATEGORIES.filter((k) => offersCategory(c.categories, k.key)).map((k) => (
-          <Chip key={k.key} label={k.title} selected={d.category === k.key} onPress={() => set({ category: d.category === k.key ? '' : k.key })} />
-        ))}
-      </View>
+      {/* The kind of company was chosen at the start (Home → category); only ask when it wasn't. */}
+      {p.category ? null : (
+        <>
+          <Text variant="title3" style={styles.h}>
+            What’s it for?
+          </Text>
+          <View style={styles.chips}>
+            {CATEGORIES.filter((k) => offersCategory(c.categories, k.key)).map((k) => (
+              <Chip key={k.key} label={k.title} selected={d.category === k.key} onPress={() => set({ category: d.category === k.key ? '' : k.key })} />
+            ))}
+          </View>
+        </>
+      )}
 
       <Text variant="title3" style={styles.h}>
         Who is this for?
