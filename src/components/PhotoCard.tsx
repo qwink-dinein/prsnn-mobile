@@ -49,7 +49,7 @@ export function PhotoCard({ c, width, height, onPress, showPrice = true, style, 
       {parallax ? (
         <ParallaxPhoto c={c} width={width} height={height * 0.6} p={parallax} />
       ) : (
-        <Image source={c.image} style={[styles.photo, { height: height * 0.6 }]} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+        <Image source={c.image} style={[styles.photo, { height: height * 0.6 }]} contentFit="cover" contentPosition={c.focus} transition={200} accessibilityIgnoresInvertColors />
       )}
       <LinearGradient colors={dark ? ['#2A2E4A', 'rgba(42,46,74,0)'] : [colors.paper, 'rgba(255,255,255,0)']} style={[styles.fade, { top: height * 0.4, height: height * 0.2 }]} />
       <View style={styles.text}>
@@ -84,7 +84,7 @@ function ParallaxPhoto({ c, width, height, p }: { c: Category; width: number; he
   });
   return (
     <Animated.View style={[styles.photo, { height, left: -drift, right: -drift, width: width + drift * 2 }, anim]}>
-      <Image source={c.image} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+      <Image source={c.image} style={{ width: '100%', height: '100%' }} contentFit="cover" contentPosition={c.focus} transition={200} accessibilityIgnoresInvertColors />
     </Animated.View>
   );
 }

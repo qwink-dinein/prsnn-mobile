@@ -20,6 +20,11 @@ export interface Category {
   promise: string;
   /** Suggested booking length (hours) shown on the card and the category page. */
   hours: number;
+  /**
+   * Where the faces are in the photo (CSS object-position style). Every card crops the photo to its own
+   * shape; this keeps the faces in frame instead of the centre of the picture.
+   */
+  focus: { left: string; top: string };
   image: number;
 }
 
@@ -34,6 +39,7 @@ export const CATEGORIES: Category[] = [
     pain: 'New city. No one to call yet.',
     promise: 'Find a local to help you settle in.',
     image: require('../../assets/images/cat/new-in-town.jpg'),
+    focus: { left: '50%', top: '18%' },
   },
   {
     key: 'dont_go_alone',
@@ -45,6 +51,7 @@ export const CATEGORIES: Category[] = [
     pain: 'Two tickets. One you.',
     promise: 'A trusted companion by your side.',
     image: require('../../assets/images/cat/dont-go-alone.jpg'),
+    focus: { left: '50%', top: '24%' },
   },
   {
     key: 'explore',
@@ -56,6 +63,7 @@ export const CATEGORIES: Category[] = [
     pain: 'You live here. You’ve seen none of it.',
     promise: 'Go further with someone who knows the way.',
     image: require('../../assets/images/cat/explore.jpg'),
+    focus: { left: '50%', top: '35%' },
   },
   {
     key: 'loved_one',
@@ -67,6 +75,7 @@ export const CATEGORIES: Category[] = [
     pain: 'Mom’s alone today.',
     promise: 'Warm company for parents and grandparents.',
     image: require('../../assets/images/cat/loved-one.jpg'),
+    focus: { left: '50%', top: '35%' },
   },
   {
     key: 'work_study',
@@ -78,6 +87,7 @@ export const CATEGORIES: Category[] = [
     pain: 'Day four of working alone.',
     promise: 'Get more done, together.',
     image: require('../../assets/images/cat/work-study.jpg'),
+    focus: { left: '50%', top: '22%' },
   },
 ];
 
@@ -89,3 +99,4 @@ export const offersCategory = (cats: string[] | undefined, key: CategoryKey | nu
 
 /** The group photo used for "Real people. Real connections." (website and app). */
 export const COMMUNITY_IMAGE = require('../../assets/images/cat/community.jpg');
+export const COMMUNITY_FOCUS = { left: '50%', top: '40%' };

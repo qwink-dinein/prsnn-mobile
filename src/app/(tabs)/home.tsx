@@ -104,7 +104,7 @@ function Discover() {
             contentContainerStyle={{ paddingHorizontal: GUTTER, gap: space.md }}
             renderItem={({ item }) => (
               <PressScale accessibilityRole="button" accessibilityLabel={`${item.title}, ${item.hours} hours, ${formatINR(priceFor(item.hours) ?? 0)}`} onPress={() => router.push({ pathname: '/category/[key]', params: { key: item.category, plan: item.title, hours: String(item.hours) } })} innerStyle={styles.plan}>
-                <Image source={categoryOf(item.category)?.image} style={styles.planPhoto} contentFit="cover" />
+                <Image source={categoryOf(item.category)?.image} style={styles.planPhoto} contentFit="cover" contentPosition={categoryOf(item.category)?.focus ?? 'center'} />
                 <View style={{ padding: space.md, gap: 2 }}>
                   <Text variant="headline" numberOfLines={1}>
                     {item.title}

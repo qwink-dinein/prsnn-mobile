@@ -29,7 +29,7 @@ export default function Apply() {
     <Screen footer={<Button label="Apply now" iconRight="arrowRight" onPress={() => router.push('/fellow/onboarding')} />}>
       <Header />
       <View style={[styles.hero, { height: Math.max(200, Math.min(width * 0.6, 280)) }]}>
-        <Image source={require('../../../assets/images/become-companion.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={require('../../../assets/images/become-companion.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={{ left: '50%', top: '30%' }} />
         <LinearGradient colors={['rgba(24,27,52,0)', 'rgba(24,27,52,0.9)']} style={StyleSheet.absoluteFill} />
         <View style={styles.heroText}>
           <Text variant="title1" color={colors.porcelain} accessibilityRole="header">

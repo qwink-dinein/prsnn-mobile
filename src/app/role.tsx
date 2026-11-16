@@ -10,9 +10,9 @@ import { useSession } from '@/state/session';
 
 type R = 'user' | 'companion';
 
-const OPTIONS: { role: R; title: string; body: string; image: number }[] = [
-  { role: 'user', title: 'Find a companion', body: 'Book ID-checked companions for walks, coffee, events and more.', image: require('../../assets/images/cat/dont-go-alone.jpg') },
-  { role: 'companion', title: 'Become a companion', body: 'Spend time with people and earn on your own terms.', image: require('../../assets/images/together.jpg') },
+const OPTIONS: { role: R; title: string; body: string; image: number; focus: { left: string; top: string } }[] = [
+  { role: 'user', title: 'Find a companion', body: 'Book ID-checked companions for walks, coffee, events and more.', image: require('../../assets/images/cat/dont-go-alone.jpg'), focus: { left: '50%', top: '24%' } },
+  { role: 'companion', title: 'Become a companion', body: 'Spend time with people and earn on your own terms.', image: require('../../assets/images/become-companion.jpg'), focus: { left: '50%', top: '35%' } },
 ];
 
 /** Screen 3 · Choose role — tapping a card is the choice (no Continue button). */
@@ -43,7 +43,7 @@ export default function Role() {
               }}
               style={({ pressed }) => [styles.card, on && styles.cardOn, pressed && { opacity: 0.92 }]}
             >
-              <Image source={o.image} style={styles.image} contentFit="cover" />
+              <Image source={o.image} style={styles.image} contentFit="cover" contentPosition={o.focus} />
               <View style={styles.body}>
                 <Text variant="title3">{o.title}</Text>
                 <Text variant="footnote" muted>

@@ -46,7 +46,7 @@ export function CategoryCard({ c, on, onPress, audience = 'member', wide, select
       innerStyle={[styles.card, on && styles.cardOn]}
     >
       <View>
-        <Image source={c.image} style={[styles.photo, wide && { height: 120 }]} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
+        <Image source={c.image} style={[styles.photo, wide && { height: 120 }]} contentFit="cover" contentPosition={c.focus} transition={200} accessibilityIgnoresInvertColors />
         {showPrice ? (
           <View style={styles.price}>
             <Text variant="caption" color={colors.moss} style={{ fontWeight: '700' }}>
