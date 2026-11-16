@@ -21,7 +21,7 @@ export type BookingChoice = { hours: number | null; date: Date | null; time: str
  * duration choice, the calendar only offers their days, and start times hide anything that would run
  * past 10 PM, is too soon, or overlaps a time they're already booked. Reports the choice to the parent.
  */
-export function BookingPicker({ c, onChange }: { c: Companion; onChange: (p: BookingChoice) => void }) {
+export function BookingPicker({ c, onChange, initialHours }: { c: Companion; onChange: (p: BookingChoice) => void; initialHours?: number }) {
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -33,8 +33,9 @@ export function BookingPicker({ c, onChange }: { c: Companion; onChange: (p: Boo
   const [time, setTime] = useState<string | null>(null);
 
   const offered = offeredHours(c.packages);
-  // Start on the suggested length; one tap picks another.
-  const hours = picked ?? (offered.includes(POPULAR_HOURS) ? POPULAR_HOURS : (offered[0] ?? null));
+  // Start on the length already chosen (a plan from Home), else the suggested one; one tap picks another.
+  const start = initialHours && offered.includes(initialHours) ? initialHours : offered.includes(POPULAR_HOURS) ? POPULAR_HOURS : (offered[0] ?? null);
+  const hours = picked ?? start;
   const weeks = monthGrid(cursor.y, cursor.m);
   const last = new Date(today);
   last.setDate(last.getDate() + BOOK_AHEAD_DAYS);

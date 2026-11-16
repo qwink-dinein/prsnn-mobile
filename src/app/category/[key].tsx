@@ -21,7 +21,7 @@ import { useSession } from '@/state/session';
 
 /** A category: what it's for, the suggested booking, popular plans in your city, and who offers it near you. */
 export default function CategoryPage() {
-  const { key, plan } = useLocalSearchParams<{ key: string; plan?: string }>();
+  const { key, plan, hours } = useLocalSearchParams<{ key: string; plan?: string; hours?: string }>();
   const c = categoryOf(key);
   const user = useSession((s) => s.user);
   const city = user?.city ?? '';
@@ -137,7 +137,7 @@ export default function CategoryPage() {
         }
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: GUTTER, marginBottom: space.sm }}>
-            <CompanionRow c={item} onPress={() => router.push({ pathname: '/companion/[id]', params: { id: item.id, category: c.key } })} />
+            <CompanionRow c={item} onPress={() => router.push({ pathname: '/companion/[id]', params: { id: item.id, category: c.key, ...(hours ? { hours } : {}) } })} />
           </View>
         )}
         ListEmptyComponent={

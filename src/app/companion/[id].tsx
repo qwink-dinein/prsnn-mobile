@@ -22,7 +22,7 @@ import { useSession } from '@/state/session';
 
 /** Screen 8 · Companion profile. */
 export default function CompanionProfile() {
-  const { id, category } = useLocalSearchParams<{ id: string; category?: string }>();
+  const { id, category, hours } = useLocalSearchParams<{ id: string; category?: string; hours?: string }>();
   const me = useSession((s) => s.user);
   const insets = useSafeAreaInsets();
   const { width } = useAppWidth();
@@ -138,7 +138,7 @@ export default function CompanionProfile() {
                   {days.length ? `${days.join(' · ')} · ${formatTime(c.startTime || DEFAULT_START)} – ${formatTime(c.endTime || DEFAULT_END)}` : 'No days set yet'}
                 </Text>
               </View>
-              {days.length ? <BookingPicker c={c} onChange={setChoice} /> : null}
+              {days.length ? <BookingPicker c={c} onChange={setChoice} initialHours={hours ? Number(hours) : undefined} /> : null}
             </>
           )}
         </View>

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -119,10 +119,10 @@ export default function Pin() {
   );
 
   const title = mode === 'login' ? 'Enter your PIN' : first ? 'Confirm your PIN' : reset ? 'Choose a new PIN' : 'Set a 4-digit PIN';
-  const sub = mode === 'login' ? `For ${displayLogin(phone)}` : first ? 'Enter the same 4 digits again.' : 'You’re verified. Next time, open prsnn with this PIN — no code needed.';
+  const sub = mode === 'login' ? '' : first ? 'Enter the same 4 digits again.' : 'You’re verified. Next time, open prsnn with this PIN — no code needed.';
 
   return (
-    <Screen scroll={false}>
+    <Screen scroll={false} edges={['top', 'bottom']}>
       <Header
         right={
           mode === 'set' && !reset ? (
@@ -142,9 +142,27 @@ export default function Pin() {
           <Text variant="title1" center>
             {title}
           </Text>
-          <Text variant="callout" muted center style={{ maxWidth: 280 }}>
-            {sub}
-          </Text>
+          {mode === 'login' ? (
+            // The saved number, always visible and changeable right here.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Mobile number ${displayLogin(phone)}. Change number`}
+              onPress={() => router.replace('/login')}
+              style={({ pressed }) => [styles.number, pressed && { opacity: 0.8 }]}
+            >
+              <Icon name="phone" size={16} color={colors.gray500} />
+              <Text variant="callout" style={{ flexShrink: 1 }} numberOfLines={1}>
+                {displayLogin(phone)}
+              </Text>
+              <Text variant="subhead" color={colors.moss} style={{ marginLeft: space.xs }}>
+                Change
+              </Text>
+            </Pressable>
+          ) : (
+            <Text variant="callout" muted center style={{ maxWidth: 280 }}>
+              {sub}
+            </Text>
+          )}
         </Enter>
         <Enter index={2}>
           <Animated.View style={[styles.boxes, shakeStyle]} accessibilityLabel={`${value.length} of ${LEN} digits entered`} accessibilityLiveRegion="polite">
@@ -184,19 +202,9 @@ export default function Pin() {
             center
             onPress={() => router.replace({ pathname: '/login', params: { reset: '1', phone: phone ?? '' } })}
             accessibilityRole="button"
-            style={{ paddingTop: space.lg, paddingBottom: space.sm, paddingHorizontal: space.lg }}
+            style={{ paddingTop: space.lg, paddingBottom: space.lg, paddingHorizontal: space.lg }}
           >
             Forgot PIN? Reset it with a code
-          </Text>
-          <Text
-            variant="footnote"
-            color={colors.textMuted}
-            center
-            onPress={() => router.replace('/login')}
-            accessibilityRole="button"
-            style={{ paddingTop: space.sm, paddingBottom: space.lg, paddingHorizontal: space.lg }}
-          >
-            Not you? Log in with another number
           </Text>
         </View>
       ) : (
@@ -215,4 +223,5 @@ const styles = StyleSheet.create({
   boxError: { borderColor: colors.danger },
   dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: colors.moss },
   error: { minHeight: 20, paddingHorizontal: space.lg },
+  number: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 44, marginTop: space.xs, paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, maxWidth: '100%' },
 });
