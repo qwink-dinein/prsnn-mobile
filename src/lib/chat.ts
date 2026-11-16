@@ -7,6 +7,21 @@ import { mergeMessages } from '@/domain/chat';
 
 export const MAX_MESSAGE_LENGTH = 1000; // database limit
 
+/** A random UUID (v4) for a new message, so sending is idempotent. */
+export function messageId(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  const h = '0123456789abcdef';
+  let out = '';
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) out += '-';
+    else if (i === 14) out += '4';
+    else if (i === 19) out += h[(Math.random() * 4) | 8];
+    else out += h[(Math.random() * 16) | 0];
+  }
+  return out;
+}
+
 type Status = 'connecting' | 'open' | 'closed' | 'error';
 type Row = { id: string; booking_id: string; sender_id: string; content: string; created_at: string };
 const toMessage = (r: Row): ChatMessage => ({ _id: r.id, bookingId: r.booking_id, senderId: r.sender_id, content: r.content, createdAt: r.created_at });
@@ -109,7 +124,14 @@ export function useChat(bookingId: string, myId: string) {
         }, 2400);
         return true;
       }
-      const { data, error: e } = await supabase.from('messages').insert({ booking_id: bookingId, sender_id: myId, content: message }).select('id, booking_id, sender_id, content, created_at').single();
+      // One ID per message, made here: a double tap, or a retry after a dropped connection, can't save it twice
+      // (the second insert hits the same primary key and is treated as already sent).
+      const id = messageId();
+      const { data, error: e } = await supabase.from('messages').insert({ id, booking_id: bookingId, sender_id: myId, content: message }).select('id, booking_id, sender_id, content, created_at').single();
+      if (e && (e as { code?: string }).code === '23505') {
+        setError(null);
+        return true;
+      }
       if (e) {
         setError(e.message.includes('row-level security') ? 'Chat opens once the booking is confirmed and paid.' : 'Message not sent. Check your connection and try again.');
         return false;

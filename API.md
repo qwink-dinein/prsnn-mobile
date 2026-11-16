@@ -402,3 +402,19 @@ Migration `20261116220000_full_refund_cancels.sql`.
 - Fix: `admin_cancel_booking` with a refund amount failed with "column reference refund_amount is ambiguous"
   (parameter and column share the name). It now uses the parameter by position.
 - App: Admin → booking → Refund says that the full amount also cancels the booking.
+
+## Round 13 (2026-11-16): production guards (no double bookings, payments, messages)
+Migrations `20261116230000_production_guards.sql`, `20261116231000_fk_indexes_admin.sql`; edge functions
+`payments`, `refunds`, `razorpay-webhook` redeployed. Test: `prsnn-backend/supabase/tests/round7-production-guards.sql`.
+- **No overlapping sessions, guaranteed by the database:** `bookings.slot` (generated time range) and the exclusion
+  constraint `bookings_companion_no_overlap` (same companion, overlapping slot, accepted or in ID check). Every path
+  (booking, offer, accept, admin reassign) already checks; this makes a race impossible.
+- `private.has_conflict` now reads only the companion's own bookings, payment holds and live offers (indexed).
+- **Payments:** `private.payment_orders` remembers every Razorpay order per booking; `pay_prepare` returns the open
+  order (`orderId`) and `payments` reuses it instead of creating a new one per checkout; `pay_confirm` matches any of
+  the booking's orders (a late payment on an earlier order still confirms), ignores the same payment twice, and queues
+  a **second payment** for an already-paid booking in `private.extra_payments` for a full automatic refund
+  (`extra_refunds_claim` / `extra_refunds_report`, sent by `refunds`, member and staff told). Razorpay refund notes
+  carry `kind: 'duplicate'` so the webhook never marks the booking itself refunded.
+- **Messages:** the app gives each message its own UUID and inserts it with that id, so a double tap or a retry can't
+  create two messages (the repeat hits the primary key and counts as sent); the send button locks instantly.

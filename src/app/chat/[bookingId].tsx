@@ -77,12 +77,16 @@ export default function Chat() {
 
   // The box clears at once; if the message didn't reach the server, the text comes back.
   const [sending, setSending] = useState(false);
+  // A ref updates at once, so a fast double tap can't send the same message twice.
+  const busy = useRef(false);
   const submit = async () => {
     const draft = text;
-    if (!draft.trim() || sending) return;
+    if (!draft.trim() || busy.current) return;
+    busy.current = true;
     setText('');
     setSending(true);
     const ok = await send(draft);
+    busy.current = false;
     setSending(false);
     if (!ok) setText((cur) => (cur ? cur : draft));
   };

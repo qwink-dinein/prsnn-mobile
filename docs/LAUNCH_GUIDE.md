@@ -124,3 +124,21 @@ Apple processes it (15–60 min). Install it with the TestFlight app and test ev
 Apps where users chat must let people **block** abusive users, as well as report them. prsnn has reporting,
 admin moderation and hidden numbers, but no per-user **Block** button yet. Ask Claude to build it before
 submitting to Apple.
+
+---
+
+## Part E · Before 100,000 users (capacity)
+
+The app's logic is built for scale (database-enforced rules, indexed queries, idempotent payments and messages).
+What limits you is the **Supabase plan**, not the code:
+
+| Supabase | Free | Pro ($25/month) | What to do |
+|---|---|---|---|
+| Monthly active users (auth) | 50,000 | 100,000 included | **Pro** before launch |
+| Database size | 500 MB | 8 GB included | Pro |
+| Realtime connections at once (chat, live badges) | 200 | 500 (raise with an add-on) | Pro, then the Realtime add-on as daily users grow |
+| Compute | Shared | Micro → upgrade (Small/Medium) | Upgrade compute when the dashboard shows CPU > 70% |
+| Paused when idle | Yes | Never | Pro |
+
+Also: Razorpay → **Settings → Payment capture → Automatic** (so no payment is left authorised); WhatsApp (Waplify)
+message credits sized for login codes; the Razorpay webhook secret matching in both places.
