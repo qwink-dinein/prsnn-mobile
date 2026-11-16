@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Header, Avatar, Card, Loading, ErrorState, Chip } from '@/components/ui/layout';
 import { Notice, useDraft } from '@/components/ui/states';
-import { CATEGORIES, offersCategory } from '@/domain/categories';
+import { CATEGORIES } from '@/domain/categories';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -151,20 +151,6 @@ export default function Checkout() {
         <MetaLine icon="clock" text={`${formatTime(p.time)} – ${formatTime(endTimeOf(p.time, p.duration))} (${durationLabel(p.duration)})`} />
         {p.category && CATEGORIES.some((k) => k.key === p.category) ? <MetaLine icon="sparkle" text={CATEGORIES.find((k) => k.key === p.category)!.title} /> : null}
       </Card>
-
-      {/* The kind of company was chosen at the start (Home → category); only ask when it wasn't. */}
-      {p.category ? null : (
-        <>
-          <Text variant="title3" style={styles.h}>
-            What’s it for?
-          </Text>
-          <View style={styles.chips}>
-            {CATEGORIES.filter((k) => offersCategory(c.categories, k.key)).map((k) => (
-              <Chip key={k.key} label={k.title} selected={d.category === k.key} onPress={() => set({ category: d.category === k.key ? '' : k.key })} />
-            ))}
-          </View>
-        </>
-      )}
 
       <Text variant="title3" style={styles.h}>
         Who is this for?
