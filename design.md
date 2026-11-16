@@ -210,3 +210,16 @@ line per step, e.g. "I am", "Where are you based?", "Who would you like to meet?
 Non-binary, Anyone), "Add your photo" (Face clearly visible · Just you · Good light), "Who can see
 your photo?" (Locked: only people you've booked with · Open: everyone), "How long can you meet?",
 "When are you free?", "Almost done". No long explanations in setup or companion onboarding.
+
+## Booking and Companion modes (2026-11-16)
+One account, two modes, for anyone who is an approved companion (members never see the switch).
+- **Booking mode** (tabs: Home · Search · My bookings · Chats · Profile): the bookings I made and chats
+  with companions I booked.
+- **Companion mode** (tabs: Today · Requests · Earnings · Chats · Profile): requests I received, my
+  earnings and chats with my clients.
+- The **Booking | Companion** switch sits at the top of every main screen (light pill in Booking mode,
+  midnight pill with a gold segment in Companion mode) and in Profile. A gold count on the other side
+  shows what's waiting there; Home (Booking mode) also shows "N new requests in Companion mode · Switch".
+- Each booking belongs to one mode by who booked it (`sideOf`, `modeOfSide`), never by the account role.
+  Notifications open in their mode (`modeForNotification`). The last mode is remembered on the device
+  (`prefs.mode`); a new companion starts in Companion mode. Rules and tests: src/domain/mode.ts.

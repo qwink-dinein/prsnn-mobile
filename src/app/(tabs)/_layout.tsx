@@ -5,7 +5,8 @@ import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useSession } from '@/state/session';
-import { badgeLabel, useUnread } from '@/lib/live';
+import { badgeLabel } from '@/lib/live';
+import { useMode, useModeBookings } from '@/lib/mode';
 import { goToLogin } from '@/lib/flow';
 
 /**
@@ -28,11 +29,17 @@ const tab = (icon: IconName) =>
 
 export default function TabsLayout() {
   const token = useSession((s) => s.token);
-  const isCompanion = useSession((s) => s.user?.role === 'companion');
-  const unread = useUnread();
+  // Each mode has its own tabs and its own counts (src/domain/mode.ts).
+  const { mode } = useMode();
+  const { by, offers, unreadChats } = useModeBookings();
   if (!token) return <SignedOut />;
-  const bookingsBadge = badgeLabel(unread.bookings);
-  const messagesBadge = badgeLabel(unread.messages);
+  const companionMode = mode === 'companion';
+  // Requests: offers waiting for my answer. My bookings: bookings I still need to pay for.
+  const toPay = by.booking.filter((b) => b.paymentStatus !== 'paid' && ['pending', 'accepted'].includes(b.status) && (b.flow !== 'prepaid' || b.allocation?.state === 'awaiting_payment')).length;
+  const bookingsCount = companionMode ? offers : toPay;
+  const bookingsBadge = badgeLabel(bookingsCount);
+  const messagesBadge = badgeLabel(unreadChats[mode]);
+  const bookingsTitle = companionMode ? 'Requests' : 'My bookings';
 
   return (
     <Tabs
@@ -51,20 +58,21 @@ export default function TabsLayout() {
         tabBarBadgeStyle: { backgroundColor: colors.champagne, color: colors.midnight, fontFamily: fonts.bold, fontSize: 11, minWidth: 18, height: 18, lineHeight: 18, borderWidth: 2, borderColor: colors.paper },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: tab(isCompanion ? 'chart' : 'home') }} />
-      <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: tab('search') }} />
+      <Tabs.Screen name="home" options={{ title: companionMode ? 'Today' : 'Home', tabBarIcon: tab(companionMode ? 'chart' : 'home') }} />
+      <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: tab('search'), href: companionMode ? null : undefined }} />
       <Tabs.Screen
         name="bookings"
         options={{
-          title: isCompanion ? 'Requests' : 'Bookings',
+          title: bookingsTitle,
           tabBarIcon: tab('calendar'),
           tabBarBadge: bookingsBadge ?? undefined,
-          tabBarAccessibilityLabel: bookingsBadge ? `${isCompanion ? 'Requests' : 'Bookings'}, ${unread.bookings} waiting for you` : undefined,
+          tabBarAccessibilityLabel: bookingsBadge ? `${bookingsTitle}, ${bookingsCount} waiting for you` : undefined,
         }}
       />
+      <Tabs.Screen name="earnings" options={{ title: 'Earnings', tabBarIcon: tab('wallet'), href: companionMode ? undefined : null }} />
       <Tabs.Screen
         name="messages"
-        options={{ title: 'Messages', tabBarIcon: tab('message'), tabBarBadge: messagesBadge ?? undefined, tabBarAccessibilityLabel: messagesBadge ? `Messages, ${unread.messages} unread` : undefined }}
+        options={{ title: 'Chats', tabBarIcon: tab('message'), tabBarBadge: messagesBadge ?? undefined, tabBarAccessibilityLabel: messagesBadge ? `Chats, ${unreadChats[mode]} unread` : undefined }}
       />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tab('user') }} />
     </Tabs>

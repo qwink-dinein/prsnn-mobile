@@ -20,6 +20,8 @@ interface Prefs {
   /** Companions saved with the heart (kept on device; the backend has no favourites yet). */
   saved: string[];
   seenOnboarding?: boolean;
+  /** Booking or Companion mode, for someone who is both (remembered on this device). */
+  mode?: import('@/domain/mode').AppMode;
 }
 
 interface SessionState {

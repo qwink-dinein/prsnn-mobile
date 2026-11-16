@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
 import { Screen, Avatar, Card, ListRow, Section, BellButton } from '@/components/ui/layout';
+import { ModeSwitch } from '@/components/ModeSwitch';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +32,7 @@ export function CompanionDashboard() {
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { q.refetch(); check.refetch(); meQ.refetch(); }} tintColor={colors.moss} />}>
+      <ModeSwitch style={{ paddingHorizontal: 0, marginTop: space.sm, marginBottom: space.sm }} />
       <View style={styles.head}>
         <Avatar uri={user?.profilePhoto} name={user?.fullName} size={56} />
         <View style={{ flex: 1, minWidth: 0 }}>

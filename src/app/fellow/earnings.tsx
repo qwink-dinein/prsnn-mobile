@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { colors, radius, space } from '@/theme/tokens';
+import { ModeSwitch } from '@/components/ModeSwitch';
 import { Screen, Header, Card, IconButton, Loading, ErrorState, EmptyState } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Brand } from '@/components/ui/Brand';
@@ -11,7 +12,8 @@ import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 
 /** Screen 21 · Earnings (from paid sessions; payouts are handled by prsnn outside the app for now). */
-export default function Earnings() {
+/** Earnings (also the Companion mode tab, without the back arrow). */
+export function EarningsScreen({ inTab = false }: { inTab?: boolean }) {
   const q = useQuery({ queryKey: qk.incoming, queryFn: svc.incomingBookings });
   const now = new Date();
   const [cursor, setCursor] = useState({ y: now.getFullYear(), m: now.getMonth() });
@@ -34,7 +36,8 @@ export default function Earnings() {
 
   return (
     <Screen>
-      <Header title="Earnings" />
+      {inTab ? <ModeSwitch style={{ paddingHorizontal: 0, marginTop: space.sm }} /> : null}
+      <Header title="Earnings" back={!inTab} />
       <View style={styles.month}>
         <IconButton name="chevronLeft" label="Previous month" onPress={() => shift(-1)} />
         <Text variant="headline">{label}</Text>
@@ -108,3 +111,8 @@ const styles = StyleSheet.create({
   barCol: { flex: 1, alignItems: 'center', gap: space.xs },
   bar: { width: 28, borderRadius: radius.sm, backgroundColor: colors.moss },
 });
+
+
+export default function Earnings() {
+  return <EarningsScreen />;
+}

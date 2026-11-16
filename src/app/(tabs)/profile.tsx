@@ -14,6 +14,8 @@ import { seeLabel } from '@/domain/privacy';
 import { isStaff, roleLabel } from '@/domain/admin';
 import { unregisterPush } from '@/lib/push';
 import { endPreview, startPreview } from '@/lib/preview';
+import { setMode, useMode } from '@/lib/mode';
+import { ModeSwitch } from '@/components/ModeSwitch';
 
 /** Screen 15 · Profile (grouped settings list, no hamburger menu). */
 export default function ProfileTab() {
@@ -22,6 +24,7 @@ export default function ProfileTab() {
   const signOut = useSession((s) => s.signOut);
   const preview = useSession((s) => s.preview);
   const isCompanion = user?.role === 'companion';
+  const { mode } = useMode();
   const verified = user?.is_verified;
   const privacyValue = [user?.profileVisibility === 'locked' ? 'Photo locked' : user?.profileVisibility === 'open' ? 'Photo open' : null, user?.seeGender ? `Showing ${seeLabel(user.seeGender).toLowerCase()}` : null].filter(Boolean).join(' · ') || undefined;
 
@@ -36,6 +39,7 @@ export default function ProfileTab() {
 
   return (
     <Screen>
+      <ModeSwitch style={{ paddingHorizontal: 0, marginTop: space.sm }} />
       <Text variant="title2" style={{ paddingTop: space.sm }} accessibilityRole="header">
         My profile
       </Text>
@@ -69,10 +73,13 @@ export default function ProfileTab() {
         </View>
       ) : null}
 
-      {isCompanion ? (
+      {isCompanion && mode === 'booking' ? (
         <View style={styles.group}>
-          <ListRow icon="chart" label="Companion dashboard" onPress={() => router.push('/home')} />
-          <ListRow icon="wallet" label="Earnings" onPress={() => router.push('/fellow/earnings')} />
+          <ListRow icon="users" label="Switch to Companion mode" value="Your requests, earnings and client chats" onPress={() => setMode('companion')} last />
+        </View>
+      ) : isCompanion ? (
+        <View style={styles.group}>
+          <ListRow icon="calendar" label="Switch to Booking mode" value="Book companions for yourself" onPress={() => setMode('booking')} />
           <ListRow icon="shieldCheck" label="ID check" value={idCheckValue(user?.verification_status)} onPress={() => router.push('/fellow/verification')} last />
         </View>
       ) : (

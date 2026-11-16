@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { modeForNotification } from '@/domain/mode';
+import { enterModeFor } from '@/lib/mode';
 import { router } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { PressScale } from '@/components/ui/motion';
@@ -32,10 +34,16 @@ const ICON: Record<NotificationType, IconName> = {
   panic: 'info',
 };
 
-/** Where tapping a notification goes. */
+/** Where tapping a notification goes. Booking news opens in the mode it belongs to (src/domain/mode.ts). */
 function open(n: AppNotification) {
   const a = n.action;
-  if (!a) return;
+  const m = modeForNotification(n.type);
+  enterModeFor(m);
+  if (!a) {
+    // Offers, confirmations, payments, refunds: the list they belong to, in that mode.
+    if (m) router.navigate('/bookings');
+    return;
+  }
   if (a.kind === 'fix' || a.kind === 'rejected') router.push({ pathname: '/fix', params: { target: a.target ?? 'photo' } });
   else if (a.kind === 'approved') router.push('/fellow/verification');
   else if (a.kind === 'review') router.push('/admin/approvals');

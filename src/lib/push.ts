@@ -1,4 +1,6 @@
 import { Platform } from 'react-native';
+import { modeForNotification } from '@/domain/mode';
+import { enterModeFor } from './mode';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
@@ -45,8 +47,11 @@ export async function registerForPush(): Promise<string | null> {
 
 function openFromPush(data: { type?: string } | undefined) {
   const t = data?.type;
+  // Open in the right mode: an offer in Companion mode, a confirmation or refund in Booking mode.
+  const m = modeForNotification(t);
+  enterModeFor(m);
   if (t === 'panic') router.push('/admin/panics');
-  else if (t === 'booking_offer') router.push('/bookings');
+  else if (m) router.navigate('/bookings');
   else if (t) router.push('/notifications');
 }
 

@@ -22,15 +22,17 @@ import { CATEGORIES, categoryOf } from '@/domain/categories';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
+import { useMode } from '@/lib/mode';
+import { ModeSwitch, OtherModeBanner } from '@/components/ModeSwitch';
 const greeting = () => {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 };
 
-/** Screen 6 · Home / Discover (companions see their dashboard here instead). */
+/** Screen 6 · Home: Discover in Booking mode, the companion dashboard ("Today") in Companion mode. */
 export default function HomeTab() {
-  const isCompanion = useSession((s) => s.user?.role === 'companion');
-  return isCompanion ? <CompanionDashboard /> : <Discover />;
+  const { mode } = useMode();
+  return mode === 'companion' ? <CompanionDashboard /> : <Discover />;
 }
 
 function Discover() {
@@ -65,7 +67,12 @@ function Discover() {
         </View>
       </View>
 
-      <Enter index={0} style={{ paddingHorizontal: GUTTER, marginTop: space.md }}>
+      <ModeSwitch style={{ marginTop: space.md }} />
+      <View style={{ marginTop: space.md }}>
+        <OtherModeBanner />
+      </View>
+
+      <Enter index={0} style={{ paddingHorizontal: GUTTER, marginTop: space.xs }}>
         <Text variant="footnote" muted>
           {greeting()}
           {user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
