@@ -110,6 +110,24 @@ export function timeSlots(c: Pick<Companion, 'startTime' | 'endTime'>, day: Date
   return out;
 }
 
+/** A time a companion is already taken (from the server: start "HH:MM", length in minutes). */
+export type BusyTime = { start: string; duration: number };
+
+/**
+ * Start times that don't overlap a busy time, for a session of `durationMinutes`. Touching is fine:
+ * a 12:00–1:00 booking leaves 1:00 free. The server checks again when the booking is made.
+ */
+export function freeSlots(slots: string[], busy: BusyTime[], durationMinutes: number): string[] {
+  return slots.filter((s) => {
+    const a = toMinutes(s);
+    const b = a + durationMinutes;
+    return !busy.some((x) => {
+      const xa = toMinutes(x.start);
+      return a < xa + Number(x.duration) && xa < b;
+    });
+  });
+}
+
 /** Month grid (weeks × 7) with nulls for padding, Sunday first like the mock-up. */
 export function monthGrid(year: number, month: number): (Date | null)[][] {
   const first = new Date(year, month, 1);

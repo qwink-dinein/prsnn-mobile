@@ -1,5 +1,5 @@
 import { DEMO } from '@/lib/config';
-import { backend } from './backend';
+import { backend, isLivePreview } from './backend';
 import { demo } from './demo';
 
 let current = DEMO ? demo : backend;
@@ -21,6 +21,13 @@ export function setSampleMode(on: boolean) {
   previewing = on;
   current = DEMO || on ? demo : backend;
 }
+
+/** Staff live preview: the real backend (it reads as the previewed person; see backend.ts). */
+export function routeToBackend() {
+  previewing = false;
+  current = DEMO ? demo : backend;
+}
+export { isLivePreview };
 
 export type { AuthResult, PaymentIntent, CompanionForm, IdForm, UnreadCounts } from './backend';
 

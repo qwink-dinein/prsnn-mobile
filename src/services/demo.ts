@@ -217,6 +217,8 @@ export const demo: Backend = {
   },
 
   policy: () => wait(POLICY),
+  // Sample data: no one else books the sample companions, so no time is taken.
+  companionBusy: (_id: string, _date: string) => wait([]),
   createPrepaidBooking: (b) => {
     const existing = keys.get(b.idempotencyKey);
     if (existing) {

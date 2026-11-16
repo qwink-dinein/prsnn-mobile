@@ -33,7 +33,8 @@ interface SessionState {
    * Staff "View the app as…": the screens run as a sample member or companion on sample data.
    * `real` is the staff member's own profile, restored on exit. Nothing about it is saved.
    */
-  preview: { as: 'member' | 'companion'; real: SessionUser } | null;
+  /** Staff "View the app as": sample data, or a real person's live data (`live`, read-only). */
+  preview: { as: 'member' | 'companion'; real: SessionUser; live?: { id: string; name: string } } | null;
   hydrate: () => Promise<void>;
   signIn: (token: string, user: SessionUser) => Promise<void>;
   updateUser: (patch: Partial<SessionUser>) => Promise<void>;

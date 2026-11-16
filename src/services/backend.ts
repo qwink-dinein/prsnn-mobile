@@ -1,4 +1,5 @@
 import { areaName } from '@/domain/places';
+import type { BusyTime } from '@/domain/booking';
 import type { UploadFile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { checkLocalPin, hasLocalPin, setLocalPin } from '@/lib/pin';
@@ -86,7 +87,30 @@ export interface IdForm {
 const NETWORK = 'No connection. Check your internet and try again.';
 
 /** Call a database function; throw its message on error. */
+// ── Staff live preview ("View the app as" a real person) ──
+// While set, the app's reads run as that person through admin_view_as (staff only, logged on the
+// server), and nothing can be changed: every write is refused before it leaves the phone.
+// The person comes from the session itself, so leaving the preview (Exit, Log out, an expired
+// session) always switches back at once.
+const viewingAs = () => useSession.getState().preview?.live?.id ?? null;
+export const isLivePreview = () => viewingAs() !== null;
+export const PREVIEW_READ_ONLY = 'This is a live preview: you can look around, but nothing can be changed.';
+/** Read as the previewed person. */
+const AS_PERSON = new Set(['me', 'my_profile', 'my_bookings', 'incoming_bookings', 'get_booking', 'list_companions', 'get_companion', 'unread_counts', 'my_consents']);
+/** The same for everyone: safe to read as the staff member. */
+const SHARED = new Set(['booking_policy', 'payment_mode', 'search_localities', 'city_plans_for', 'companion_busy']);
+/** Harmless bookkeeping a screen does on its own (marking a chat read): skipped quietly. */
+const SKIP = new Set(['mark_chat_read', 'save_push_token']);
+
 async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
+  const viewAs = viewingAs();
+  if (viewAs && !SHARED.has(fn)) {
+    if (SKIP.has(fn)) return null as T;
+    if (!AS_PERSON.has(fn)) throw new Error(PREVIEW_READ_ONLY);
+    const r = await supabase.rpc('admin_view_as', { target: viewAs, fn, args: args ?? {} });
+    if (r.error) throw new Error(/fetch|network/i.test(r.error.message) ? NETWORK : r.error.message);
+    return r.data as T;
+  }
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : error.message);
   return data as T;
@@ -101,6 +125,7 @@ async function uid(): Promise<string> {
 
 /** Upload a picked image to `<bucket>/<my id>/<kind>-<time>.<ext>`; returns the storage path. */
 async function upload(bucket: 'avatars' | 'verification', kind: string, file: UploadFile): Promise<string> {
+  if (viewingAs()) throw new Error(PREVIEW_READ_ONLY);
   const me = await uid();
   const ext = (file.name.split('.').pop() || file.type.split('/').pop() || 'jpg').toLowerCase().replace('jpeg', 'jpg');
   const path = `${me}/${kind}-${Date.now()}.${ext}`;
@@ -174,6 +199,7 @@ async function withDocLinks(users: Record<string, any>[]): Promise<AdminUser[]> 
 
 /** The `payments` edge function (Razorpay orders and verification), with its error message passed through. */
 async function payments<T>(body: Record<string, unknown>): Promise<T> {
+  if (viewingAs()) throw new Error(PREVIEW_READ_ONLY);
   const { data, error } = await supabase.functions.invoke('payments', { body });
   if (error) {
     const ctx = (error as { context?: Response }).context;
@@ -274,6 +300,8 @@ export const backend = {
 
   // ── Prepaid booking (pay first, then companion offers) ──
   policy: () => rpc<Policy>('booking_policy'),
+  /** Times a companion is already taken on a day (`YYYY-MM-DD`), so they aren't offered again. */
+  companionBusy: (id: string, date: string) => rpc<BusyTime[]>('companion_busy', { cid: id, d: date }),
   createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; homeVisit?: boolean; recipient?: Recipient | null }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
   acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),
@@ -314,6 +342,13 @@ export const backend = {
 
   // ── Notifications ──
   notifications: async (): Promise<AppNotification[]> => {
+    type N = { id: string; type: AppNotification['type']; message: string; is_read: boolean; created_at: string; action: AppNotification['action'] };
+    const viewAs = viewingAs();
+    if (viewAs) {
+      const r = await supabase.rpc('admin_view_as', { target: viewAs, fn: 'notifications', args: {} });
+      if (r.error) throw new Error(/fetch|network/i.test(r.error.message) ? NETWORK : r.error.message);
+      return ((r.data ?? []) as N[]).map((n) => ({ _id: n.id, type: n.type, message: n.message, isRead: n.is_read, createdAt: n.created_at, action: n.action }));
+    }
     const { data, error } = await supabase.from('notifications').select('id, type, message, is_read, created_at, action').order('created_at', { ascending: false }).limit(100);
     if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : error.message);
     return (data ?? []).map((n) => ({ _id: n.id, type: n.type, message: n.message, isRead: n.is_read, createdAt: n.created_at, action: n.action }));
@@ -326,11 +361,13 @@ export const backend = {
     return { message: 'Read' };
   },
   markNotificationsRead: async () => {
+    if (viewingAs()) return { message: 'Preview' };
     const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', await uid()).eq('is_read', false);
     if (error) throw new Error(error.message);
     return { message: 'Read' };
   },
   clearNotifications: async () => {
+    if (viewingAs()) return { message: 'Preview' };
     const { error } = await supabase.from('notifications').delete().eq('user_id', await uid());
     if (error) throw new Error(error.message);
     return { message: 'Cleared' };
@@ -460,6 +497,12 @@ export const backend = {
     userConsents: (id: string) => rpc<{ kind: string; version: string; source: string; bookingId: string | null; acceptedAt: string; withdrawnAt: string | null }[]>('admin_user_consents', { uid: id }),
     /** Records a staff "View the app as…" preview in the activity log (the preview itself is sample data). */
     logPreview: (as: 'member' | 'companion', start: string) => rpc<null>('admin_log_preview', { as_role: as, start_at: start }),
+    /** Start a live, read-only preview as a real person (logged on the server); returns who they are. */
+    viewAs: async (id: string): Promise<SessionUser> => {
+      const { data, error } = await supabase.rpc('admin_view_as', { target: id, fn: 'start', args: {} });
+      if (error) throw new Error(/fetch|network/i.test(error.message) ? NETWORK : error.message);
+      return { ...(data as SessionUser), hasPin: true };
+    },
     approvalCounts: () => rpc<{ companions: number; photos: number; idChecks: number; panics: number }>('admin_approval_counts'),
     approvals: async (kind: 'companions' | 'photos') => withDocLinks(await rpc<Record<string, any>[]>('admin_approvals', { kind })),
     decideProfile: (id: string, decision: 'approve' | 'reject', note?: string) => rpc<{ message: string; user: AdminUser }>('admin_decide_profile', { uid: id, decision, note: note ?? null }),

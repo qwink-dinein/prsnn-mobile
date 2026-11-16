@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { isSampleMode } from '@/services';
+import { isLivePreview, isSampleMode } from '@/services';
 import { supabase } from './supabase';
 import type { ChatMessage } from '@/domain/types';
 import { mergeMessages } from '@/domain/chat';
@@ -22,9 +22,12 @@ const toMessage = (r: Row): ChatMessage => ({ _id: r.id, bookingId: r.booking_id
  */
 export function useChat(bookingId: string, myId: string) {
   const sample = isSampleMode();
+  // Staff live preview: chats are private, so none are loaded or sent (admins read a chat only
+  // when a problem is reported on the booking, from Admin → Bookings).
+  const live = isLivePreview();
   const [messages, setMessages] = useState<ChatMessage[]>(() => (sample ? demoThread(bookingId, myId) : []));
-  const [status, setStatus] = useState<Status>(sample ? 'open' : 'connecting');
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>(sample ? 'open' : live ? 'closed' : 'connecting');
+  const [error, setError] = useState<string | null>(live ? 'Chats are private, so they aren’t shown in a preview.' : null);
   // "Typing…": a Realtime broadcast on the same channel (nothing is stored). Hidden after 4 s of
   // silence or as soon as their message arrives.
   const [otherTyping, setOtherTyping] = useState(false);
@@ -39,7 +42,7 @@ export function useChat(bookingId: string, myId: string) {
   useEffect(() => () => void (typingTimer.current && clearTimeout(typingTimer.current)), []);
 
   useEffect(() => {
-    if (sample) return;
+    if (sample || live) return;
     let alive = true;
     const add = (list: ChatMessage[]) => {
       if (list.some((m) => String(m.senderId) !== myId)) showTyping(false);
@@ -80,21 +83,22 @@ export function useChat(bookingId: string, myId: string) {
       channelRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [bookingId, myId, sample, showTyping]);
+  }, [bookingId, myId, sample, live, showTyping]);
 
   /** Tell the other person I'm typing (at most every 2 s). */
   const typing = useCallback(() => {
     const now = Date.now();
-    if (sample || now - lastSent.current < 2000 || !channelRef.current) return;
+    if (sample || live || now - lastSent.current < 2000 || !channelRef.current) return;
     lastSent.current = now;
     void channelRef.current.send({ type: 'broadcast', event: 'typing', payload: { from: myId } });
-  }, [myId, sample]);
+  }, [myId, sample, live]);
 
   /** Sends a message. Resolves true once the server has it; false (with `error` set) if it didn't go. */
   const send = useCallback(
     async (text: string): Promise<boolean> => {
       const message = text.trim();
       if (!message || message.length > MAX_MESSAGE_LENGTH) return false;
+      if (live) return false;
       if (sample) {
         setMessages((p) => [...p, { _id: `m${Date.now()}`, bookingId, senderId: myId, content: message, createdAt: new Date().toISOString() }]);
         // Sample mode: the other side "types" and answers, so the chat can be tried end to end.
@@ -114,7 +118,7 @@ export function useChat(bookingId: string, myId: string) {
       if (data) setMessages((prev) => mergeMessages(prev, [toMessage(data as Row)]));
       return true;
     },
-    [bookingId, myId, sample, showTyping],
+    [bookingId, myId, sample, live, showTyping],
   );
 
   return { messages, status, error, send, otherTyping, typing };

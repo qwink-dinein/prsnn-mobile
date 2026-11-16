@@ -99,11 +99,13 @@ export default function ProfileTab() {
       {preview ? (
         // Staff preview: switch sides or leave; no real account actions on sample data.
         <View style={styles.group}>
-          <ListRow
-            icon="users"
-            label={preview.as === 'member' ? 'Switch to companion preview' : 'Switch to member preview'}
-            onPress={() => void startPreview(queryClient, preview.as === 'member' ? 'companion' : 'member', 'home').catch(() => {})}
-          />
+          {preview.live ? null : (
+            <ListRow
+              icon="users"
+              label={preview.as === 'member' ? 'Switch to companion preview' : 'Switch to member preview'}
+              onPress={() => void startPreview(queryClient, preview.as === 'member' ? 'companion' : 'member', 'home').catch(() => {})}
+            />
+          )}
           <ListRow icon="logout" label="Exit preview" onPress={() => endPreview(queryClient)} last />
         </View>
       ) : (

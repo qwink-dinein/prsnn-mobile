@@ -102,6 +102,14 @@ r = await rpc(mem, 'simulate_payment', { bid, outcome: 'success' }); ok(r.data?.
 r = await rpc(comp, 'incoming_bookings'); const offer = r.data?.find((x) => x._id === bid);
 ok(offer?.myOffer?.status === 'offered' && offer.companionShare === 559, 'companion sees offer, earns ₹559', offer);
 r = await rpc(mem2, 'get_booking', { bid }); ok(!!r.error, 'other members cannot see the booking');
+r = await rpc(mem2, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '17:00', duration: '60', idempotencyKey: key + 'dbl', acceptTerms: true, meetingPlace: 'Inorbit Mall' } });
+ok(/already booked at that time/.test(r.error ?? ''), 'no double booking: overlapping time refused for everyone', r);
+r = await rpc(mem2, 'companion_busy', { cid: compId, d: day(3) }); ok(r.data?.some((x) => x.start === '16:00' && x.duration === 120), 'busy times listed (no names)', r);
+r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '16:30', duration: '60', idempotencyKey: key + 'dbl2', acceptTerms: true, meetingPlace: 'Inorbit Mall' } });
+ok(/already booked/.test(r.error ?? ''), 'same member cannot double-book either', r);
+r = await rpc(sup, 'admin_view_as', { target: compId, fn: 'incoming_bookings' }); ok(r.data?.some((x) => x._id === bid), 'staff live preview reads as the companion', r.error);
+ok((await rpc(mem, 'admin_view_as', { target: compId, fn: 'me' })).error === 'Access denied', 'members cannot use live preview');
+ok(/isn’t available/.test((await rpc(sup, 'admin_view_as', { target: compId, fn: 'cancel_booking' })).error ?? ''), 'live preview is read-only');
 r = await rpc(comp, 'accept_offer', { bid }); ok(r.data?.booking?.allocation?.state === 'id_check', 'ID in review: accept holds the booking (no second ID prompt)', r);
 r = await rpc(sup, 'admin_decide_verification', { uid: compId, decision: 'verified', note: null }); ok(/1 held booking\(s\) confirmed/.test(r.data?.message ?? ''), 'verified: held booking confirmed', r);
 r = await rpc(mem, 'get_booking', { bid }); ok(r.data?.status === 'accepted' && r.data?.companionId?.fullName === 'Ananya Rao' && !r.data.companionId.locked, 'confirmed: full name unlocked', r.data?.companionId);

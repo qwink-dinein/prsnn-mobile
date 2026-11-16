@@ -7,7 +7,8 @@ import { Screen, Header, Loading, ErrorState, IconButton } from '@/components/ui
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { PackageGrid } from '@/components/PackageGrid';
-import { MIN_LEAD_MINUTES, formatTime, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf , formatINR } from '@/domain/booking';
+import { firstName } from '@/components/companions';
+import { MIN_LEAD_MINUTES, formatTime, freeSlots, isDayAvailable, monthGrid, timeSlots, toDateKey, endTimeOf, formatINR } from '@/domain/booking';
 import { POPULAR_HOURS, hoursLabel, offeredHours, priceFor } from '@/domain/pricing';
 import type { Duration } from '@/domain/types';
 import { svc, qk } from '@/services';
@@ -38,7 +39,11 @@ export default function SelectDateTime() {
   const last = new Date(today);
   last.setDate(last.getDate() + BOOK_AHEAD_DAYS);
   // Starts inside the companion's hours, ends by 10 PM, and ~90 min notice so a companion can be confirmed.
-  const slots = c && date && hours ? timeSlots(c, date, new Date(), 30, MIN_LEAD_MINUTES, hours * 60) : [];
+  const allSlots = c && date && hours ? timeSlots(c, date, new Date(), 30, MIN_LEAD_MINUTES, hours * 60) : [];
+  // Times this companion is already booked that day are hidden (the server refuses them too).
+  const busy = useQuery({ queryKey: ['companion', id, 'busy', date ? toDateKey(date) : ''], queryFn: () => svc.companionBusy(id, toDateKey(date!)), enabled: !!date, staleTime: 30_000 });
+  const slots = hours ? freeSlots(allSlots, busy.data ?? [], hours * 60) : allSlots;
+  const hidden = allSlots.length - slots.length;
   const monthLabel = new Date(cursor.y, cursor.m, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   const canPrev = cursor.y > today.getFullYear() || cursor.m > today.getMonth();
   const canNext = new Date(cursor.y, cursor.m + 1, 1) <= last;
@@ -54,7 +59,7 @@ export default function SelectDateTime() {
       footer={
         <Button
           label={hours ? `Continue · ${formatINR(priceFor(hours) ?? 0)}` : 'Continue'}
-          disabled={!date || !time || !duration}
+          disabled={!date || !time || !duration || !slots.includes(time)}
           onPress={() => router.push({ pathname: '/book/review', params: { id: c.id, date: toDateKey(date!), time: time!, duration: duration!, ...(category ? { category } : {}) } })}
         />
       }
@@ -135,9 +140,15 @@ export default function SelectDateTime() {
         <Text variant="callout" muted>
           Pick a day first.
         </Text>
+      ) : busy.isLoading ? (
+        <Text variant="callout" muted>
+          Checking which times are free…
+        </Text>
       ) : slots.length === 0 ? (
         <Text variant="callout" muted>
-          No {hoursLabel(hours)} slot fits that day between 7 AM and 10 PM. Try another day or a shorter time.
+          {hidden > 0
+            ? `${firstName(c.fullName)} is already booked for the rest of that day. Try another day or a shorter time.`
+            : `No ${hoursLabel(hours)} slot fits that day between 7 AM and 10 PM. Try another day or a shorter time.`}
         </Text>
       ) : (
         <>
@@ -150,6 +161,11 @@ export default function SelectDateTime() {
               </Pressable>
             ))}
           </View>
+          {hidden > 0 ? (
+            <Text variant="footnote" muted style={{ marginTop: space.sm }}>
+              Times when {firstName(c.fullName)} is already booked aren’t shown.
+            </Text>
+          ) : null}
           {time ? (
             <Text variant="footnote" muted style={{ marginTop: space.sm }}>
               {formatTime(time)} – {formatTime(endTimeOf(time, String(hours * 60)))} · sessions run between 7 AM and 10 PM

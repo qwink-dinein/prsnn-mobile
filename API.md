@@ -375,3 +375,21 @@ companions, shown to member and confirmed companion, refused outside Loved One).
   (back to 'simulated' to pause). The app reads `payment_mode()`; no app update needed to switch.
 - App: `createPaymentIntent` / `verifyPayment` call `payments`; checkout stays Razorpay Standard Checkout in a
   WebView; UPI app links (upi://, intent://, phonepe://…) open the UPI app (`externalTarget`, src/domain/payments.ts).
+
+## Round 11 (2026-11-16): no double bookings, live "View the app as"
+Migration `20261116210000_no_double_booking_live_preview.sql`.
+- `private.holds_companion(booking, cid)`: a booking holds a companion's time while the member is paying
+  (`awaiting_payment`, 30-minute window), while it is offered to them (live offer), and once accepted / in ID check.
+  `private.has_conflict` uses it, so offers skip a busy companion as before, now counting payment holds too.
+- `create_prepaid_booking` locks the companion, then refuses an overlapping time: "<Name> is already booked at that
+  time…" for everyone, and "You already have a booking at that time…" for the same member. A member's own unpaid,
+  overlapping booking (they went back and chose again) is cancelled (`replaced_by_new_booking`) instead of blocking them.
+- `companion_busy(cid uuid, d date) → [{ start, duration }]`: the taken times on a day, no names. The booking screen
+  hides start times that would overlap (`freeSlots`, src/domain/booking.ts).
+- `admin_view_as(target uuid, fn text, args jsonb)`: staff only. Runs one read as a real member or companion
+  (`start`/`me`, `my_profile`, `my_bookings`, `incoming_bookings`, `get_booking`, `list_companions`, `get_companion`,
+  `unread_counts`, `my_consents`, `notifications`), restoring the caller's identity afterwards. `start` is written to
+  the activity log (`app.preview_live`). Anything else is refused; chats are not readable this way.
+- App: Admin → View the app as → **Live data** picks a real person; the app's reads go through `admin_view_as`, every
+  write is refused before it leaves the phone ("This is a live preview…"), and chats show "Chats are private". Exit or
+  Log out returns to the staff account. **Sample data** is the old preview.

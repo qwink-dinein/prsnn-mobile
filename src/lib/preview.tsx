@@ -8,11 +8,11 @@ import { fonts } from '@/theme/fonts';
 import { Text } from '@/components/ui/Text';
 import { useConfirm } from '@/components/ui/confirm';
 import { isStaff } from '@/domain/admin';
-import type { SessionUser } from '@/domain/types';
+import type { AdminUser, SessionUser } from '@/domain/types';
 import { DEMO } from '@/lib/config';
 import { backend } from '@/services/backend';
 import { resetDemo } from '@/services/demo';
-import { setSampleMode } from '@/services';
+import { routeToBackend, setSampleMode } from '@/services';
 import { useSession } from '@/state/session';
 
 export type PreviewAs = 'member' | 'companion';
@@ -76,6 +76,26 @@ export async function startPreview(qc: QueryClient, as: PreviewAs, start: Previe
   go(routeFor(as, start));
 }
 
+/**
+ * Staff only. Opens the app as a real member or companion, on live data and read-only: the screens
+ * read as them through admin_view_as (written to the activity log), every change is refused, and
+ * chats stay private. Exit (or Log out) goes straight back to the staff member's own account.
+ */
+export async function startLivePreview(qc: QueryClient, person: Pick<AdminUser, 'id' | 'fullName'>) {
+  const st = useSession.getState();
+  const real = st.preview?.real ?? st.user;
+  if (!real || !isStaff(real.role)) throw new Error('Only the prsnn team can preview the app.');
+  if (DEMO) throw new Error('Live preview needs the real server. This build uses sample data.');
+  const user = await backend.admin.viewAs(person.id);
+  if (isStaff(user.role)) throw new Error('Pick a member or a companion, not a staff account.');
+  setSampleMode(false);
+  routeToBackend();
+  qc.clear();
+  const as = user.role === 'companion' ? 'companion' : 'member';
+  useSession.setState({ preview: { as, real, live: { id: person.id, name: user.fullName || person.fullName || 'this person' } }, user });
+  go('/home');
+}
+
 /** Back to Admin with the staff member's own session; sample changes are thrown away. */
 export function endPreview(qc: QueryClient) {
   const pv = useSession.getState().preview;
@@ -94,7 +114,7 @@ export function PreviewStrip() {
   const confirm = useConfirm();
   if (!pv) return null;
   const exit = async () => {
-    if (await confirm({ title: 'Exit preview?', message: 'You’ll go back to Admin. Sample changes are cleared.', confirmLabel: 'Exit', cancelLabel: 'Keep looking' })) endPreview(qc);
+    if (await confirm({ title: 'Exit preview?', message: pv.live ? 'You’ll go back to Admin and your own account.' : 'You’ll go back to Admin. Sample changes are cleared.', confirmLabel: 'Exit', cancelLabel: 'Keep looking' })) endPreview(qc);
   };
   return (
     <SafeAreaView edges={['top']} style={styles.strip}>
@@ -104,7 +124,7 @@ export function PreviewStrip() {
           <Text variant="caption" color={colors.porcelain} style={{ fontFamily: fonts.semibold }}>
             {pv.as === 'companion' ? 'Companion preview' : 'Member preview'}
           </Text>
-          {' · sample data'}
+          {pv.live ? ` · ${pv.live.name} · live, read-only` : ' · sample data'}
         </Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Exit preview" onPress={exit} hitSlop={10} style={styles.exit}>
           <Text variant="caption" color={colors.midnight} style={{ fontFamily: fonts.semibold }}>
