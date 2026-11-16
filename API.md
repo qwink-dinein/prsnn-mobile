@@ -393,3 +393,12 @@ Migration `20261116210000_no_double_booking_live_preview.sql`.
 - App: Admin → View the app as → **Live data** picks a real person; the app's reads go through `admin_view_as`, every
   write is refused before it leaves the phone ("This is a live preview…"), and chats show "Chats are private". Exit or
   Log out returns to the staff account. **Sample data** is the old preview.
+
+## Round 12 (2026-11-16): a full refund cancels an open booking
+Migration `20261116220000_full_refund_cancels.sql`.
+- `admin_refund(bid, amount, reason)`: refunding the **whole** amount on a booking that is still open (pending or
+  accepted) now cancels it through `admin_cancel_booking` (open offers withdrawn, both people notified, logged as
+  `booking.cancel` with reason "Full refund: …"); the result has `cancelled: true`. Partial refunds leave the booking open.
+- Fix: `admin_cancel_booking` with a refund amount failed with "column reference refund_amount is ambiguous"
+  (parameter and column share the name). It now uses the parameter by position.
+- App: Admin → booking → Refund says that the full amount also cancels the booking.

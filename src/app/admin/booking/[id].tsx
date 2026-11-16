@@ -83,7 +83,11 @@ export default function AdminBookingDetail() {
     },
     refund: {
       title: 'Refund',
-      message: `Paid ${formatINR(b.amountPaid ?? 0)}. One refund per booking; it goes to the original payment method.`,
+      message:
+        `Paid ${formatINR(b.amountPaid ?? 0)}. One refund per booking; it goes to the original payment method.` +
+        (b.status === 'pending' || b.status === 'accepted'
+          ? ` Refunding the full ${formatINR(b.amountPaid ?? 0)} also cancels this booking, and both people are told. A smaller amount keeps it going.`
+          : ''),
       fields: [rupeeField(refundable, 'Amount (₹)', refundable), { key: 'reason', label: 'Reason', multiline: true }],
       label: 'Refund',
       destructive: true,

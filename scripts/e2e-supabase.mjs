@@ -142,6 +142,10 @@ console.log('8. Cancel policy, push, broadcast');
 r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(4), startTime: '11:00', duration: '60', idempotencyKey: key + 'b', acceptTerms: true } });
 const b2 = r.data?.booking?._id; await rpc(mem, 'simulate_payment', { bid: b2, outcome: 'success' });
 r = await rpc(mem, 'cancel_booking', { bid: b2 }); ok(r.data?.refundAmount === 339, 'cancel ≥15 min before: ₹339 of ₹399 (85%)', r.data);
+r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(5), startTime: '11:00', duration: '60', idempotencyKey: key + 'fr', acceptTerms: true, meetingPlace: 'Inorbit Mall' } });
+const b3 = r.data?.booking?._id; await rpc(mem, 'simulate_payment', { bid: b3, outcome: 'success' });
+r = await rpc(sup, 'admin_refund', { bid: b3, amount: 399, reason: 'Member asked' }); ok(r.data?.cancelled === true, 'full refund on an open booking cancels it', r);
+r = await rpc(mem, 'get_booking', { bid: b3 }); ok(r.data?.status === 'cancelled' && r.data?.refund?.amount === 399, 'member sees it cancelled and refunded', r.data && { s: r.data.status, rf: r.data.refund });
 r = await rpc(mem, 'save_push_token', { token: 'ExponentPushToken[e2e-test]' }); ok(!r.error, 'push token saved', r);
 ok((await rpc(sup, 'admin_audience')).data?.members === 1, 'audience counts it');
 { const { data, error } = await sup.functions.invoke('broadcast', { body: { audience: 'companions', title: 'Hello', body: 'Weekend is busy' } }); ok(!error && /Nobody|Sent/.test(data?.message ?? ''), 'superadmin broadcast', data ?? error?.message); }
