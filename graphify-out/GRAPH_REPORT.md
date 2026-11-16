@@ -1,17 +1,17 @@
 # Graph Report - prsnn-mobile  (2026-11-16)
 
 ## Corpus Check
-- 181 files · ~306,795 words
+- 181 files · ~306,731 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 2, .example 1)
 
 ## Summary
-- 1600 nodes · 7265 edges · 63 communities (53 shown, 10 thin omitted)
+- 1600 nodes · 7263 edges · 63 communities (53 shown, 10 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 244 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e9fedaec`
+- Built from commit: `b6fa8bff`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -95,14 +95,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `day()` --calls--> `toDateKey()`  [EXTRACTED]
   src/services/demo.ts → src/domain/booking.ts
-- `BookingsTab()` --calls--> `BookingCard()`  [EXTRACTED]
-  src/app/(tabs)/bookings.tsx → src/components/bookings.tsx
-- `BookingsTab()` --calls--> `RequestCard()`  [EXTRACTED]
-  src/app/(tabs)/bookings.tsx → src/components/fellow/RequestCard.tsx
-- `BookingsTab()` --calls--> `EmptyState()`  [EXTRACTED]
-  src/app/(tabs)/bookings.tsx → src/components/ui/layout.tsx
-- `BookingsTab()` --calls--> `ErrorState()`  [EXTRACTED]
-  src/app/(tabs)/bookings.tsx → src/components/ui/layout.tsx
+- `Checkout()` --calls--> `placeOf()`  [EXTRACTED]
+  src/app/book/review.tsx → src/components/companions.tsx
+- `Checkout()` --calls--> `useDraft()`  [EXTRACTED]
+  src/app/book/review.tsx → src/components/ui/states.tsx
+- `Checkout()` --calls--> `amountDuePaise()`  [EXTRACTED]
+  src/app/book/review.tsx → src/domain/booking.ts
+- `Checkout()` --calls--> `rupees()`  [EXTRACTED]
+  src/app/book/review.tsx → src/domain/booking.ts
 
 ## Import Cycles
 - None detected.
@@ -329,17 +329,17 @@ Nodes (15): expo-router, react-native, styles, ID_COPY, styles, styles, styles, 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react-native` connect `react-native` to `layout.tsx`, `package.json`, `motion.tsx`, `Text.tsx`, `dependencies`, `space`, `index.ts`, `formatINR`, `booking.ts`, `BookingPicker.tsx`, `onboarding.tsx`, `@react-native-async-storage/async-storage`, `formatINR`, `availability.tsx`, `lib/chat.ts`, `interest.ts`, `pay/[bookingId].tsx`, `wallet.tsx`, `Text`, `states.tsx`, `preview.tsx`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `Text()` connect `Text` to `layout.tsx`, `Chat`, `motion.tsx`, `Text.tsx`, `interest.ts`, `space`, `index.ts`, `formatINR`, `booking.ts`, `states.tsx`, `react-native`, `preview.tsx`, `onboarding.tsx`, `BookingPicker.tsx`, `formatINR`, `availability.tsx`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **What connects `COMMUNITY_IMAGE`, `expo/tsconfig.base` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
 - **Should `types.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.06105457909343201 - nodes in this community are weakly interconnected._
-- **Why does `Text()` connect `Text` to `layout.tsx`, `Chat`, `motion.tsx`, `Text.tsx`, `interest.ts`, `space`, `index.ts`, `formatINR`, `booking.ts`, `states.tsx`, `react-native`, `preview.tsx`, `onboarding.tsx`, `BookingPicker.tsx`, `formatINR`, `availability.tsx`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `useSession` connect `Text` to `types.ts`, `layout.tsx`, `Chat`, `motion.tsx`, `Text.tsx`, `demoAdmin.ts`, `space`, `demo.ts`, `formatINR`, `booking.ts`, `onboarding.tsx`, `states.tsx`, `preview.tsx`, `react-native`, `formatINR`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Should `layout.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.08571428571428572 - nodes in this community are weakly interconnected._
-- **Why does `@supabase/supabase-js` connect `lib/chat.ts` to `package.json`, `e2e-supabase.mjs`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Why does `react-native` connect `react-native` to `layout.tsx`, `package.json`, `motion.tsx`, `Text.tsx`, `dependencies`, `space`, `index.ts`, `formatINR`, `booking.ts`, `BookingPicker.tsx`, `onboarding.tsx`, `@react-native-async-storage/async-storage`, `formatINR`, `availability.tsx`, `lib/chat.ts`, `interest.ts`, `pay/[bookingId].tsx`, `wallet.tsx`, `Text`, `states.tsx`, `preview.tsx`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
   _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
