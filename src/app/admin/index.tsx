@@ -62,7 +62,7 @@ export default function AdminOverview() {
             {o.money ? (
               <View style={styles.money} accessible accessibilityLabel={`Collected ${formatINR(o.money.collected)}, refunded ${formatINR(o.money.refunded)}, companion payouts ${formatINR(o.money.companionPayouts)}, prsnn net ${formatINR(o.money.platformNet)}`}>
                 <Text variant="subhead" color={colors.gray600}>
-                  Money (all time)
+                  Money (real payments)
                 </Text>
                 <View style={styles.moneyRow}>
                   <Money label="Collected" v={o.money.collected} />

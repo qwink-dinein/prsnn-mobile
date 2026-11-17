@@ -451,3 +451,9 @@ Test: `prsnn-backend/supabase/tests/round9-purge-files.sql`.
   It is called by a trigger on `deleted_accounts` (after commit, via `pg_net`) and by pg_cron `purge-files`
   every 15 minutes while anything is waiting.
 - Pankaj's leftover photo was removed when this went live.
+
+## Round 16 (2026-11-17): admin "Money" counts real payments only
+Migration `20261117090000_money_real_only.sql`.
+- `admin_overview().money` sums only bookings with `payment_mode = 'razorpay'`; simulated test bookings (before
+  going live, and any later) are left out. New field `money.since`: the first real payment's time.
+- App: the card is titled "Money (real payments)".
