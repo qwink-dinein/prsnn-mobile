@@ -430,3 +430,16 @@ Migration `20261117060000_delete_notice.sql`. Test: `prsnn-backend/supabase/test
 - No new data is kept (the number was already in `deleted_accounts`); the privacy policy is unchanged.
 - Backfilled once for self-deletions in the last 7 days.
 - App: tapping an `account_deleted` notice calls the number.
+
+## Round 15 (2026-11-17): a deleted account's files are deleted too
+Migration `20261117070000_purge_deleted_files.sql`; edge function `purge-files` (new, `verify_jwt: false`).
+Test: `prsnn-backend/supabase/tests/round9-purge-files.sql`.
+- Matches the privacy policy: profile photos (`avatars`) are removed right after the account is deleted;
+  ID documents and selfie (`verification`) too, unless the person is part of an open safety case (an unresolved
+  panic alert or dispute on one of their bookings). Those are removed once the case closes.
+- `private.purgeable_files(lim)` lists files whose owner folder belongs to a `deleted_accounts` row with no live
+  account. `public.purge_files_claim(lim)` exposes it to the service role only.
+- Supabase blocks deleting `storage.objects` in SQL, so `purge-files` removes them through the Storage API.
+  It is called by a trigger on `deleted_accounts` (after commit, via `pg_net`) and by pg_cron `purge-files`
+  every 15 minutes while anything is waiting.
+- Pankaj's leftover photo was removed when this went live.
