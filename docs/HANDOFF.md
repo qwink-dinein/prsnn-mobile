@@ -16,6 +16,7 @@ All three are clean and pushed. Every migration is applied and the `payments`, `
 - Backend: database blocks double booking; the same payment twice is harmless; a second payment is refunded automatically.
 
 ## Waiting on the owner
+0. Make one paid booking to confirm the companion's WhatsApp booking request now arrives (fixed 17 Nov: the offer notice had no booking, so its WhatsApp was skipped). `notify` logs now say `waplify sent/failed` per message.
 1. **Restore prices.** Live prices are still the ₹10 test prices. On "restore prices", set `packagePrices` in `public.settings` (key `pricing`) back to 399, 699, 999, 1299, 1599, 1899, 2199, 2499, 2799, 3099, 3349, 3599.
 2. Make the Razorpay webhook secret match in Razorpay and in Supabase secrets.
 3. Build a new APK on the Mac and upload it to Drive:
