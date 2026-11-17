@@ -1,7 +1,7 @@
-# Graph Report - prsnn-mobile  (2026-11-16)
+# Graph Report - prsnn-mobile  (2026-11-17)
 
 ## Corpus Check
-- 186 files · ~308,746 words
+- 186 files · ~308,790 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 2, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0a08d56d`
+- Built from commit: `d910596b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -94,14 +94,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `day()` --calls--> `toDateKey()`  [EXTRACTED]
   src/services/demo.ts → src/domain/booking.ts
-- `Chat()` --calls--> `whenOf()`  [EXTRACTED]
-  src/app/chat/[bookingId].tsx → src/components/bookings.tsx
-- `Chat()` --calls--> `HoldButton()`  [EXTRACTED]
-  src/app/chat/[bookingId].tsx → src/components/PanicButton.tsx
-- `Chat()` --calls--> `Icon`  [EXTRACTED]
-  src/app/chat/[bookingId].tsx → src/components/ui/Icon.tsx
-- `Chat()` --calls--> `Avatar()`  [EXTRACTED]
-  src/app/chat/[bookingId].tsx → src/components/ui/layout.tsx
+- `Notifications()` --calls--> `Button()`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/Button.tsx
+- `Notifications()` --calls--> `Icon`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/Icon.tsx
+- `Notifications()` --calls--> `Header()`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/layout.tsx
+- `Notifications()` --calls--> `PressScale()`  [EXTRACTED]
+  src/app/notifications.tsx → src/components/ui/motion.tsx
 
 ## Import Cycles
 - None detected.
@@ -305,16 +305,16 @@ Nodes (5): jest, moduleNameMapper, preset, testMatch, transformIgnorePatterns
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Text()` connect `Text` to `home.tsx`, `motion.tsx`, `errorMessage`, `interest.ts`, `layout.tsx`, `admin.tsx`, `onboarding.tsx`, `booking.ts`, `states.tsx`, `index.ts`, `preview.tsx`, `domain/pricing.ts`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **What connects `COMMUNITY_IMAGE`, `expo/tsconfig.base` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
 - **Should `types.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.061979648473635525 - nodes in this community are weakly interconnected._
 - **Why does `react-native` connect `layout.tsx` to `home.tsx`, `package.json`, `motion.tsx`, `errorMessage`, `session.ts`, `dependencies`, `pay/[bookingId].tsx`, `wallet.tsx`, `admin.tsx`, `Text`, `booking.ts`, `states.tsx`, `index.ts`, `onboarding.tsx`, `preview.tsx`, `domain/pricing.ts`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Should `home.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.06298904538341157 - nodes in this community are weakly interconnected._
 - **Why does `@supabase/supabase-js` connect `@supabase/supabase-js` to `home.tsx`, `package.json`, `motion.tsx`, `e2e-supabase.mjs`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
   _Cohesion score 0.10526315789473684 - nodes in this community are weakly interconnected._
