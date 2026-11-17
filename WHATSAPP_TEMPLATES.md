@@ -9,7 +9,7 @@ env on Render.
 | 1 | `prsnn_login_code` | **Authentication** | anyone logging in | sign up, log in, **forgot PIN** | `WAPLIFY_TEMPLATE_NAME` |
 | 2 | `prsnn_booking_request` | Utility | companion | a member sends a booking request | `WAPLIFY_TPL_BOOKING_REQUEST` |
 | 3 | `prsnn_booking_accepted` | Utility | member | companion accepts → please pay | `WAPLIFY_TPL_BOOKING_ACCEPTED` |
-| 4 | `prsnn_payment_received` | Utility | companion | member has paid → chat is open | `WAPLIFY_TPL_PAYMENT_RECEIVED` |
+| 4 | `prsnn_payment_received` | Utility | companion | member has paid → chat is open (also: held booking confirmed after ID approval, or assigned by support) | `WAPLIFY_TPL_PAYMENT_RECEIVED` |
 | 5 | `prsnn_booking_confirmed` | Utility | member | companion accepted a paid booking | `WAPLIFY_TPL_BOOKING_CONFIRMED` |
 | 6 | `prsnn_booking_unfulfilled` | Utility | member | nobody accepted → full refund | `WAPLIFY_TPL_BOOKING_UNFULFILLED` |
 | 7 | `prsnn_panic_alert` | Utility | **every admin** | panic button pressed; repeats every 5 min until resolved | `WAPLIFY_TPL_PANIC_ALERT` |
@@ -20,6 +20,11 @@ env on Render.
 the companion gets #2 when a member books (the member is not messaged — they know they
 booked); the member gets #5 when a companion accepts (the companion is not messaged —
 they know they accepted). Only the 5 AM reminder (#8) goes to both.
+
+**Exception (2026-11-17):** when the companion did *not* tap Accept — their ID check was just
+approved and the held booking went through, or support assigned the booking to them — the
+companion gets #4 `prsnn_payment_received` ("…your booking is now confirmed and chat is
+enabled"), with the amount the member paid. The member still gets #5.
 
 > **Why #1 is "Authentication", not "Utility".** Meta only allows one-time
 > codes in Authentication templates. A Utility template containing a code

@@ -467,3 +467,13 @@ Migration `20261117100000_people_counts.sql`.
 - App: Admin → "People" card with Members · Companions · Both; each opens Users with that filter
   (`/admin/users?role=user|companion|both`, new "Both" chip).
 - e2e: the money check now expects simulated bookings to leave `money` unchanged (real payments only, round 16).
+
+## Round 18 (2026-11-17): companion is told on WhatsApp when an ID approval confirms their booking
+Edge function `notify` v20.
+- Before: when an admin approved a companion's ID, the held paid booking was confirmed and the **member** got
+  WhatsApp #5 `prsnn_booking_confirmed`, but the **companion** got only the in-app notice (and no push without a
+  push token), because companion-side `booking_confirmed` had no WhatsApp.
+- Now a companion-side `booking_confirmed` sends #4 `prsnn_payment_received` (amount, member's first name, date,
+  time, ref; "booking confirmed, chat enabled"). Companions only get `booking_confirmed` when they didn't tap Accept
+  (ID approval releasing a held booking, or support assigning it), so nobody gets a message about their own tap.
+- Re-sent to the one companion affected today (2 bookings, both later the same day).
