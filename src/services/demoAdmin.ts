@@ -132,6 +132,8 @@ export const demoAdmin: Backend['admin'] = {
       failedRefunds: bookings.filter((b) => b.refund?.status === 'failed').length,
       members: users.filter((x) => x.role === 'user').length,
       companions: users.filter((x) => x.role === 'companion' && x.verificationStatus === 'verified').length,
+      allCompanions: users.filter((x) => x.role === 'companion').length,
+      bothSides: 0,
       bookingsToday: 2,
       ...(isSuper() ? { money: { collected: 5294, refunded: 0, companionPayouts: 1437, platformNet: 3857 } } : {}),
     }),
@@ -142,7 +144,7 @@ export const demoAdmin: Backend['admin'] = {
   },
   users: ({ q, role: r } = {}) => {
     const t = (q ?? '').toLowerCase();
-    return wait(users.filter((x) => (!r || (r === 'staff' ? ['admin', 'subadmin', 'superadmin'].includes(x.role) : x.role === r)) && (!t || `${x.fullName} ${x.phone} ${x.city}`.toLowerCase().includes(t))));
+    return wait(users.filter((x) => (!r || (r === 'staff' ? ['admin', 'subadmin', 'superadmin'].includes(x.role) : r === 'both' ? false : x.role === r)) && (!t || `${x.fullName} ${x.phone} ${x.city}`.toLowerCase().includes(t))));
   },
   user: (id) => {
     const x = users.find((y) => y.id === id);

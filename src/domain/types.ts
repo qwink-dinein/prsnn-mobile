@@ -358,7 +358,12 @@ export interface AdminOverview {
   refundsToReview: number;
   failedRefunds: number;
   members: number;
+  /** Verified (ID-checked) companions. */
   companions: number;
+  /** Every companion account, any approval status. */
+  allCompanions?: number;
+  /** Companions who have also booked someone (a paid booking as the customer). */
+  bothSides?: number;
   bookingsToday: number;
   /** Superadmin only. */
   money?: { collected: number; refunded: number; companionPayouts: number; platformNet: number };

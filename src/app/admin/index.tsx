@@ -56,8 +56,18 @@ export default function AdminOverview() {
                 onPress={() => router.push({ pathname: '/admin/bookings', params: { tab: 'refunds' } })}
               />
             </View>
+            <View style={styles.people}>
+              <Text variant="subhead" color={colors.gray600}>
+                People
+              </Text>
+              <View style={styles.moneyRow}>
+                <Person label="Members" v={o.members} onPress={() => router.push({ pathname: '/admin/users', params: { role: 'user' } })} />
+                <Person label={`Companions · ${o.companions} ID-verified`} v={o.allCompanions ?? o.companions} onPress={() => router.push({ pathname: '/admin/users', params: { role: 'companion' } })} />
+                <Person label="Both: companions who also booked" v={o.bothSides ?? 0} onPress={() => router.push({ pathname: '/admin/users', params: { role: 'both' } })} />
+              </View>
+            </View>
             <Text variant="footnote" muted>
-              {o.members} members · {o.companions} verified companions · {o.bookingsToday} bookings today
+              {o.bookingsToday} {o.bookingsToday === 1 ? 'booking' : 'bookings'} today
             </Text>
             {o.money ? (
               <View style={styles.money} accessible accessibilityLabel={`Collected ${formatINR(o.money.collected)}, refunded ${formatINR(o.money.refunded)}, companion payouts ${formatINR(o.money.companionPayouts)}, prsnn net ${formatINR(o.money.platformNet)}`}>
@@ -124,6 +134,19 @@ function PanicBanner({ name, role, ref_, sends, at, onPress }: { name: string; r
 }
 const BLINK = { from: { opacity: 1 }, to: { opacity: 0.78 } };
 
+function Person({ label, v, onPress }: { label: string; v: number; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${v}. Open the list.`} onPress={onPress} style={({ pressed }) => [{ flex: 1, minWidth: 0, gap: 2 }, pressed ? { opacity: 0.7 } : null]}>
+      <Text variant="title2" color={colors.moss}>
+        {v}
+      </Text>
+      <Text variant="caption" muted>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Money({ label, v }: { label: string; v: number }) {
   return (
     <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -137,6 +160,7 @@ function Money({ label, v }: { label: string; v: number }) {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  people: { gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   money: { gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.green50, borderWidth: 1, borderColor: colors.line },
   moneyRow: { flexDirection: 'row', gap: space.md },
   panic: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.danger },

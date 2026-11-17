@@ -37,6 +37,7 @@ ok((await rpc(anon, 'my_bookings')).error, 'logged-out: no bookings');
 const meSup = await rpc(sup, 'sync_my_role');
 ok(meSup.data?.role === 'superadmin', 'superadmin from phone list', meSup);
 ok((await rpc(mem, 'admin_overview')).error === 'Access denied', 'member: admin refused');
+const money0 = (await rpc(sup, 'admin_overview')).data?.money; // real payments only: the simulated bookings below must not change it
 { const { data } = await anon.from('settings').select('value').eq('key', 'pricing').single(); ok(data?.value?.packagePrices?.['1'] === 399, 'prices readable by everyone'); }
 
 console.log('1b. Consents are recorded with a timestamp');
@@ -135,7 +136,9 @@ r = await rpc(sub, 'admin_reply_dispute', { bid, msg: 'Looking into it.' }); ok(
 r = await rpc(sup, 'admin_refund', { bid, amount: 200, reason: 'Late start' }); ok(r.data?.result === 'processed', 'superadmin partial refund ₹200', r);
 ok(/already/.test((await rpc(sup, 'admin_refund', { bid, amount: 50, reason: 'x' })).error ?? ''), 'no second refund');
 r = await rpc(sup, 'admin_close_dispute', { bid, resolution: 'Refunded ₹200.' }); ok(!r.error, 'dispute closed', r);
-r = await rpc(sup, 'admin_overview'); ok(r.data?.money?.collected === 699 * 2 && r.data.money.refunded === 699 + 200, 'overview money (one refunded in full, one partly)', r.data?.money);
+r = await rpc(sup, 'admin_overview'); ok(money0 && r.data?.money?.collected === money0.collected && r.data.money.refunded === money0.refunded, 'overview money counts real payments only (test bookings left out)', r.data?.money);
+ok(Number.isInteger(r.data?.allCompanions) && r.data.allCompanions >= r.data.companions && Number.isInteger(r.data.bothSides) && r.data.bothSides <= r.data.allCompanions, 'overview people: all companions ≥ verified ≥ 0; both ≤ all companions', r.data);
+r = await rpc(sup, 'admin_users', { q: '', role_filter: 'both' }); ok(Array.isArray(r.data) && r.data.every((u) => u.role === 'companion'), 'users filter "both": companions only', r.error);
 r = await rpc(sup, 'admin_activity', { before_at: null }); ok(r.data?.length >= 5, `activity log: ${r.data?.length} entries`);
 
 console.log('8. Cancel policy, push, broadcast');

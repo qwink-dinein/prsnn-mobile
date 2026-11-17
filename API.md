@@ -457,3 +457,13 @@ Migration `20261117090000_money_real_only.sql`.
 - `admin_overview().money` sums only bookings with `payment_mode = 'razorpay'`; simulated test bookings (before
   going live, and any later) are left out. New field `money.since`: the first real payment's time.
 - App: the card is titled "Money (real payments)".
+
+## Round 17 (2026-11-17): people counts on the admin overview
+Migration `20261117100000_people_counts.sql`.
+- `admin_overview()` adds `allCompanions` (every companion account, any approval status; `companions` stays the
+  ID-verified count) and `bothSides` (companions who have also booked someone: a paid or refunded booking as the
+  customer, real or test). Helper `private.both_sides(uid)`.
+- `admin_users(q, role_filter)` accepts `role_filter = 'both'`.
+- App: Admin → "People" card with Members · Companions · Both; each opens Users with that filter
+  (`/admin/users?role=user|companion|both`, new "Both" chip).
+- e2e: the money check now expects simulated bookings to leave `money` unchanged (real payments only, round 16).

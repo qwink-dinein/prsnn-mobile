@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,7 @@ const FILTERS = [
   { value: '', label: 'Everyone' },
   { value: 'user', label: 'Members' },
   { value: 'companion', label: 'Companions' },
+  { value: 'both', label: 'Both' },
   { value: 'staff', label: 'Staff' },
 ] as const;
 
@@ -20,7 +22,8 @@ const FILTERS = [
 export default function AdminUsers() {
   const [text, setText] = useState('');
   const [search, setSearch] = useState('');
-  const [role, setRole] = useState<string>('');
+  const initial = useLocalSearchParams<{ role?: string }>().role;
+  const [role, setRole] = useState<string>(FILTERS.some((f) => f.value === initial) ? (initial as string) : '');
   useEffect(() => {
     const t = setTimeout(() => setSearch(text.trim()), 300);
     return () => clearTimeout(t);
