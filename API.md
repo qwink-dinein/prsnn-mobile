@@ -418,3 +418,15 @@ Migrations `20261116230000_production_guards.sql`, `20261116231000_fk_indexes_ad
   carry `kind: 'duplicate'` so the webhook never marks the booking itself refunded.
 - **Messages:** the app gives each message its own UUID and inserts it with that id, so a double tap or a retry can't
   create two messages (the repeat hits the primary key and counts as sent); the send button locks instantly.
+
+## Round 14 (2026-11-17): admins are told when an account is deleted
+Migration `20261117060000_delete_notice.sql`. Test: `prsnn-backend/supabase/tests/round8-delete-notice.sql`.
+- `private.delete_account` (used by `delete_my_account` and `admin_delete_user`) now notifies every admin, except the
+  one who deleted it, in one line: name, role, city, mobile number, who deleted it and how long after signing up.
+  Example: "Pankaj (companion, Delhi, +91 97850 72111) deleted his account himself, 50 min after signing up."
+  Notification `type: 'other'`, `action: { kind: 'account_deleted', role, deletedId, phone }`.
+- When a profile is deleted, earlier "to review" notices about it get "(Account since deleted.)" and lose their action,
+  so they no longer open an empty approvals queue.
+- No new data is kept (the number was already in `deleted_accounts`); the privacy policy is unchanged.
+- Backfilled once for self-deletions in the last 7 days.
+- App: tapping an `account_deleted` notice calls the number.

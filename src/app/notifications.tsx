@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { PressScale } from '@/components/ui/motion';
 import { Skeleton } from '@/components/ui/states';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, Linking, RefreshControl, StyleSheet, View } from 'react-native';
 import { useConfirm } from '@/components/ui/confirm';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -51,6 +51,8 @@ function open(n: AppNotification) {
   else if (a.kind === 'panic_resolved' && a.bookingId) router.push(`/booking/${a.bookingId}`);
   // Staff: a new paid booking opens it in the admin view.
   else if (a.kind === 'booking' && a.bookingId) router.push({ pathname: '/admin/booking/[id]', params: { id: a.bookingId } });
+  // Staff: a deleted account's notice calls the number in it.
+  else if (a.kind === 'account_deleted' && a.phone) void Linking.openURL(`tel:+${a.phone.replace(/\D/g, '')}`).catch(() => undefined);
 }
 const inFilter = (n: AppNotification, f: Filter) => f === 'all' || (f === 'bookings' ? n.type.startsWith('booking') || n.type === 'dispute' || n.type === 'panic' : n.type === 'payment_completed' || n.type === 'refund');
 
