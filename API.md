@@ -123,6 +123,10 @@ companion, fails bookings past the deadline (full refund), completes sessions 2 
 Table `notifications` (own rows; mark read; delete). Every new row is delivered by
 `functions/notify` (cron, 30 s): Expo push to the person's device, and WhatsApp templates for
 `booking_offer` (→ `WAPLIFY_TPL_BOOKING_REQUEST`), `booking_confirmed` and unfulfilled refunds.
+A WhatsApp counts as sent only when Waplify answers `status: "success"` (an HTTP 200 with an
+error is retried, at most 5 attempts). Each send is logged in the function's logs as
+`waplify sent <template> to=…1234` or `waplify failed <template> <status> <reason>`, and a message
+skipped because its secret is missing is logged as `whatsapp skipped <type>: secret <NAME> is not set`.
 
 ## Settings
 
