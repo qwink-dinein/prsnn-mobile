@@ -27,7 +27,11 @@ All three are clean and pushed. Every migration is applied and the `payments`, `
 6. Cloudflare Web Analytics: remove the duplicate "prsnn.com Automatic setup" site.
 7. Google Search Console: request indexing.
 
+8. Email sign-in (visitors from abroad): Supabase custom SMTP was set to the Zoho free mailbox (admin@prsnn.com) and the email limit raised from 2/hour to 30. Not tested yet; the Zoho free plan may block SMTP (then use ZeptoMail or Zoho Mail Lite). Use a Zoho app password and sender admin@prsnn.com. Test: sign in with email, then check Auth logs for `mail.send` from prsnn.com.
+9. Booking #ABDFC7: an admin's full ₹10 refund failed (Razorpay balance too low). Top up and retry in Admin → Refunds, or decide to drop it.
+
 ## Offered, not started
+- Admin "Payments" screen: one row per payment with outcome, plain reason and Razorpay IDs (design first)
 - ID check at companion sign-up
 - Tourism step 1 (languages, licensed-guide badge)
 - Block feature (needed for Apple review)
