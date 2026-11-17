@@ -422,3 +422,28 @@ Migrations `20261116230000_production_guards.sql`, `20261116231000_fk_indexes_ad
   carry `kind: 'duplicate'` so the webhook never marks the booking itself refunded.
 - **Messages:** the app gives each message its own UUID and inserts it with that id, so a double tap or a retry can't
   create two messages (the repeat hits the primary key and counts as sent); the send button locks instantly.
+
+## Round 14 (2026-11-17): admins are told when an account is deleted
+Migration `20261117060000_delete_notice.sql`. Test: `prsnn-backend/supabase/tests/round8-delete-notice.sql`.
+- `private.delete_account` (used by `delete_my_account` and `admin_delete_user`) now notifies every admin, except the
+  one who deleted it, in one line: name, role, city, mobile number, who deleted it and how long after signing up.
+  Example: "Pankaj (companion, Delhi, +91 97850 72111) deleted his account himself, 50 min after signing up."
+  Notification `type: 'other'`, `action: { kind: 'account_deleted', role, deletedId, phone }`.
+- When a profile is deleted, earlier "to review" notices about it get "(Account since deleted.)" and lose their action,
+  so they no longer open an empty approvals queue.
+- No new data is kept (the number was already in `deleted_accounts`); the privacy policy is unchanged.
+- Backfilled once for self-deletions in the last 7 days.
+- App: tapping an `account_deleted` notice calls the number.
+
+## Round 15 (2026-11-17): a deleted account's files are deleted too
+Migration `20261117070000_purge_deleted_files.sql`; edge function `purge-files` (new, `verify_jwt: false`).
+Test: `prsnn-backend/supabase/tests/round9-purge-files.sql`.
+- Matches the privacy policy: profile photos (`avatars`) are removed right after the account is deleted;
+  ID documents and selfie (`verification`) too, unless the person is part of an open safety case (an unresolved
+  panic alert or dispute on one of their bookings). Those are removed once the case closes.
+- `private.purgeable_files(lim)` lists files whose owner folder belongs to a `deleted_accounts` row with no live
+  account. `public.purge_files_claim(lim)` exposes it to the service role only.
+- Supabase blocks deleting `storage.objects` in SQL, so `purge-files` removes them through the Storage API.
+  It is called by a trigger on `deleted_accounts` (after commit, via `pg_net`) and by pg_cron `purge-files`
+  every 15 minutes while anything is waiting.
+- Pankaj's leftover photo was removed when this went live.
