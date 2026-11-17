@@ -123,6 +123,10 @@ companion, fails bookings past the deadline (full refund), completes sessions 2 
 Table `notifications` (own rows; mark read; delete). Every new row is delivered by
 `functions/notify` (cron, 30 s): Expo push to the person's device, and WhatsApp templates for
 `booking_offer` (→ `WAPLIFY_TPL_BOOKING_REQUEST`), `booking_confirmed` and unfulfilled refunds.
+Every booking notice carries its `booking_id` (WhatsApp templates need the booking's date, time and
+names). Until 17 Nov the companion's offer notice was saved without it, so its WhatsApp was skipped and only
+the push went out; `next_offer` now saves the booking and the message reads "New paid 1-hour booking #REF …"
+(migration `20261117080000_offer_notice_booking`, test `round10-offer-notice.sql`).
 A WhatsApp counts as sent only when Waplify answers `status: "success"` (an HTTP 200 with an
 error is retried, at most 5 attempts). Each send is logged in the function's logs as
 `waplify sent <template> to=…1234` or `waplify failed <template> <status> <reason>`, and a message
