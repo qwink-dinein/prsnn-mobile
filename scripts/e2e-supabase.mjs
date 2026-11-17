@@ -125,6 +125,8 @@ const got = new Promise((resolve) => {
 const msg = await got;
 ok(msg?.content === 'Hi Riya, call me on ••••••••••', 'member receives live message, number masked', msg);
 { const { data } = await mem2.from('messages').select('id').eq('booking_id', bid); ok((data ?? []).length === 0, 'others cannot read the chat'); }
+r = await rpc(mem, 'chat_open', { b: bid }); ok(r.data === true, 'chat open from confirmation until the session ends (after the end: tests/round11-chat-window.sql)', r);
+r = await rpc(mem2, 'chat_open', { b: bid }); ok(r.data === false, 'chat not open for someone else', r);
 
 console.log('7. Dispute, admin, money');
 r = await rpc(mem, 'open_dispute', { bid, reason: 'Companion was 30 minutes late.' }); ok(!r.error, 'dispute opened', r);

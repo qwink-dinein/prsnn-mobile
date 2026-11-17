@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { chatOpen } from '@/domain/chat';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { colors, space } from '@/theme/tokens';
@@ -7,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui/confirm';
 import { MetaLine, PrepaidStatus, STAGE_LABEL, totalOf, whenOf } from '@/components/bookings';
-import { canChat, companionOf, durationLabel, formatINR, idOf, paymentLabel, personOf, refundIfCancelledNow, stageOf } from '@/domain/booking';
+import { companionOf, durationLabel, formatINR, idOf, paymentLabel, personOf, refundIfCancelledNow, stageOf } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
@@ -59,7 +60,7 @@ export default function BookingDetail() {
       footer={
         <View style={{ gap: space.sm }}>
           {(stage === 'pay' || stage === 'paying') && !isCompanion ? <Button label={`Pay ${formatINR(totalOf(b))}`} onPress={() => router.push(`/pay/${b._id}`)} /> : null}
-          {canChat(b, isCompanion) ? <Button label={`Chat with ${other?.fullName?.split(' ')[0] ?? 'them'}`} icon="message" onPress={() => router.push(`/chat/${b._id}`)} /> : null}
+          {chatOpen(b) ? <Button label={`Chat with ${other?.fullName?.split(' ')[0] ?? 'them'}`} icon="message" onPress={() => router.push(`/chat/${b._id}`)} /> : null}
           {cancellable ? <Button label="Cancel booking" variant="danger" onPress={confirmCancel} loading={cancel.isPending} /> : null}
           {canReport ? <Button label={b.dispute?.status === 'open' ? 'Problem reported · add details' : 'Report a problem'} variant="ghost" icon="flag" onPress={() => router.push(`/report/${b._id}`)} /> : null}
         </View>

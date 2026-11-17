@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { chatOpen } from '@/domain/chat';
 import { router } from 'expo-router';
 import { colors, space } from '@/theme/tokens';
 import { durationLabel, endTimeOf, formatINR, formatTime, parseDateKey, companionOf, stageOf, totalOfBooking, paymentLabel, minutesLeft, formatMinutes, type Stage } from '@/domain/booking';
@@ -74,7 +75,7 @@ export function BookingCard({ b }: { b: Booking }) {
       {stage === 'confirmed' ? (
         <View style={styles.actions}>
           <Button label="View" variant="secondary" compact style={{ flex: 1 }} onPress={() => router.push(`/booking/${b._id}`)} />
-          <Button label="Chat" icon="message" compact style={{ flex: 1 }} onPress={() => router.push(`/chat/${b._id}`)} />
+          {chatOpen(b) ? <Button label="Chat" icon="message" compact style={{ flex: 1 }} onPress={() => router.push(`/chat/${b._id}`)} /> : null}
         </View>
       ) : stage !== 'pay' && stage !== 'paying' ? (
         <Button label="View details" variant="secondary" compact onPress={() => router.push(`/booking/${b._id}`)} />

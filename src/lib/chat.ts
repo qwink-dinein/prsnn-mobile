@@ -27,20 +27,29 @@ type Row = { id: string; booking_id: string; sender_id: string; content: string;
 const toMessage = (r: Row): ChatMessage => ({ _id: r.id, bookingId: r.booking_id, senderId: r.sender_id, content: r.content, createdAt: r.created_at });
 
 /**
- * Live chat for one booking: the messages table + Supabase Realtime.
- * Row-level security lets only the two people on a confirmed, paid booking
- * read or write; phone numbers are masked by the database on insert.
+ * Live chat for one thread (every booking between the same two people): the messages table +
+ * Supabase Realtime. Row-level security lets only the two people on a confirmed, paid booking read;
+ * writing is allowed only while a booking is open (`chat_open`: accepted, paid, session not over),
+ * so messages are sent to `sendTo`, the open booking (null when the chat is closed).
+ * Phone numbers are masked by the database on insert.
  *
  * History and live messages are merged (never replaced), and the history is loaded again
  * every time the live channel (re)connects, so nothing sent while it was connecting or
  * offline goes missing.
  */
-export function useChat(bookingId: string, myId: string) {
+export function useChat(thread: { ids: string[]; sendTo: string | null; channel: string }, myId: string) {
+  const ids = thread.ids;
+  const idsKey = ids.join(',');
+  const bookingId = thread.sendTo ?? ids[ids.length - 1] ?? '';
   const sample = isSampleMode();
   // Staff live preview: chats are private, so none are loaded or sent (admins read a chat only
   // when a problem is reported on the booking, from Admin → Bookings).
   const live = isLivePreview();
   const [messages, setMessages] = useState<ChatMessage[]>(() => (sample ? demoThread(bookingId, myId) : []));
+  // A thread that gains or loses a booking starts from its own history again.
+  useEffect(() => {
+    if (!sample) setMessages([]);
+  }, [idsKey, sample]);
   const [status, setStatus] = useState<Status>(sample ? 'open' : live ? 'closed' : 'connecting');
   const [error, setError] = useState<string | null>(live ? 'Chats are private, so they aren’t shown in a preview.' : null);
   // "Typing…": a Realtime broadcast on the same channel (nothing is stored). Hidden after 4 s of
@@ -57,8 +66,9 @@ export function useChat(bookingId: string, myId: string) {
   useEffect(() => () => void (typingTimer.current && clearTimeout(typingTimer.current)), []);
 
   useEffect(() => {
-    if (sample || live) return;
+    if (sample || live || !idsKey) return;
     let alive = true;
+    const list = idsKey.split(',');
     const add = (list: ChatMessage[]) => {
       if (list.some((m) => String(m.senderId) !== myId)) showTyping(false);
       setMessages((prev) => mergeMessages(prev, list));
@@ -67,7 +77,7 @@ export function useChat(bookingId: string, myId: string) {
       supabase
         .from('messages')
         .select('id, booking_id, sender_id, content, created_at')
-        .eq('booking_id', bookingId)
+        .in('booking_id', list)
         .order('created_at', { ascending: true })
         .limit(500)
         .then(({ data, error: e }) => {
@@ -77,8 +87,8 @@ export function useChat(bookingId: string, myId: string) {
         });
     void loadHistory();
     const channel = supabase
-      .channel(`chat:${bookingId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${bookingId}` }, (payload) => add([toMessage(payload.new as Row)]))
+      .channel(`chat:${thread.channel}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: list.length === 1 ? `booking_id=eq.${list[0]}` : `booking_id=in.(${list.join(',')})` }, (payload) => add([toMessage(payload.new as Row)]))
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload?.from && payload.from !== myId) showTyping(true);
       })
@@ -98,7 +108,7 @@ export function useChat(bookingId: string, myId: string) {
       channelRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [bookingId, myId, sample, live, showTyping]);
+  }, [idsKey, thread.channel, myId, sample, live, showTyping]);
 
   /** Tell the other person I'm typing (at most every 2 s). */
   const typing = useCallback(() => {
@@ -114,6 +124,10 @@ export function useChat(bookingId: string, myId: string) {
       const message = text.trim();
       if (!message || message.length > MAX_MESSAGE_LENGTH) return false;
       if (live) return false;
+      if (!sample && !thread.sendTo) {
+        setError('This session has ended, so chat is closed.');
+        return false;
+      }
       if (sample) {
         setMessages((p) => [...p, { _id: `m${Date.now()}`, bookingId, senderId: myId, content: message, createdAt: new Date().toISOString() }]);
         // Sample mode: the other side "types" and answers, so the chat can be tried end to end.
@@ -127,20 +141,20 @@ export function useChat(bookingId: string, myId: string) {
       // One ID per message, made here: a double tap, or a retry after a dropped connection, can't save it twice
       // (the second insert hits the same primary key and is treated as already sent).
       const id = messageId();
-      const { data, error: e } = await supabase.from('messages').insert({ id, booking_id: bookingId, sender_id: myId, content: message }).select('id, booking_id, sender_id, content, created_at').single();
+      const { data, error: e } = await supabase.from('messages').insert({ id, booking_id: thread.sendTo, sender_id: myId, content: message }).select('id, booking_id, sender_id, content, created_at').single();
       if (e && (e as { code?: string }).code === '23505') {
         setError(null);
         return true;
       }
       if (e) {
-        setError(e.message.includes('row-level security') ? 'Chat opens once the booking is confirmed and paid.' : 'Message not sent. Check your connection and try again.');
+        setError(e.message.includes('row-level security') ? 'Chat is closed: it’s open from confirmation until the session ends.' : 'Message not sent. Check your connection and try again.');
         return false;
       }
       setError(null);
       if (data) setMessages((prev) => mergeMessages(prev, [toMessage(data as Row)]));
       return true;
     },
-    [bookingId, myId, sample, live, showTyping],
+    [bookingId, thread.sendTo, myId, sample, live, showTyping],
   );
 
   return { messages, status, error, send, otherTyping, typing };

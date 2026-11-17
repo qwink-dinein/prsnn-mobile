@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { chatOpen } from '@/domain/chat';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -176,7 +177,7 @@ export function RequestCard({ b }: { b: Booking }) {
         </View>
       ) : mine ? (
         <View style={styles.actions}>
-          <Button label="Chat" icon="message" variant="secondary" compact style={{ flex: 1 }} onPress={() => router.push(`/chat/${b._id}`)} />
+          {chatOpen(b) ? <Button label="Chat" icon="message" variant="secondary" compact style={{ flex: 1 }} onPress={() => router.push(`/chat/${b._id}`)} /> : null}
           {canComplete(b, now) ? <Button label="Mark completed" compact style={{ flex: 1 }} loading={update.isPending} onPress={() => update.mutate('completed')} /> : null}
           {!started ? <Button label="Details" variant="ghost" compact style={{ flex: 1 }} onPress={() => router.push(`/booking/${b._id}`)} /> : null}
         </View>

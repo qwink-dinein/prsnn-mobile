@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,8 +9,10 @@ import { Avatar, IconButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { whenOf } from '@/components/bookings';
-import { idOf, personOf } from '@/domain/booking';
-import type { ChatMessage } from '@/domain/types';
+import { canChat, idOf, personOf } from '@/domain/booking';
+import { threadOf } from '@/domain/chat';
+import { useAllMyBookings } from '@/lib/myBookings';
+import type { Booking, ChatMessage } from '@/domain/types';
 import { MAX_MESSAGE_LENGTH, useChat } from '@/lib/chat';
 import { HoldButton } from '@/components/PanicButton';
 import { panicWindow } from '@/domain/safety';
@@ -21,12 +23,34 @@ import { RiseIn, TypingDots } from '@/components/ui/motion';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 
-/** Screen 13 · Chat for one booking (live over Supabase Realtime). */
+type Row = ChatMessage | { divider: Booking };
+const isDivider = (r: Row): r is { divider: Booking } => 'divider' in r;
+
+/**
+ * Screen 13 · Chat with one person (live over Supabase Realtime). Every booking with them is one
+ * thread, with a divider per booking. Sending is open from confirmation until the session ends
+ * (database rule `chat_open`); a new booking with them opens it again.
+ */
 export default function Chat() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const me = useSession((s) => s.user);
   const booking = useQuery({ queryKey: qk.booking(bookingId), queryFn: () => svc.booking(bookingId) });
-  const { messages, status, error, send, otherTyping, typing } = useChat(bookingId, me?.id ?? '');
+  const all = useAllMyBookings();
+  // Re-checked every 30 s, so the box locks by itself when the session ends.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+  const thread = useMemo(() => {
+    const list = (all.data ?? []).filter((x) => canChat(x));
+    if (booking.data && !list.some((x) => x._id === booking.data!._id)) list.push(booking.data);
+    return threadOf(bookingId, list, now);
+  }, [all.data, booking.data, bookingId, now]);
+  const ids = useMemo(() => thread?.bookings.map((x) => x._id) ?? [bookingId], [thread, bookingId]);
+  const sendTo = thread ? (thread.sendTo?._id ?? null) : null;
+  const pair = thread ? [idOf(thread.main.requesterId), idOf(thread.main.companionId)].join('-') : bookingId;
+  const { messages, status, error, send, otherTyping, typing } = useChat({ ids, sendTo, channel: pair }, me?.id ?? '');
   // Messages already there when the chat opened stay still; only new ones rise in.
   const [known, setKnown] = useState<Set<string> | null>(null);
   useEffect(() => {
@@ -35,12 +59,26 @@ export default function Chat() {
     return () => clearTimeout(t);
   }, [known, status, messages]);
   const [text, setText] = useState('');
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef<FlatList<Row>>(null);
 
-  const b = booking.data;
+  const b = thread?.main ?? booking.data;
   const isCompanion = b ? idOf(b.companionId) === me?.id : false;
   const other = b ? personOf(isCompanion ? b.requesterId : b.companionId) : null;
-  const closed = b ? b.status !== 'accepted' : false;
+  const firstName = other?.fullName?.split(' ')[0];
+  const closed = !!thread && !sendTo;
+  // A divider before the first message of each booking (only when the thread has more than one).
+  const rows = useMemo<Row[]>(() => {
+    if (!thread || thread.bookings.length < 2) return messages;
+    const byId = new Map(thread.bookings.map((x) => [x._id, x]));
+    const out: Row[] = [];
+    let last = '';
+    for (const m of messages) {
+      if (m.bookingId !== last && byId.has(m.bookingId)) out.push({ divider: byId.get(m.bookingId)! });
+      last = m.bookingId;
+      out.push(m);
+    }
+    return out;
+  }, [messages, thread]);
 
   useEffect(() => {
     if (messages.length || otherTyping) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
@@ -49,18 +87,16 @@ export default function Chat() {
   // Reading the chat clears its unread badge (and again as new messages arrive while it's open).
   const qc = useQueryClient();
   useEffect(() => {
-    if (!bookingId || status !== 'open') return;
-    svc.markChatRead(bookingId).then(() => qc.invalidateQueries({ queryKey: qk.unread })).catch(() => {});
-  }, [bookingId, status, messages.length, qc]);
+    if (!ids.length || status !== 'open') return;
+    Promise.all(ids.map((id) => svc.markChatRead(id)))
+      .then(() => qc.invalidateQueries({ queryKey: qk.unread }))
+      .catch(() => {});
+  }, [ids, status, messages.length, qc]);
 
-  // SOS in the header while the panic button is on (session start → 1 h after the end).
+  // SOS in the header while the panic button is on (session start → 1 h after the end) for any booking in the thread.
   const [sos, setSos] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(t);
-  }, []);
-  const panicOn = b ? panicWindow(b, now).on : false;
+  const panicBooking = (thread?.bookings ?? (b ? [b] : [])).find((x) => panicWindow(x, now).on) ?? null;
+  const panicOn = !!panicBooking;
 
   // Keyboard: the composer shows a "hide" button while it's up; tapping or dragging the chat hides it too.
   const [kb, setKb] = useState(false);
@@ -96,34 +132,34 @@ export default function Chat() {
       <View style={styles.header}>
         <IconButton name="chevronLeft" label="Back" onPress={() => router.back()} />
         <Avatar uri={other?.profilePhotoUrl} name={other?.fullName} size={40} online={status === 'open'} />
-        <Pressable style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel="Booking details" onPress={() => router.push(`/booking/${bookingId}`)}>
+        <Pressable style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel="Booking details" onPress={() => router.push(`/booking/${b?._id ?? bookingId}`)}>
           <Text variant="headline" numberOfLines={1}>
             {other?.fullName ?? 'Chat'}
           </Text>
           <Text variant="caption" muted numberOfLines={1}>
-            {status === 'open' ? (b ? whenOf(b) : 'Online') : status === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
+            {closed ? 'Chat closed' : status === 'open' ? (thread?.sendTo ? whenOf(thread.sendTo) : b ? whenOf(b) : 'Online') : status === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
           </Text>
         </Pressable>
-        {panicOn && b ? (
+        {panicOn && panicBooking ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={b.panic ? 'Safety alert active. Open it.' : 'SOS. Open the panic button.'}
-            onPress={() => (b.panic ? router.push(`/panic/${b._id}`) : (Keyboard.dismiss(), setSos(true)))}
+            accessibilityLabel={panicBooking.panic ? 'Safety alert active. Open it.' : 'SOS. Open the panic button.'}
+            onPress={() => (panicBooking.panic ? router.push(`/panic/${panicBooking._id}`) : (Keyboard.dismiss(), setSos(true)))}
             hitSlop={6}
             style={styles.sos}
           >
             <Text style={styles.sosText}>SOS</Text>
           </Pressable>
         ) : null}
-        <IconButton name="info" label="Booking details" onPress={() => router.push(`/booking/${bookingId}`)} />
+        <IconButton name="info" label="Booking details" onPress={() => router.push(`/booking/${b?._id ?? bookingId}`)} />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <FlatList
           ref={listRef}
-          data={messages}
+          data={rows}
           extraData={known}
-          keyExtractor={(m) => m._id}
+          keyExtractor={(r) => (isDivider(r) ? `d-${r.divider._id}` : r._id)}
           contentContainerStyle={styles.list}
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
@@ -152,6 +188,14 @@ export default function Chat() {
           }
           ListFooterComponent={otherTyping ? <TypingDots name={other?.fullName?.split(' ')[0]} /> : undefined}
           renderItem={({ item }) => {
+            if (isDivider(item)) {
+              return (
+                <Text variant="caption" muted center style={styles.divider} accessibilityRole="header">
+                  {item.divider.ref ? `Booking #${item.divider.ref} · ` : ''}
+                  {whenOf(item.divider)}
+                </Text>
+              );
+            }
             const mine = String(item.senderId) === me?.id;
             return (
               <Pressable onPress={Keyboard.dismiss} accessible={false} style={[styles.bubbleRow, mine && { justifyContent: 'flex-end' }]}>
@@ -173,9 +217,15 @@ export default function Chat() {
           </Text>
         ) : null}
         {closed ? (
-          <View style={styles.closed}>
+          <View style={styles.closed} accessible accessibilityLiveRegion="polite">
+            <View style={styles.closedLine}>
+              <Icon name="lock" size={14} color={colors.gray500} />
+              <Text variant="footnote" muted center>
+                Your session has ended, so chat is closed.
+              </Text>
+            </View>
             <Text variant="footnote" muted center>
-              This session has ended, so the chat is read-only.
+              {isCompanion ? `It opens again if ${firstName ?? 'they'} books you again.` : `Book ${firstName ?? 'them'} again to chat.`}
             </Text>
           </View>
         ) : (
@@ -207,12 +257,12 @@ export default function Chat() {
         )}
       </KeyboardAvoidingView>
 
-      {b ? (
+      {panicBooking ? (
         <Modal visible={sos} transparent animationType="slide" onRequestClose={() => setSos(false)}>
           <Pressable style={styles.scrim} onPress={() => setSos(false)} accessibilityLabel="Close" accessibilityRole="button" />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]} accessibilityViewIsModal>
             <View style={styles.grabber} />
-            <HoldButton b={b} bare />
+            <HoldButton b={panicBooking} bare />
             <Pressable accessibilityRole="button" onPress={() => setSos(false)} style={styles.notNow}>
               <Text variant="subhead" muted>
                 Not now
@@ -246,5 +296,7 @@ const styles = StyleSheet.create({
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, padding: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },
   input: { flex: 1, maxHeight: 120, minHeight: 44, fontFamily: fonts.body, fontSize: 16, color: colors.ink, paddingHorizontal: space.lg, paddingTop: 11, paddingBottom: 11, backgroundColor: colors.mist, borderRadius: 22 },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.moss, alignItems: 'center', justifyContent: 'center' },
-  closed: { padding: space.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  closed: { padding: space.lg, gap: 2, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },
+  closedLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  divider: { marginVertical: space.sm },
 });

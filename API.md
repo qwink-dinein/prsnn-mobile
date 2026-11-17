@@ -477,3 +477,17 @@ Edge function `notify` v20.
   time, ref; "booking confirmed, chat enabled"). Companions only get `booking_confirmed` when they didn't tap Accept
   (ID approval releasing a held booking, or support assigning it), so nobody gets a message about their own tap.
 - Re-sent to the one companion affected today (2 bookings, both later the same day).
+
+## Round 19 (2026-11-17): one chat per person; chat closes when the session ends
+Migration `20261117110000_chat_window.sql`. Test: `prsnn-backend/supabase/tests/round11-chat-window.sql`.
+- New `public.chat_open(b)`: the caller is on booking `b`, it is accepted and paid, and `now() < upper(slot)`
+  (the session's end). Policy "chat write" on `messages` now uses it, so a message can be sent from confirmation
+  (paid + accepted, i.e. after the ID check when there is one) until the session ends, from any app version.
+- Reading is unchanged (`can_chat`): history stays visible after the session, and admins still read a disputed
+  booking's chat by booking.
+- App: messages still belong to a booking, but every confirmed booking between the same two people (same side)
+  is one thread (`src/domain/chat.ts`: `chatOpen`, `chatThreads`, `threadOf`). The chat screen loads all of them,
+  shows a divider per booking, sends to the open booking whose session ends first, and locks the box when none is
+  open ("Your session has ended, so chat is closed."). Chats tab: one row per person with Open/Closed.
+  "Chat" buttons on booking cards and the booking page show only while chat is open.
+- A new booking with the same person reopens the same thread.
