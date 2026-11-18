@@ -1,5 +1,8 @@
 # Session handoff — 17 Nov 2026
 
+> **Stable point saved 18 Nov 2026:** tag `stable-2026-11-18` in all three repos. What's in it and how to get back:
+> `docs/RELEASE-2026-11-18.md`.
+
 Start the next session from here. Branch in all three repos: `claude/adoring-euler-w8jj3h`.
 
 | Repo | Last commit |
