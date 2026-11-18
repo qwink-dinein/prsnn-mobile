@@ -20,6 +20,7 @@ import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
 import { openPhoto } from '@/lib/photoViewer';
+import { SafetyMenu } from '@/components/SafetyActions';
 import { hasVisiblePhoto } from '@/domain/search';
 
 /** Screen 8 · Companion profile. */
@@ -81,7 +82,10 @@ export default function CompanionProfile() {
           ) : null}
           <View style={[styles.photoBar, { top: insets.top + space.xs }]}>
             <IconButton name="chevronLeft" label="Back" onPress={() => router.back()} style={styles.round} />
-            <HeartButton id={c.id} onDark size={22} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+              {isMe ? null : <SafetyMenu person={{ id: c.id, name: firstName(c.fullName) }} onBlocked={() => router.back()} style={styles.round} />}
+              <HeartButton id={c.id} onDark size={22} />
+            </View>
           </View>
         </View>
 

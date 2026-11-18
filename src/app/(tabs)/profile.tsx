@@ -98,6 +98,7 @@ export default function ProfileTab() {
         <ListRow icon="user" label="Personal information" onPress={() => router.push('/edit-profile')} />
         <ListRow icon="lock" label="Privacy & preferences" value={privacyValue} onPress={() => router.push('/privacy')} />
         <ListRow icon="heart" label="Saved companions" value={savedCount ? `${savedCount} saved` : undefined} onPress={() => router.push('/saved')} />
+        <ListRow icon="shield" label="Blocked people" onPress={() => router.push('/blocked')} />
         <ListRow icon="bell" label="Notifications" onPress={() => router.push('/notifications')} />
         <ListRow icon="lock" label={user?.hasPin ? 'Change PIN' : 'Set a PIN'} onPress={() => router.push({ pathname: '/pin', params: { mode: 'set' } })} last />
       </View>

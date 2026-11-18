@@ -122,6 +122,8 @@ const putU = (id: string, p: Partial<AdminUser>) => {
 const superOnly = () => (isSuper() ? null : fail('Access denied'));
 
 export const demoAdmin: Backend['admin'] = {
+  reports: () => wait([]),
+  closeReport: () => wait({ message: 'Report closed.' }),
   overview: () =>
     wait({
       role: role(),

@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, radius, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Avatar, IconButton } from '@/components/ui/layout';
+import { SafetyMenu } from '@/components/SafetyActions';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { whenOf } from '@/components/bookings';
@@ -151,6 +152,7 @@ export default function Chat() {
             <Text style={styles.sosText}>SOS</Text>
           </Pressable>
         ) : null}
+        {other?._id ? <SafetyMenu person={{ id: other._id, name: firstName || 'them' }} bookingId={b?._id} onBlocked={() => router.back()} /> : null}
         <IconButton name="info" label="Booking details" onPress={() => router.push(`/booking/${b?._id ?? bookingId}`)} />
       </View>
 

@@ -9,6 +9,7 @@ import { LEGAL_VERSION, type Consent, type ConsentKind } from '@/domain/rules';
 import type { AdminBooking, AdminChatMessage, AdminOverview, AdminUser, AppNotification, AuditEntry, Booking, BroadcastAudience, BroadcastRecord, CityPlan, Companion, Duration, Locality, PanicAlert, Policy, Profile, ProfileCheck, Quote, Recipient, SessionUser, BookingStatus, IdType, Gender, SeeGender, Visibility, ApprovalStatus } from '@/domain/types';
 import type { PricingSettings } from '@/domain/pricing';
 import type { BookingTab } from '@/domain/admin';
+import type { AdminReport, BlockedPerson, ReportReason } from '@/domain/safety';
 
 /**
  * All server calls, on Supabase (prsnn-backend/supabase). Every call is an RPC
@@ -96,7 +97,7 @@ const viewingAs = () => useSession.getState().preview?.live?.id ?? null;
 export const isLivePreview = () => viewingAs() !== null;
 export const PREVIEW_READ_ONLY = 'This is a live preview: you can look around, but nothing can be changed.';
 /** Read as the previewed person. */
-const AS_PERSON = new Set(['me', 'my_profile', 'my_bookings', 'incoming_bookings', 'get_booking', 'list_companions', 'get_companion', 'unread_counts', 'my_consents']);
+const AS_PERSON = new Set(['me', 'my_profile', 'my_bookings', 'incoming_bookings', 'get_booking', 'list_companions', 'get_companion', 'unread_counts', 'my_consents', 'my_blocks']);
 /** The same for everyone: safe to read as the staff member. */
 const SHARED = new Set(['booking_policy', 'payment_mode', 'search_localities', 'city_plans_for', 'companion_busy', 'companions_busy']);
 /** Harmless bookkeeping a screen does on its own (marking a chat read): skipped quietly. */
@@ -304,6 +305,12 @@ export const backend = {
   companionBusy: (id: string, date: string) => rpc<BusyTime[]>('companion_busy', { cid: id, d: date }),
   /** Every companion's taken times on one day: { companionId: BusyTime[] } ("Available today"). */
   companionsBusy: (date: string) => rpc<Record<string, BusyTime[]>>('companions_busy', { d: date }),
+  /** Block and report another person (works both ways: hidden, not matched, no messages). */
+  blockUser: (id: string) => rpc<{ message: string }>('block_user', { uid: id }),
+  unblockUser: (id: string) => rpc<{ message: string }>('unblock_user', { uid: id }),
+  myBlocks: () => rpc<BlockedPerson[]>('my_blocks'),
+  reportUser: (id: string, reason: ReportReason, details?: string, bookingId?: string, alsoBlock = false) =>
+    rpc<{ message: string }>('report_user', { uid: id, reason, details: details ?? null, bid: bookingId ?? null, also_block: alsoBlock }),
   createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; homeVisit?: boolean; recipient?: Recipient | null }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
   acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),
@@ -448,6 +455,8 @@ export const backend = {
   // ── In-app admin (staff only; money/price/push are superadmin-only on the server) ──
   admin: {
     overview: () => rpc<AdminOverview>('admin_overview'),
+    reports: (status: 'open' | 'closed' | '' = 'open') => rpc<AdminReport[]>('admin_reports', { st: status }),
+    closeReport: (id: string, note: string) => rpc<{ message: string }>('admin_close_report', { rid: id, resolution: note }),
     verifications: async () => withDocLinks(await rpc<Record<string, any>[]>('admin_verifications')),
     decideVerification: (id: string, decision: 'verified' | 'rejected', note?: string) => rpc<{ message: string; user: AdminUser }>('admin_decide_verification', { uid: id, decision, note: note ?? null }),
     users: (p: { q?: string; role?: string } = {}) => rpc<AdminUser[]>('admin_users', { q: p.q ?? '', role_filter: p.role ?? '' }),

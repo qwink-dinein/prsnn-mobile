@@ -205,7 +205,7 @@ export type NotificationType = 'booking_request' | 'booking_accepted' | 'payment
 
 /** What tapping a notification does (staff change requests, approvals, panic alerts). */
 export interface NotificationAction {
-  kind: 'fix' | 'rejected' | 'approved' | 'photo_approved' | 'review' | 'panic' | 'panic_resolved' | 'booking' | 'account_deleted';
+  kind: 'fix' | 'rejected' | 'approved' | 'photo_approved' | 'review' | 'panic' | 'panic_resolved' | 'booking' | 'account_deleted' | 'report';
   target?: 'photo' | 'profile';
   /** account_deleted: the deleted account's number (digits, with 91), so staff can call. */
   phone?: string | null;

@@ -6,6 +6,7 @@ import { needsIdToAccept } from '@/domain/verification';
 import type { Backend, AuthResult } from './backend';
 import { demoAdmin, demoRoleFor } from './demoAdmin';
 import { LEGAL_VERSION, type Consent } from '@/domain/rules';
+import type { BlockedPerson, ReportReason } from '@/domain/safety';
 
 /**
  * Sample data for EXPO_PUBLIC_DEMO=1 (design review, preview, screenshots).
@@ -18,6 +19,7 @@ import { LEGAL_VERSION, type Consent } from '@/domain/rules';
 const demoConsents: Consent[] = (['terms', 'privacy', 'age_18', 'whatsapp_updates'] as const).map((kind) => ({ kind, version: LEGAL_VERSION, acceptedAt: new Date(Date.now() - 864e5).toISOString() }));
 
 const wait = <T>(v: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(v), ms));
+let demoBlocks: BlockedPerson[] = [];
 const fail = (message: string) => new Promise<never>((_, j) => setTimeout(() => j(new Error(message)), 250));
 const allDays = { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true };
 
@@ -220,6 +222,17 @@ export const demo: Backend = {
   // Sample data: no one else books the sample companions, so no time is taken.
   companionBusy: (_id: string, _date: string) => wait([]),
   companionsBusy: (_date: string) => wait({} as Record<string, BusyTime[]>),
+  blockUser: (id: string) => {
+    if (!demoBlocks.some((b) => b.id === id)) demoBlocks.unshift({ id, name: people.find((c) => c.id === id)?.fullName?.split(' ')[0] ?? 'Someone', photo: null, at: new Date().toISOString() });
+    return wait({ message: 'Blocked. You won’t see each other, be matched or message each other.' });
+  },
+  unblockUser: (id: string) => {
+    demoBlocks = demoBlocks.filter((b) => b.id !== id);
+    return wait({ message: 'Unblocked.' });
+  },
+  myBlocks: () => wait([...demoBlocks]),
+  reportUser: (_id: string, _reason: ReportReason, _details?: string, _bookingId?: string, alsoBlock = false) =>
+    wait({ message: alsoBlock ? 'Thanks. We’ve got your report and blocked them. Our team will look into it.' : 'Thanks. We’ve got your report. Our team will look into it.' }),
   createPrepaidBooking: (b) => {
     const existing = keys.get(b.idempotencyKey);
     if (existing) {

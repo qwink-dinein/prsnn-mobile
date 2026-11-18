@@ -120,10 +120,9 @@ Apple processes it (15–60 min). Install it with the TestFlight app and test ev
   company, in-person services paid with Razorpay under Guideline 3.1.3(e)).
 - **Version → Build:** pick the TestFlight build → **Add for Review → Submit** (usually 1–3 days).
 
-### Known review risk (Apple Guideline 1.2, user-generated content)
-Apps where users chat must let people **block** abusive users, as well as report them. prsnn has reporting,
-admin moderation and hidden numbers, but no per-user **Block** button yet. Ask Claude to build it before
-submitting to Apple.
+### Apple Guideline 1.2 (user-generated content): covered
+People can **report** and **block** anyone from their profile or the chat ("⋯"), blocked people are listed in Profile → Blocked
+people, and reports reach Admin → Reports with a staff notification. Mention this in the review notes.
 
 ---
 

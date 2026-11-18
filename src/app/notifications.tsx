@@ -47,6 +47,7 @@ function open(n: AppNotification) {
   if (a.kind === 'fix' || a.kind === 'rejected') router.push({ pathname: '/fix', params: { target: a.target ?? 'photo' } });
   else if (a.kind === 'approved') router.push('/fellow/verification');
   else if (a.kind === 'review') router.push('/admin/approvals');
+  else if (a.kind === 'report') router.push('/admin/reports');
   else if (a.kind === 'panic' && a.alertId) router.push({ pathname: '/admin/panic/[id]', params: { id: a.alertId } });
   else if (a.kind === 'panic_resolved' && a.bookingId) router.push(`/booking/${a.bookingId}`);
   // Staff: a new paid booking opens it in the admin view.

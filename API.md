@@ -555,3 +555,16 @@ a member who applies starts at `id_required` (then `pending` when their ID is se
 ID on file, nobody verified them) went back to `id_required`: still listed as "New on prsnn", ID asked at their first
 booking. None had an open booking. Test: `supabase/tests/round12-member-verified-is-not-id.sql`.
 
+## Round 24 (2026-11-18): block and report (App Store Guideline 1.2)
+
+Migrations `20261118160000_block_and_report` + `20261118161000_close_report_fix` (applied):
+- Tables `blocks (blocker_id, blocked_id)` and `user_reports` (reason, details, booking, status, resolution, handled_by); RLS on,
+  no policies (only through functions).
+- `block_user(uid)`, `unblock_user(uid)`, `my_blocks()`, `report_user(uid, reason, details?, bid?, also_block?)` (max 10 reports a
+  day; "other" needs details; staff get a notification `{kind: 'report'}`); staff `admin_reports(st)`, `admin_close_report(rid, note)`.
+- A block works both ways (`private.blocked`): hidden from `list_companions` / `get_companion`, never offered by `private.eligible`,
+  and `chat_open` is false so neither can send messages (history stays). A paid booking isn't cancelled by a block.
+- App: "⋯" on a companion's profile and in chat → Report / Block (`components/SafetyActions`); Profile → Blocked people (Unblock);
+  Admin → Reports (open / closed, open the person or booking, close with a note); the staff notification opens Admin → Reports.
+- Test: `supabase/tests/round13-block-and-report.sql`; `__tests__/safety.test.ts`.
+

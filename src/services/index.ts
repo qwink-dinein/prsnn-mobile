@@ -39,6 +39,7 @@ export const qk = {
   companions: ['companions'] as const,
   companion: (id: string) => ['companion', id] as const,
   companionsBusy: (date: string) => ['companionsBusy', date] as const,
+  blocks: ['blocks'] as const,
   myBookings: ['bookings', 'mine'] as const,
   incoming: ['bookings', 'incoming'] as const,
   booking: (id: string) => ['booking', id] as const,
@@ -49,6 +50,7 @@ export const qk = {
   admin: {
     all: ['admin'] as const,
     overview: ['admin', 'overview'] as const,
+    reports: (status: string) => ['admin', 'reports', status] as const,
     verifications: ['admin', 'verifications'] as const,
     users: (q: string, role: string) => ['admin', 'users', q, role] as const,
     user: (id: string) => ['admin', 'user', id] as const,
