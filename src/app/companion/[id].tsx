@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { useAppWidth } from '@/lib/layout';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
@@ -19,10 +19,23 @@ import { BookingPicker, type BookingChoice } from '@/components/BookingPicker';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
 import { useSession } from '@/state/session';
+import { openPhoto } from '@/lib/photoViewer';
+import { hasVisiblePhoto } from '@/domain/search';
 
 /** Screen 8 · Companion profile. */
 export default function CompanionProfile() {
-  const { id, category, hours } = useLocalSearchParams<{ id: string; category?: string; hours?: string }>();
+  const { id, category, hours, book } = useLocalSearchParams<{ id: string; category?: string; hours?: string; book?: string }>();
+  const heroRef = useRef<ComponentRef<typeof View>>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  // From the photo viewer's Book button: scroll to the booking picker once both have a place on screen.
+  const sheetY = useRef<number | null>(null);
+  const pickerY = useRef<number | null>(null);
+  const scrolled = useRef(false);
+  const scrollToPicker = () => {
+    if (book !== '1' || scrolled.current || sheetY.current == null || pickerY.current == null) return;
+    scrolled.current = true;
+    scrollRef.current?.scrollTo({ y: Math.max(0, sheetY.current + pickerY.current - 16), animated: true });
+  };
   const me = useSession((s) => s.user);
   const insets = useSafeAreaInsets();
   const { width } = useAppWidth();
@@ -47,8 +60,8 @@ export default function CompanionProfile() {
 
   return (
     <View style={styles.safe}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 + insets.bottom }} showsVerticalScrollIndicator={false}>
-        <View style={{ height: photoH, backgroundColor: colors.mossSoft }}>
+      <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 120 + insets.bottom }} showsVerticalScrollIndicator={false}>
+        <View ref={heroRef} collapsable={false} style={{ height: photoH, backgroundColor: colors.mossSoft }}>
           {c.locked ? (
             <LockedPhoto style={StyleSheet.absoluteFill} size="lg" />
           ) : c.profilePhoto ? (
@@ -58,13 +71,24 @@ export default function CompanionProfile() {
               <Text style={styles.initial}>{firstName(c.fullName).charAt(0)}</Text>
             </View>
           )}
+          {hasVisiblePhoto(c) ? (
+            <Pressable
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Open ${firstName(c.fullName)}’s photo`}
+              onPress={() => openPhoto(heroRef.current, c, { actions: false })}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : null}
           <View style={[styles.photoBar, { top: insets.top + space.xs }]}>
             <IconButton name="chevronLeft" label="Back" onPress={() => router.back()} style={styles.round} />
             <HeartButton id={c.id} onDark size={22} />
           </View>
         </View>
 
-        <View style={styles.sheet}>
+        <View style={styles.sheet} onLayout={(e) => {
+          sheetY.current = e.nativeEvent.layout.y;
+          scrollToPicker();
+        }}>
           <View style={styles.nameRow}>
             <Text variant="title1" style={{ flexShrink: 1 }}>
               {c.fullName ?? 'Companion'}
@@ -138,7 +162,16 @@ export default function CompanionProfile() {
                   {days.length ? `${days.join(' · ')} · ${formatTime(c.startTime || DEFAULT_START)} – ${formatTime(c.endTime || DEFAULT_END)}` : 'No days set yet'}
                 </Text>
               </View>
-              {days.length ? <BookingPicker c={c} onChange={setChoice} initialHours={hours ? Number(hours) : undefined} /> : null}
+              {days.length ? (
+                <View
+                  onLayout={(e) => {
+                    pickerY.current = e.nativeEvent.layout.y;
+                    scrollToPicker();
+                  }}
+                >
+                  <BookingPicker c={c} onChange={setChoice} initialHours={hours ? Number(hours) : undefined} />
+                </View>
+              ) : null}
             </>
           )}
         </View>

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FlatList, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useLiveCompanions } from '@/components/ui/states';
@@ -16,6 +17,9 @@ import { CitySheet } from '@/components/PlacePicker';
 import { areasFor } from '@/data/india-areas';
 import { seeLabel } from '@/domain/privacy';
 import { useSession } from '@/state/session';
+import { AvailableTodayToggle } from '@/components/AvailableTodayToggle';
+import { freeToday, toDateKey } from '@/domain/booking';
+import { svc, qk } from '@/services';
 
 /** Screen 7 · Search & filters (filters run on the device over the verified list). */
 export default function SearchTab() {
@@ -43,7 +47,26 @@ export default function SearchTab() {
     const fromData = (q.data ?? []).filter((c) => !city || (c.city ?? '').toLowerCase() === city.toLowerCase()).map((c) => c.area).filter(Boolean) as string[];
     return Array.from(new Set([...fromData, ...areasFor(city)])).sort();
   }, [q.data, city]);
-  const results = useMemo(() => filterCompanions(q.data ?? [], text, category, area, sort, city), [q.data, text, category, area, sort, city]);
+  const matches = useMemo(() => filterCompanions(q.data ?? [], text, category, area, sort, city), [q.data, text, category, area, sort, city]);
+
+  // "Available today": the clock ticks each minute so people drop off once their last slot passes.
+  const [today, setToday] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const day = toDateKey(now);
+  const busy = useQuery({ queryKey: qk.companionsBusy(day), queryFn: () => svc.companionsBusy(day), staleTime: 60_000, refetchInterval: 120_000 });
+  const free = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of matches) {
+      const f = freeToday(c, busy.data?.[c.id] ?? [], now);
+      if (f) m.set(c.id, f.label);
+    }
+    return m;
+  }, [matches, busy.data, now]);
+  const results = useMemo(() => (today ? matches.filter((c) => free.has(c.id)) : matches), [today, matches, free]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -64,6 +87,10 @@ export default function SearchTab() {
           clearButtonMode="while-editing"
         />
         {text ? <IconButton name="close" label="Clear search" size={18} onPress={() => setText('')} /> : null}
+      </View>
+
+      <View style={styles.today}>
+        <AvailableTodayToggle on={today} count={free.size} loading={busy.isLoading} onToggle={() => setToday((v) => !v)} />
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
@@ -110,13 +137,17 @@ export default function SearchTab() {
           keyExtractor={(c) => c.id}
           contentContainerStyle={{ paddingHorizontal: GUTTER - space.sm, paddingBottom: space.huge }}
           keyboardDismissMode="on-drag"
-          renderItem={({ item }) => <CompanionRow c={item} />}
+          renderItem={({ item }) => <CompanionRow c={item} free={free.get(item.id)} />}
           ListHeaderComponent={
             <Text variant="footnote" muted style={{ paddingHorizontal: space.sm, paddingBottom: space.xs }} accessibilityLiveRegion="polite">
               {results.length} {results.length === 1 ? 'companion' : 'companions'}
+              {today ? ' · free today' : ''}
             </Text>
           }
           ListEmptyComponent={
+            today && matches.length ? (
+              <EmptyState icon="clock" title="No one is free for the rest of today" body="Everyone here is booked or done for the day. See everyone and book for another day." action="Show everyone" onAction={() => setToday(false)} />
+            ) : (
             <EmptyState
               icon="search"
               title={text ? `No one matches “${text}”` : 'No one matches these filters'}
@@ -128,8 +159,10 @@ export default function SearchTab() {
                 setArea('all');
                 setCity(null);
                 setSort('recommended');
+                setToday(false);
               }}
             />
+            )
           }
         />
       )}
@@ -142,6 +175,7 @@ const styles = StyleSheet.create({
   title: { paddingHorizontal: GUTTER, paddingTop: space.sm },
   search: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginHorizontal: GUTTER, marginTop: space.md, minHeight: 50, paddingLeft: space.lg, paddingRight: space.xs, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.ink, paddingVertical: 12 },
+  today: { paddingHorizontal: GUTTER, paddingTop: space.md },
   chipRow: { flexGrow: 0, flexShrink: 0, minHeight: 54 },
   chips: { paddingHorizontal: GUTTER, gap: space.sm, paddingTop: space.md },
 });

@@ -32,6 +32,7 @@ import { useStepFlow } from '@/lib/stepFlow';
 import { firstUnanswered } from '@/domain/setup';
 import { useConfirm } from '@/components/ui/confirm';
 import { goToLogin } from '@/lib/flow';
+import { usePhotoNudge } from '@/components/PhotoNudge';
 
 type Step = 'gender' | 'photo' | 'visibility' | 'where' | 'about' | 'offer' | 'durations' | 'availability' | 'finish';
 const STEPS: Step[] = ['gender', 'photo', 'visibility', 'where', 'about', 'offer', 'durations', 'availability', 'finish'];
@@ -44,6 +45,7 @@ const INTERESTS = ['Coffee', 'Walks', 'Food', 'Movies', 'Music', 'Books', 'Sport
  * kept as a draft on the phone.
  */
 export default function CompanionOnboarding() {
+  const nudge = usePhotoNudge();
   const user = useSession((s) => s.user);
   const updateUser = useSession((s) => s.updateUser);
   const qc = useQueryClient();
@@ -180,6 +182,7 @@ export default function CompanionOnboarding() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      {nudge.sheet}
       <View style={styles.top}>
         <IconButton name="chevronLeft" label="Back" onPress={back} />
         <View style={styles.dots} accessibilityLabel={`Step ${i + 1} of ${STEPS.length}`}>
@@ -280,17 +283,19 @@ export default function CompanionOnboarding() {
             </>
           ) : step === 'visibility' ? (
             <Options
-              items={(['locked', 'open'] as Visibility[]).map((v) => ({
+              items={(['open', 'locked'] as Visibility[]).map((v) => ({
                 key: v,
-                title: `${VISIBILITY_COPY[v].title}${d.gender && defaultVisibility(d.gender) === v ? ' · recommended' : ''}`,
+                title: `${VISIBILITY_COPY[v].title}${defaultVisibility(d.gender) === v ? ' · recommended' : ''}`,
                 body: v === 'locked' ? 'Only people who’ve booked you' : VISIBILITY_COPY[v].body,
                 icon: (v === 'locked' ? 'lock' : 'eye') as IconName,
               }))}
               selected={d.visibility}
-              onPick={(v) => {
-                set({ visibility: v as Visibility });
-                next();
-              }}
+              onPick={(v) =>
+                nudge.pick(v as Visibility, (final) => {
+                  set({ visibility: final });
+                  next();
+                })
+              }
             />
           ) : step === 'where' ? (
             <>

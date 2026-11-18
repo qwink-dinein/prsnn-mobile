@@ -3,6 +3,7 @@ import { colors, radius, space } from '@/theme/tokens';
 import { Text } from './ui/Text';
 import { Icon } from './ui/Icon';
 import { Chip } from './ui/layout';
+import { usePhotoNudge } from './PhotoNudge';
 import { defaultVisibility, GENDER_OPTIONS, SEE_OPTIONS, VISIBILITY_COPY } from '@/domain/privacy';
 import type { Gender, SeeGender, Visibility } from '@/domain/types';
 
@@ -16,12 +17,14 @@ export interface IdentityValue {
 
 /**
  * "I am", "Show me" and profile visibility with an explicit consent tick.
- * Choosing a gender pre-selects the default visibility (men open, women and
- * non-binary locked) until the person picks one themselves.
+ * Choosing a gender pre-selects the default visibility (open for everyone)
+ * until the person picks one themselves. Picking "Locked" shows the photo nudge first.
  */
 export function IdentityForm({ value, onChange, showSee = true, role = 'member' }: { value: IdentityValue; onChange: (v: IdentityValue) => void; showSee?: boolean; role?: 'member' | 'companion' }) {
+  const nudge = usePhotoNudge();
   return (
     <View style={{ gap: space.xl }}>
+      {nudge.sheet}
       <View style={{ gap: space.sm }}>
         <Text variant="headline">I am</Text>
         <View style={styles.wrap} accessibilityRole="radiogroup">
@@ -60,14 +63,19 @@ export function IdentityForm({ value, onChange, showSee = true, role = 'member' 
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${VISIBILITY_COPY[v].title}. ${VISIBILITY_COPY[v].body}`}
-              onPress={() => onChange({ ...value, visibility: v, consent: true })}
+              onPress={() => {
+                const apply = (final: Visibility) => onChange({ ...value, visibility: final, consent: true });
+                // Already locked: no need to ask again.
+                if (value.visibility === 'locked') apply(v);
+                else nudge.pick(v, apply);
+              }}
               style={[styles.option, on && styles.optionOn]}
             >
               <Icon name={v === 'locked' ? 'lock' : 'eye'} size={20} color={colors.moss} />
               <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <Text variant="callout" style={{ fontFamily: 'Urbanist-SemiBold' }}>
                   {VISIBILITY_COPY[v].title}
-                  {value.gender && defaultVisibility(value.gender) === v ? <Text variant="caption" muted>{'  '}· default</Text> : null}
+                  {value.gender && defaultVisibility(value.gender) === v ? <Text variant="caption" muted>{'  '}· recommended</Text> : null}
                 </Text>
                 <Text variant="footnote" muted>
                   {VISIBILITY_COPY[v].body}

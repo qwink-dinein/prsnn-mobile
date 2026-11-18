@@ -38,6 +38,7 @@ export const qk = {
   consents: ['consents'] as const,
   companions: ['companions'] as const,
   companion: (id: string) => ['companion', id] as const,
+  companionsBusy: (date: string) => ['companionsBusy', date] as const,
   myBookings: ['bookings', 'mine'] as const,
   incoming: ['bookings', 'incoming'] as const,
   booking: (id: string) => ['booking', id] as const,

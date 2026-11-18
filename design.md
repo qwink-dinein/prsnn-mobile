@@ -178,6 +178,18 @@ action) and pull-to-refresh on lists.
 - The PIN keypad has 76pt round keys, registers a digit the moment a key is
   touched, never drops fast taps, and accepts a hardware keyboard.
 
+## Photo nudge, Available today, photo viewer (2026-11-18)
+
+- **Open by default.** Everyone starts with an open photo. Tapping **Locked** opens a bottom sheet first:
+  lock → eye in champagne, "Public photos get more bookings", three points on a champagne-mist panel
+  (shown higher in search, still safe, change any time), midnight **Keep my photo visible**, ghost **Lock it anyway**.
+- **Available today** (Search, under the search field): a 60 pt switch card. Off: champagne-mist fill, champagne
+  2 pt border, soft champagne glow and a pulsing dot. On: midnight fill, champagne switch. Rows then carry a
+  champagne-mist "Free today · till 9 PM" pill.
+- **Photo viewer.** The tapped photo grows (320 ms, ease-out) into a round photo, at most 340 pt, with a 3 pt champagne
+  ring, over midnight at 94%. Name, verified shield, area and price below, then View profile (outline) and Book
+  (champagne). Swipe down, tap outside or ✕ to close. No motion with reduced motion turned on.
+
 ## Photos
 
 The marketing photos in `assets/images/` come from the web app's `public/`

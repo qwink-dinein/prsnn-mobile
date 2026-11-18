@@ -24,6 +24,7 @@ import { defaultVisibility, GENDER_OPTIONS, VISIBILITY_COPY } from '@/domain/pri
 import type { Gender, SeeGender, Visibility } from '@/domain/types';
 import { useSession } from '@/state/session';
 import { isStaff } from '@/domain/admin';
+import { usePhotoNudge } from '@/components/PhotoNudge';
 
 type Step = 'name' | 'contact' | 'where' | 'categories' | 'gender' | 'meet' | 'photo' | 'visibility';
 
@@ -45,6 +46,7 @@ const COUNTRIES = ['United Kingdom', 'United States', 'United Arab Emirates', 'C
  * Companions and staff only give their name here (companion sign-up asks the rest).
  */
 export default function SetupProfile() {
+  const nudge = usePhotoNudge();
   const user = useSession((s) => s.user);
   const updateUser = useSession((s) => s.updateUser);
   const simple = isStaff(user?.role) || user?.role === 'companion';
@@ -198,6 +200,7 @@ export default function SetupProfile() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      {nudge.sheet}
       <View style={styles.top}>
         <IconButton name="chevronLeft" label={i > 0 ? 'Back' : 'Leave setup'} onPress={back} />
         <View style={styles.dots} accessibilityLabel={`Step ${i + 1} of ${steps.length}`}>
@@ -394,18 +397,20 @@ export default function SetupProfile() {
             </View>
           ) : (
             <Options
-              items={(['locked', 'open'] as Visibility[]).map((v) => ({
+              items={(['open', 'locked'] as Visibility[]).map((v) => ({
                 key: v,
-                title: `${VISIBILITY_COPY[v].title}${d.gender && defaultVisibility(d.gender) === v ? ' · recommended' : ''}`,
+                title: `${VISIBILITY_COPY[v].title}${defaultVisibility(d.gender) === v ? ' · recommended' : ''}`,
                 body: VISIBILITY_COPY[v].body,
                 icon: (v === 'locked' ? 'lock' : 'eye') as IconName,
               }))}
               selected={d.visibility}
               busy={busy}
-              onPick={(v) => {
-                set({ visibility: v as Visibility });
-                void save(v as Visibility);
-              }}
+              onPick={(v) =>
+                nudge.pick(v as Visibility, (final) => {
+                  set({ visibility: final });
+                  void save(final);
+                })
+              }
             />
           )}
         </Enter>

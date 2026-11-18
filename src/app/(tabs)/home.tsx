@@ -17,6 +17,7 @@ import { priceFor } from '@/domain/pricing';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { CompanionCard } from '@/components/companions';
+import { photosFirst } from '@/domain/search';
 import { CompanionDashboard } from '@/components/fellow/Dashboard';
 import { CATEGORIES, categoryOf } from '@/domain/categories';
 import { svc, qk } from '@/services';
@@ -47,7 +48,8 @@ function Discover() {
   const popular = useMemo(() => {
     const list = q.data ?? [];
     const here = list.filter((c) => (c.city ?? '').toLowerCase() === city.toLowerCase());
-    return [...here, ...list.filter((c) => !here.includes(c))].slice(0, 10);
+    // Visible photos first within each group (owner's rule; see domain/search photosFirst).
+    return [...photosFirst(here), ...photosFirst(list.filter((c) => !here.includes(c)))].slice(0, 10);
   }, [q.data, city]);
   const loved = CATEGORIES.find((c) => c.key === 'loved_one')!;
 

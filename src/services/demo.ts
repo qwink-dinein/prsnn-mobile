@@ -1,5 +1,5 @@
 import type { AppNotification, Booking, Companion, Gender, Policy, Profile, SessionUser, VerificationStatus } from '@/domain/types';
-import { amountDuePaise, refundIfCancelledNow, toDateKey } from '@/domain/booking';
+import { amountDuePaise, refundIfCancelledNow, toDateKey, type BusyTime } from '@/domain/booking';
 import { priceFor, pricing } from '@/domain/pricing';
 import { useSession } from '@/state/session';
 import { needsIdToAccept } from '@/domain/verification';
@@ -219,6 +219,7 @@ export const demo: Backend = {
   policy: () => wait(POLICY),
   // Sample data: no one else books the sample companions, so no time is taken.
   companionBusy: (_id: string, _date: string) => wait([]),
+  companionsBusy: (_date: string) => wait({} as Record<string, BusyTime[]>),
   createPrepaidBooking: (b) => {
     const existing = keys.get(b.idempotencyKey);
     if (existing) {

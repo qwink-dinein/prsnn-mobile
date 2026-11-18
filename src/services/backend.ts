@@ -98,7 +98,7 @@ export const PREVIEW_READ_ONLY = 'This is a live preview: you can look around, b
 /** Read as the previewed person. */
 const AS_PERSON = new Set(['me', 'my_profile', 'my_bookings', 'incoming_bookings', 'get_booking', 'list_companions', 'get_companion', 'unread_counts', 'my_consents']);
 /** The same for everyone: safe to read as the staff member. */
-const SHARED = new Set(['booking_policy', 'payment_mode', 'search_localities', 'city_plans_for', 'companion_busy']);
+const SHARED = new Set(['booking_policy', 'payment_mode', 'search_localities', 'city_plans_for', 'companion_busy', 'companions_busy']);
 /** Harmless bookkeeping a screen does on its own (marking a chat read): skipped quietly. */
 const SKIP = new Set(['mark_chat_read', 'save_push_token']);
 
@@ -302,6 +302,8 @@ export const backend = {
   policy: () => rpc<Policy>('booking_policy'),
   /** Times a companion is already taken on a day (`YYYY-MM-DD`), so they aren't offered again. */
   companionBusy: (id: string, date: string) => rpc<BusyTime[]>('companion_busy', { cid: id, d: date }),
+  /** Every companion's taken times on one day: { companionId: BusyTime[] } ("Available today"). */
+  companionsBusy: (date: string) => rpc<Record<string, BusyTime[]>>('companions_busy', { d: date }),
   createPrepaidBooking: (b: { companionId: string; scheduledDate: string; startTime: string; duration: Duration; idempotencyKey: string; acceptTerms: true; message?: string; experience?: string; city?: string; area?: string; category?: string | null; meetingPlace: string; homeVisit?: boolean; recipient?: Recipient | null }) =>
     rpc<{ booking: Booking; quote: Quote; policy: Policy; replayed?: boolean }>('create_prepaid_booking', { p: b }),
   acceptOffer: (id: string) => rpc<{ message: string; booking: Booking; idCheck?: boolean }>('accept_offer', { bid: id }),

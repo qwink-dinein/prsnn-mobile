@@ -106,6 +106,7 @@ r = await rpc(mem2, 'get_booking', { bid }); ok(!!r.error, 'other members cannot
 r = await rpc(mem2, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '17:00', duration: '60', idempotencyKey: key + 'dbl', acceptTerms: true, meetingPlace: 'Inorbit Mall' } });
 ok(/already booked at that time/.test(r.error ?? ''), 'no double booking: overlapping time refused for everyone', r);
 r = await rpc(mem2, 'companion_busy', { cid: compId, d: day(3) }); ok(r.data?.some((x) => x.start === '16:00' && x.duration === 120), 'busy times listed (no names)', r);
+r = await rpc(mem2, 'companions_busy', { d: day(3) }); ok(r.data?.[compId]?.some((x) => x.start === '16:00' && x.duration === 120) && Object.values(r.data ?? {}).every((list) => list.every((x) => Object.keys(x).sort().join() === 'duration,start')), 'every companion\'s busy times for a day (times only)', r);
 r = await rpc(mem, 'create_prepaid_booking', { p: { companionId: compId, scheduledDate: day(3), startTime: '16:30', duration: '60', idempotencyKey: key + 'dbl2', acceptTerms: true, meetingPlace: 'Inorbit Mall' } });
 ok(/already booked/.test(r.error ?? ''), 'same member cannot double-book either', r);
 r = await rpc(sup, 'admin_view_as', { target: compId, fn: 'incoming_bookings' }); ok(r.data?.some((x) => x._id === bid), 'staff live preview reads as the companion', r.error);

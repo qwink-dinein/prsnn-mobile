@@ -107,10 +107,11 @@ describe('cities and areas', () => {
 });
 
 describe('privacy defaults', () => {
-  it('men open, women and non-binary locked', () => {
+  it('everyone starts open (a visible photo drives bookings); locking is a choice', () => {
     expect(defaultVisibility('man')).toBe('open');
-    expect(defaultVisibility('woman')).toBe('locked');
-    expect(defaultVisibility('nonbinary')).toBe('locked');
+    expect(defaultVisibility('woman')).toBe('open');
+    expect(defaultVisibility('nonbinary')).toBe('open');
+    expect(defaultVisibility(undefined)).toBe('open');
   });
   it('identity is complete only with all three choices', () => {
     expect(hasIdentity({ gender: 'woman', seeGender: 'woman', profileVisibility: 'locked' })).toBe(true);

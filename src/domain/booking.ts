@@ -128,6 +128,31 @@ export function freeSlots(slots: string[], busy: BusyTime[], durationMinutes: nu
   });
 }
 
+/** Shortest session (minutes): a companion counts as free today if one of these still fits. */
+export const FREE_TODAY_MINUTES = 60;
+
+/**
+ * "Available today" on Search: the companion works today and a 1-hour session can still start
+ * (after the booking lead time) without overlapping their taken times. Returns their free window
+ * for the label, or null. `from` is the first free start; `until` is when their day ends.
+ */
+export function freeToday(
+  c: Pick<Companion, 'availability' | 'startTime' | 'endTime'>,
+  busy: BusyTime[],
+  now: Date = new Date(),
+): { from: string; until: string; label: string } | null {
+  if (!isDayAvailable(c.availability, now)) return null;
+  const endMin = Math.min(toMinutes(c.endTime || DEFAULT_END), toMinutes(DEFAULT_END));
+  // A session that fits inside their hours (the picker also allows a start right at closing time).
+  const starts = freeSlots(timeSlots(c, now, now, 30, MIN_LEAD_MINUTES, FREE_TODAY_MINUTES), busy, FREE_TODAY_MINUTES).filter((t) => toMinutes(t) + FREE_TODAY_MINUTES <= endMin);
+  if (!starts.length) return null;
+  const from = starts[0];
+  const until = fromMinutes(endMin);
+  // Free from (about) now: "till 9 PM"; free later in the day: "4 PM – 9 PM".
+  const soon = toMinutes(from) <= now.getHours() * 60 + now.getMinutes() + MIN_LEAD_MINUTES + 30;
+  return { from, until, label: soon ? `till ${formatTime(until)}` : `${formatTime(from)} – ${formatTime(until)}` };
+}
+
 /** Month grid (weeks × 7) with nulls for padding, Sunday first like the mock-up. */
 export function monthGrid(year: number, month: number): (Date | null)[][] {
   const first = new Date(year, month, 1);

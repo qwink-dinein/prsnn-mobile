@@ -13,8 +13,12 @@ export const SEE_OPTIONS: { value: SeeGender; label: string }[] = [
   { value: 'everyone', label: 'Everyone' },
 ];
 
-/** Owner's rule: men open by default; women (and non-binary people) locked by default. */
-export const defaultVisibility = (g?: Gender | null): Visibility => (g === 'man' ? 'open' : 'locked');
+/**
+ * Owner's rule (18 Nov): everyone starts open, because a visible photo drives trust and bookings.
+ * Choosing "Locked" first shows the photo nudge (components/PhotoNudge). The gender argument is kept
+ * so callers don't change if the rule ever differs by gender again.
+ */
+export const defaultVisibility = (_g?: Gender | null): Visibility => 'open';
 
 export const VISIBILITY_COPY: Record<Visibility, { title: string; body: string }> = {
   open: { title: 'Open', body: 'Everyone' },

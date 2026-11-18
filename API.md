@@ -491,3 +491,23 @@ Migration `20261117110000_chat_window.sql`. Test: `prsnn-backend/supabase/tests/
   open ("Your session has ended, so chat is closed."). Chats tab: one row per person with Open/Closed.
   "Chat" buttons on booking cards and the booking page show only while chat is open.
 - A new booking with the same person reopens the same thread.
+
+## Round 20 (2026-11-18): photos open by default, "Available today", photo viewer
+
+- **Photo visibility.** Everyone now starts with an **open** photo (`domain/privacy.defaultVisibility`; women were locked by default
+  before). Picking **Locked** in sign-up, companion onboarding or Privacy first shows the photo nudge
+  (`components/PhotoNudge`: "Public photos get more bookings", main button "Keep my photo visible", "Lock it anyway" always there).
+  Existing choices are unchanged. No backend change: the default lived in the app.
+- **Visible photos rank first.** `domain/search.photosFirst`: on Search ("Recommended") and Home, companions with an uploaded,
+  unlocked photo come first; order within each group is kept. Price sorts are unaffected.
+- **`companions_busy(d date) → { companionId: [{start, duration}] }`** (migration `20261118090000_companions_busy_today`):
+  every companion's taken times on one day, same rule as `companion_busy` (`private.holds_companion`), times only, signed-in
+  callers. New index `bookings_scheduled_date`. Used by the **Available today** switch on Search: `domain/booking.freeToday`
+  keeps a companion if they work today and a 1-hour session still fits in their hours after the 90-minute booking lead and
+  their taken times; rows show "Free today · till 9 PM" or "4 PM – 9 PM". The switch starts off, glowing (pulse stops with
+  reduced motion). e2e: checks the map and that only times come back.
+- **Photo viewer.** Tapping a visible photo (Home card, Search row, profile) grows it into a large round photo over a dark
+  backdrop (`components/PhotoViewer`, mounted once in `app/_layout`, opened with `lib/photoViewer.openPhoto`). Swipe down,
+  tap outside or close to shrink it back. From a list it offers View profile and Book (`/companion/[id]?book=1` scrolls to
+  the booking picker). Locked photos never open.
+
