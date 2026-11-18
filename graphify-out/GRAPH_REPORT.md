@@ -1,161 +1,138 @@
 # Graph Report - prsnn-mobile  (2026-11-18)
 
 ## Corpus Check
-- 192 files · ~315,176 words
+- 193 files · ~316,083 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 2, .example 1)
 
 ## Summary
-- 1675 nodes · 7681 edges · 79 communities (65 shown, 14 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 247 edges (avg confidence: 0.85)
+- 1681 nodes · 7720 edges · 57 communities (56 shown, 1 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 248 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `805c19ac`
+- Built from commit: `66142b48`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - types.ts
-- tokens.ts
+- lib/mode.ts
 - package.json
-- chat/[bookingId].tsx
+- lib/chat.ts
 - expo
 - session.ts
 - landing.py
-- dependencies
+- session.ts
 - devDependencies
 - demoAdmin.ts
-- space
+- layout.tsx
 - compilerOptions
 - scripts
 - e2e-supabase.mjs
-- PhotoCard.tsx
+- home.tsx
 - rules.ts
 - demo.ts
-- admin.tsx
+- Text
 - LocationFields.tsx
 - BookingPicker.tsx
 - screens_v2.py
-- components/bookings.tsx
+- booking.ts
 - journey.py
-- react-native
+- Button.tsx
 - pathlib
-- expo-crypto
 - domain/pricing.ts
 - all_screens.py
-- Text
 - btn
 - body
 - chat_keyboard.py
 - btn
-- profile.tsx
-- layout.tsx
 - brand_screens.py
-- errorMessage
-- expo-notifications
 - formatINR
 - photo
 - interest.ts
 - pay/[bookingId].tsx
 - card_systems.py
 - wallet.tsx
-- search.tsx
-- useSession
+- app/_layout.tsx
 - logo_concepts.py
 - view_as.py
 - logo_luxe.py
-- Button
+- Icon
 - wordmarks.py
-- react-native-worklets@0.13.0
 - motion.tsx
 - m_book
-- booking.ts
-- Text.tsx
-- fellow/earnings.tsx
+- chat/[bookingId].tsx
 - jest
 - verification.ts
 - brand_directions.py
 - flow.ts
-- expo@~58.0.20
-- expo-constants
-- expo-device
 - view-as.tsx
-- session.ts
+- config.ts
 - IdentityForm.tsx
-- availability.tsx
 - notifications.tsx
 - categories.py
-- react-native-web@~0.21.4
-- round2.test.ts
-- expo-font
-- @expo-google-fonts/lora@^0.4.2
-- @expo-google-fonts/outfit@^0.4.3
-- @react-native-community/netinfo
-- react-native-screens@~4.30.0
-- react-native-webview
-- zod@^4.6.7
 
 ## God Nodes (most connected - your core abstractions)
-1. `Text()` - 213 edges
+1. `Text()` - 215 edges
 2. `body()` - 138 edges
-3. `Icon` - 122 edges
+3. `Icon` - 124 edges
 4. `btn()` - 104 edges
-5. `errorMessage()` - 103 edges
-6. `ic()` - 102 edges
-7. `Button()` - 102 edges
-8. `react-native` - 100 edges
-9. `colors` - 93 edges
+5. `Button()` - 104 edges
+6. `errorMessage()` - 103 edges
+7. `ic()` - 102 edges
+8. `react-native` - 101 edges
+9. `colors` - 94 edges
 10. `Header()` - 89 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `day()` --calls--> `toDateKey()`  [EXTRACTED]
   src/services/demo.ts → src/domain/booking.ts
-- `ProfileTab()` --calls--> `ModeSwitch()`  [EXTRACTED]
-  src/app/(tabs)/profile.tsx → src/components/ModeSwitch.tsx
-- `ProfileTab()` --calls--> `useConfirm()`  [EXTRACTED]
-  src/app/(tabs)/profile.tsx → src/components/ui/confirm.tsx
-- `ProfileTab()` --calls--> `Icon`  [EXTRACTED]
-  src/app/(tabs)/profile.tsx → src/components/ui/Icon.tsx
-- `ProfileTab()` --calls--> `Avatar()`  [EXTRACTED]
-  src/app/(tabs)/profile.tsx → src/components/ui/layout.tsx
+- `normaliseCompanion()` --calls--> `areaName()`  [EXTRACTED]
+  src/services/backend.ts → src/domain/places.ts
+- `toProfile()` --calls--> `areaName()`  [EXTRACTED]
+  src/services/backend.ts → src/domain/places.ts
+- `Chat()` --calls--> `typing`  [EXTRACTED]
+  src/app/chat/[bookingId].tsx → src/components/ui/motion.tsx
+- `HomeTab()` --calls--> `useMode()`  [EXTRACTED]
+  src/app/(tabs)/home.tsx → src/lib/mode.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (79 total, 14 thin omitted)
+## Communities (57 total, 1 thin omitted)
 
 ### Community 0 - "types.ts"
-Cohesion: 0.07
-Nodes (39): BookingTab, BusyTime, AdminChatMessage, AdminOverview, AdminPerson, AllocationState, AppNotification, Availability (+31 more)
+Cohesion: 0.06
+Nodes (40): BusyTime, AdminChatMessage, AdminOverview, AdminPerson, AllocationState, AppNotification, Availability, BookingStatus (+32 more)
 
-### Community 1 - "tokens.ts"
-Cohesion: 0.12
-Nodes (29): expo-linear-gradient, BLINK, styles, styles, styles, TABS, styles, SignedOut() (+21 more)
+### Community 1 - "lib/mode.ts"
+Cohesion: 0.26
+Nodes (16): SignedOut(), tab(), TabsLayout(), MessagesTab(), styles, LABEL, ModeSwitch(), styles (+8 more)
 
 ### Community 2 - "package.json"
-Cohesion: 0.11
-Nodes (18): @expo-google-fonts/dm-sans@^0.4.2, expo-image-picker@~58.0.10, expo-linking@~58.0.14, expo-status-bar@~58.0.4, expo-system-ui@~58.0.6, react-dom@19.3.0, zustand@^5.0.16, main (+10 more)
+Cohesion: 0.05
+Nodes (52): dependencies, expo@~58.0.20, expo-crypto@~58.0.7, @expo-google-fonts/dm-sans@^0.4.2, @expo-google-fonts/lora@^0.4.2, @expo-google-fonts/outfit@^0.4.3, @expo-google-fonts/urbanist@^0.4.2, expo-haptics@~58.0.7 (+44 more)
 
-### Community 3 - "chat/[bookingId].tsx"
-Cohesion: 0.12
-Nodes (24): Chat(), isDivider(), time(), RiseIn(), typing, TypingDots(), idOf(), ChatBooking (+16 more)
+### Community 3 - "lib/chat.ts"
+Cohesion: 0.19
+Nodes (10): mergeMessages(), ChatMessage, demoThread(), MAX_MESSAGE_LENGTH, messageId(), Row, Status, toMessage() (+2 more)
 
 ### Community 4 - "expo"
 Cohesion: 0.04
 Nodes (47): backgroundColor, foregroundImage, monochromeImage, adaptiveIcon, allowBackup, blockedPermissions, package, permissions (+39 more)
 
 ### Community 5 - "session.ts"
-Cohesion: 0.24
-Nodes (17): loginIdOfAuthUser(), loginKey(), sameLogin(), sessionIsGone(), checkLocalPin(), clearLocalPin(), forgetSavedSession(), hash() (+9 more)
+Cohesion: 0.21
+Nodes (18): loginIdOfAuthUser(), loginKey(), sameLogin(), sessionIsGone(), checkLocalPin(), clearLocalPin(), forgetSavedSession(), hash() (+10 more)
 
 ### Community 6 - "landing.py"
 Cohesion: 0.09
 Nodes (43): btn(), cat_card(), companion_band(), faq(), final_cta(), footer(), ic(), landing_a() (+35 more)
 
-### Community 7 - "dependencies"
-Cohesion: 0.08
-Nodes (25): dependencies, @expo-google-fonts/urbanist@^0.4.2, expo-haptics@~58.0.7, expo-image@~58.0.17, expo-linear-gradient@~58.0.3, expo-router@~58.0.27, expo-secure-store@~58.0.2, expo-splash-screen@~58.0.11 (+17 more)
+### Community 7 - "session.ts"
+Cohesion: 0.19
+Nodes (7): Phase, styles, styles, styles, setApiToken(), UploadFile, CompanionForm
 
 ### Community 8 - "devDependencies"
 Cohesion: 0.11
@@ -165,9 +142,9 @@ Nodes (19): { defineConfig }, expoConfig, devDependencies, eslint@^9.0.0, eslint
 Cohesion: 0.07
 Nodes (32): priceCurveError(), AdminBooking, AuditEntry, BroadcastRecord, CityPlan, PanicAlert, Role, Backend (+24 more)
 
-### Community 10 - "space"
-Cohesion: 0.13
-Nodes (27): expo-router, react, @tanstack/react-query, EMPTY, styles, styles, styles, FILTERS (+19 more)
+### Community 10 - "layout.tsx"
+Cohesion: 0.09
+Nodes (68): expo-haptics, expo-router, react, react-native, react-native-reanimated, react-native-safe-area-context, @tanstack/react-query, styles (+60 more)
 
 ### Community 11 - "compilerOptions"
 Cohesion: 0.18
@@ -181,9 +158,9 @@ Nodes (10): scripts, android, export:web, graph, ios, lint, start, test (+2 more
 Cohesion: 0.08
 Nodes (15): fs, book(), cand, card, [compId, memId], got, img, offer (+7 more)
 
-### Community 14 - "PhotoCard.tsx"
-Cohesion: 0.23
-Nodes (11): DeckCard(), Dot(), HomeCategories(), styles, DARK, ICON, Parallax, ParallaxPhoto() (+3 more)
+### Community 14 - "home.tsx"
+Cohesion: 0.09
+Nodes (42): expo-linear-gradient, CategoryPage(), styles, Discover(), greeting(), HomeTab(), styles, BecomeCompanionCard() (+34 more)
 
 ### Community 15 - "rules.ts"
 Cohesion: 0.33
@@ -191,35 +168,35 @@ Nodes (8): agreedAt(), Consent, ConsentKind, HOUSE_RULES, LEGAL_VERSION, missing
 
 ### Community 16 - "demo.ts"
 Cohesion: 0.07
-Nodes (27): Profile, SessionUser, AuthResult, allDays, bookings, companionStatus(), day(), demo (+19 more)
+Nodes (26): SessionUser, AuthResult, allDays, bookings, companionStatus(), day(), demo, DemoCompanion (+18 more)
 
-### Community 17 - "admin.tsx"
-Cohesion: 0.11
-Nodes (38): AdminBookingDetail(), PersonLink(), Sheet, styles, Wrap(), PanicDetail(), styles, tel() (+30 more)
+### Community 17 - "Text"
+Cohesion: 0.05
+Nodes (165): Activity(), AdminActivity(), priceDiff(), short(), styles, AdminAdmins(), Admins(), styles (+157 more)
 
 ### Community 18 - "LocationFields.tsx"
-Cohesion: 0.17
-Nodes (20): AreaSheet(), CitySheet(), Dropdown(), fold(), LocationFields(), NoMatch(), Row(), Sheet() (+12 more)
+Cohesion: 0.14
+Nodes (24): AreaSheet(), CitySheet(), Dropdown(), fold(), LocationFields(), NoMatch(), Row(), Sheet() (+16 more)
 
 ### Community 19 - "BookingPicker.tsx"
-Cohesion: 0.28
-Nodes (13): BookingPicker(), styles, WEEK, dayKeyOf(), endTimeOf(), formatTime(), freeSlots(), freeToday() (+5 more)
+Cohesion: 0.11
+Nodes (30): initial(), BookingChoice, BookingPicker(), styles, WEEK, AvailabilityEditor(), AvailabilityValue, emptyAvailability() (+22 more)
 
 ### Community 20 - "screens_v2.py"
 Cohesion: 0.05
 Nodes (46): keypad(), s_pin_login(), a_overview_sub(), banner(), booked(), booking_detail(), c_status_changes(), c_status_live() (+38 more)
 
-### Community 21 - "components/bookings.tsx"
-Cohesion: 0.14
-Nodes (40): Checkout(), newKey(), RELATIONS, Step(), styles, BookingDetail(), styles, Confirmed() (+32 more)
+### Community 21 - "booking.ts"
+Cohesion: 0.10
+Nodes (47): RELATIONS, styles, styles, styles, BookingsTab(), styles, TABS, BookingCard() (+39 more)
 
 ### Community 22 - "journey.py"
 Cohesion: 0.09
 Nodes (26): b64(), bar(), chat_screen(), dots(), keypad(), opts(), page(), pkrow() (+18 more)
 
-### Community 23 - "react-native"
-Cohesion: 0.09
-Nodes (38): react-native, styles, INTERESTS, Step, STEPS, styles, ID_COPY, styles (+30 more)
+### Community 23 - "Button.tsx"
+Cohesion: 0.08
+Nodes (25): Data, DATA, STARTS, styles, WHO, METHODS, styles, EARN_HOURS (+17 more)
 
 ### Community 24 - "pathlib"
 Cohesion: 0.19
@@ -227,15 +204,11 @@ Nodes (5): letters(), monogram(), wordmark(), icon(), mark()
 
 ### Community 26 - "domain/pricing.ts"
 Cohesion: 0.15
-Nodes (26): perks(), a11y(), PackageGrid(), Props, styles, tagFor(), applyPricing(), BASE_RATE (+18 more)
+Nodes (27): perks(), styles, a11y(), PackageGrid(), Props, styles, tagFor(), applyPricing() (+19 more)
 
 ### Community 27 - "all_screens.py"
 Cohesion: 0.13
 Nodes (37): checkbox(), chips(), field(), label(), notice(), s_admins(), s_broadcast(), s_chat() (+29 more)
-
-### Community 28 - "Text"
-Cohesion: 0.13
-Nodes (34): AdminOverview(), Money(), PanicBanner(), Person(), CategoryPage(), Options(), Wordmark(), Pin() (+26 more)
 
 ### Community 29 - "btn"
 Cohesion: 0.09
@@ -253,33 +226,21 @@ Nodes (3): composer(), header(), svg()
 Cohesion: 0.20
 Nodes (25): foot(), c1(), c2(), c3(), c4(), c5(), c6(), c7() (+17 more)
 
-### Community 33 - "profile.tsx"
-Cohesion: 0.15
-Nodes (23): ProfileTab(), styles, AdminAction, can(), canActOn(), describeAction(), isStaff(), isSuperadmin() (+15 more)
-
-### Community 34 - "layout.tsx"
-Cohesion: 0.13
-Nodes (18): expo-image, react-native-safe-area-context, styles, styles, PHOTOS, Splash(), styles, OPTIONS (+10 more)
-
 ### Community 35 - "brand_screens.py"
 Cohesion: 0.15
 Nodes (19): confirmed(), mark(), profile(), row(), welcome(), btn(), chat(), checkout() (+11 more)
 
-### Community 36 - "errorMessage"
-Cohesion: 0.12
-Nodes (49): Activity(), AdminActivity(), priceDiff(), short(), styles, AdminAdmins(), Admins(), styles (+41 more)
-
 ### Community 38 - "formatINR"
-Cohesion: 0.23
-Nodes (19): CompanionProfile(), CompanionCard(), CompanionRow(), firstName(), fromPrice(), HeartButton(), Photo(), placeOf() (+11 more)
+Cohesion: 0.16
+Nodes (29): expo-image, CompanionProfile(), styles, CompanionCard(), CompanionRow(), firstName(), fromPrice(), HeartButton() (+21 more)
 
 ### Community 39 - "photo"
 Cohesion: 0.23
 Nodes (12): photo(), s_apply(), s_category(), s_companion(), s_home_more(), s_login(), shade(), bc() (+4 more)
 
 ### Community 40 - "interest.ts"
-Cohesion: 0.33
-Nodes (7): APPROVAL, categoryTitle(), MEET, SignupChoices, signupDetails(), topCategories(), base
+Cohesion: 0.31
+Nodes (8): APPROVAL, categoryTitle(), MEET, roleLabel(), SignupChoices, signupDetails(), topCategories(), base
 
 ### Community 41 - "pay/[bookingId].tsx"
 Cohesion: 0.26
@@ -293,13 +254,9 @@ Nodes (18): e_booking(), e_home(), e_prices(), g_booking(), g_home(), g_prices()
 Cohesion: 0.29
 Nodes (7): react-native-svg@15.16.0, react-native-svg, Guilloche, Material, MaterialCard(), MATERIALS, styles
 
-### Community 44 - "search.tsx"
+### Community 45 - "app/_layout.tsx"
 Cohesion: 0.12
-Nodes (24): SearchTab(), styles, AvailableTodayToggle(), AreaPicker(), CityPicker(), CitySheet(), PickerField(), SearchSheet() (+16 more)
-
-### Community 45 - "useSession"
-Cohesion: 0.14
-Nodes (21): AppEffects(), RootLayout(), styles, Ask, ConfirmOptions, ConfirmProvider(), Ctx, styles (+13 more)
+Nodes (19): expo-font@~58.0.10, expo-splash-screen@~58.0.11, expo-status-bar@~58.0.4, react-native-gesture-handler@~3.3.0, expo-font, expo-splash-screen, expo-status-bar, react-native-gesture-handler (+11 more)
 
 ### Community 46 - "logo_concepts.py"
 Cohesion: 0.19
@@ -313,97 +270,81 @@ Nodes (10): s_action(), s_companion_dash(), s_companion_onb(), s_exit(), s_membe
 Cohesion: 0.29
 Nodes (9): card(), cut(), gem(), linked(), signature(), svg(), uid(), word() (+1 more)
 
-### Community 49 - "Button"
-Cohesion: 0.12
-Nodes (44): EMPTY, Plans(), Row(), styles, AdminPrices(), Draft, draftOf(), Pair() (+36 more)
+### Community 49 - "Icon"
+Cohesion: 0.11
+Nodes (38): Row(), CompanionOnboarding(), INTERESTS, Line(), Options(), Step, STEPS, styles (+30 more)
 
 ### Community 50 - "wordmarks.py"
 Cohesion: 0.27
 Nodes (4): bodoni_italic(), gem(), light_lower(), urbanist_lower()
 
 ### Community 52 - "motion.tsx"
-Cohesion: 0.10
-Nodes (21): expo-haptics, react-native-reanimated, styles, PULSE, styles, styles, WEAK, styles (+13 more)
+Cohesion: 0.09
+Nodes (24): DOT_FADE, DOT_SETTLE, styles, BRAND_WORD, dotColorFor(), isLight(), Wordmark(), bob (+16 more)
 
 ### Community 53 - "m_book"
 Cohesion: 0.38
 Nodes (7): price_card(), price_tab(), s_availability(), s_book_length(), stack(), c_availability(), m_book()
 
-### Community 54 - "booking.ts"
+### Community 54 - "chat/[bookingId].tsx"
 Cohesion: 0.11
-Nodes (27): amountDuePaise(), awaitingAnswer(), BookingTab, canChat(), canComplete(), canPay(), CATEGORIES, CategoryKey (+19 more)
-
-### Community 55 - "Text.tsx"
-Cohesion: 0.12
-Nodes (20): DOT_FADE, DOT_SETTLE, styles, BRAND_WORD, dotColorFor(), isLight(), Wordmark(), EASE_OUT_CSS (+12 more)
-
-### Community 56 - "fellow/earnings.tsx"
-Cohesion: 0.48
-Nodes (5): Earnings(), EarningsScreen(), styles, EarningsTab(), Brand()
+Nodes (26): Chat(), isDivider(), Row, styles, time(), PULSE, styles, RiseIn() (+18 more)
 
 ### Community 57 - "jest"
 Cohesion: 0.40
 Nodes (5): jest, moduleNameMapper, preset, testMatch, transformIgnorePatterns
 
 ### Community 58 - "verification.ts"
-Cohesion: 0.39
-Nodes (7): VerificationStatus, companionStatusLine(), ID_TYPES, idUploadError(), isLiveCompanion(), needsBack(), needsIdToAccept()
+Cohesion: 0.33
+Nodes (8): VerificationStatus, companionStatusLine(), ID_TYPES, idCheckValue(), idUploadError(), isLiveCompanion(), needsBack(), needsIdToAccept()
 
 ### Community 59 - "brand_directions.py"
 Cohesion: 0.19
 Nodes (6): pair(), phone(), section(), font_card(), icon(), mark()
 
 ### Community 60 - "flow.ts"
-Cohesion: 0.17
-Nodes (17): AppMode, canUseCompanionMode(), effectiveMode(), modeOfSide(), modesFor(), SideMode, sideMode(), Who (+9 more)
+Cohesion: 0.11
+Nodes (28): PHOTOS, Splash(), styles, Logo(), marketRole(), AppMode, canUseCompanionMode(), effectiveMode() (+20 more)
 
 ### Community 64 - "view-as.tsx"
-Cohesion: 0.17
-Nodes (19): Data, DATA, STARTS, styles, WHO, endPreview(), go(), PreviewAs (+11 more)
+Cohesion: 0.20
+Nodes (15): styles, endPreview(), go(), PreviewAs, PreviewStart, routeFor(), sampleUser(), startLivePreview() (+7 more)
 
-### Community 65 - "session.ts"
-Cohesion: 0.14
-Nodes (9): @react-native-async-storage/async-storage, styles, setApiToken(), DEMO, SITE_URL, SUPABASE_KEY, SUPABASE_URL, secure (+1 more)
+### Community 65 - "config.ts"
+Cohesion: 0.15
+Nodes (11): @react-native-async-storage/async-storage@2.2.0, react-native-url-polyfill@^4.0.0, @supabase/supabase-js@^2.119.0, @react-native-async-storage/async-storage, react-native-url-polyfill, @supabase/supabase-js, DEMO, SITE_URL (+3 more)
 
 ### Community 66 - "IdentityForm.tsx"
-Cohesion: 0.27
-Nodes (12): identityComplete(), IdentityValue, styles, defaultVisibility(), GENDER_OPTIONS, SEE_OPTIONS, VISIBILITY_COPY, ApprovalStatus (+4 more)
-
-### Community 67 - "availability.tsx"
-Cohesion: 0.28
-Nodes (11): Availability(), AvailabilityForm(), initial(), AvailabilityEditor(), AvailabilityValue, emptyAvailability(), HOURS, styles (+3 more)
+Cohesion: 0.29
+Nodes (11): identityComplete(), IdentityValue, styles, GENDER_OPTIONS, SEE_OPTIONS, VISIBILITY_COPY, ApprovalStatus, Gender (+3 more)
 
 ### Community 68 - "notifications.tsx"
-Cohesion: 0.29
-Nodes (8): Filter, ICON, open(), styles, modeForNotification(), enterModeFor(), openFromPush(), registerForPush()
+Cohesion: 0.21
+Nodes (11): expo-constants@~58.0.13, expo-device@~58.0.5, expo-notifications@~58.1.8, expo-constants, expo-device, expo-notifications, open(), modeForNotification() (+3 more)
 
 ### Community 69 - "categories.py"
 Cohesion: 0.31
 Nodes (5): city_pill(), day_trips(), plan_rows(), pk(), profile()
 
-### Community 71 - "round2.test.ts"
-Cohesion: 0.29
-Nodes (5): durationLine(), savingPercent(), PANIC_AFTER_END_MS, panicWindow(), b()
-
 ## Knowledge Gaps
-- **2 isolated node(s):** `expo/tsconfig.base`, `COMMUNITY_IMAGE`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 417 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **2 isolated node(s):** `COMMUNITY_IMAGE`, `expo/tsconfig.base`
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 420 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Text()` connect `Text` to `tokens.ts`, `chat/[bookingId].tsx`, `space`, `PhotoCard.tsx`, `admin.tsx`, `LocationFields.tsx`, `BookingPicker.tsx`, `components/bookings.tsx`, `react-native`, `domain/pricing.ts`, `profile.tsx`, `layout.tsx`, `errorMessage`, `formatINR`, `search.tsx`, `useSession`, `Button`, `motion.tsx`, `Text.tsx`, `fellow/earnings.tsx`, `view-as.tsx`, `session.ts`, `IdentityForm.tsx`, `availability.tsx`, `notifications.tsx`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
-- **What connects `expo/tsconfig.base`, `COMMUNITY_IMAGE` to the rest of the system?**
+- **Why does `Text()` connect `Text` to `view-as.tsx`, `lib/mode.ts`, `IdentityForm.tsx`, `formatINR`, `session.ts`, `layout.tsx`, `home.tsx`, `Icon`, `LocationFields.tsx`, `BookingPicker.tsx`, `motion.tsx`, `booking.ts`, `chat/[bookingId].tsx`, `Button.tsx`, `domain/pricing.ts`, `flow.ts`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **What connects `COMMUNITY_IMAGE`, `expo/tsconfig.base` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
 - **Should `types.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06553911205073996 - nodes in this community are weakly interconnected._
-- **Why does `react-native` connect `react-native` to `tokens.ts`, `package.json`, `dependencies`, `space`, `PhotoCard.tsx`, `admin.tsx`, `LocationFields.tsx`, `BookingPicker.tsx`, `components/bookings.tsx`, `domain/pricing.ts`, `profile.tsx`, `layout.tsx`, `errorMessage`, `formatINR`, `pay/[bookingId].tsx`, `wallet.tsx`, `search.tsx`, `useSession`, `Button`, `motion.tsx`, `Text.tsx`, `fellow/earnings.tsx`, `view-as.tsx`, `session.ts`, `IdentityForm.tsx`, `availability.tsx`, `notifications.tsx`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Should `tokens.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.12435897435897436 - nodes in this community are weakly interconnected._
-- **Why does `useSession` connect `useSession` to `types.ts`, `tokens.ts`, `chat/[bookingId].tsx`, `demoAdmin.ts`, `space`, `demo.ts`, `admin.tsx`, `components/bookings.tsx`, `react-native`, `Text`, `profile.tsx`, `layout.tsx`, `errorMessage`, `formatINR`, `search.tsx`, `Button`, `motion.tsx`, `Text.tsx`, `flow.ts`, `view-as.tsx`, `session.ts`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _Cohesion score 0.06363636363636363 - nodes in this community are weakly interconnected._
+- **Why does `react-native` connect `layout.tsx` to `lib/mode.ts`, `package.json`, `session.ts`, `session.ts`, `home.tsx`, `Text`, `LocationFields.tsx`, `BookingPicker.tsx`, `booking.ts`, `Button.tsx`, `domain/pricing.ts`, `formatINR`, `pay/[bookingId].tsx`, `wallet.tsx`, `app/_layout.tsx`, `Icon`, `motion.tsx`, `chat/[bookingId].tsx`, `flow.ts`, `view-as.tsx`, `config.ts`, `IdentityForm.tsx`, `notifications.tsx`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.10526315789473684 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05152394775036284 - nodes in this community are weakly interconnected._
+- **Why does `react` connect `layout.tsx` to `lib/mode.ts`, `package.json`, `lib/chat.ts`, `session.ts`, `home.tsx`, `Text`, `LocationFields.tsx`, `BookingPicker.tsx`, `booking.ts`, `Button.tsx`, `domain/pricing.ts`, `formatINR`, `pay/[bookingId].tsx`, `wallet.tsx`, `app/_layout.tsx`, `Icon`, `motion.tsx`, `chat/[bookingId].tsx`, `flow.ts`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Should `expo` be split into smaller, more focused modules?**
+  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._

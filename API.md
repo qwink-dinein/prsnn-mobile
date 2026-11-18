@@ -535,3 +535,14 @@ Migration `20261117110000_chat_window.sql`. Test: `prsnn-backend/supabase/tests/
   3,099 · 3,349 · 3,599 (`settings.pricing.packagePrices`).
 - e2e: superadmin and sub-admin keep a member side and can use member calls.
 
+## Round 22 (2026-11-18): "Become a companion" everywhere it's looked for
+
+Members kept phoning to ask how to apply. No backend change.
+- **Home (members only):** `components/BecomeCompanionCard` under House rules: photo card "Become a companion · keep 80% of every
+  booking: ₹319 for an hour" → sheet with what you keep for 1 / 2 / 4 hours (`domain/pricing.companionKeepFor`, live prices),
+  four steps, **Apply now** (`/fellow/onboarding`). Hidden for companions (applicants become companions when they submit).
+- **Welcome:** "Want to earn as a companion? Apply" under the buttons sets `intendedRole: 'companion'` and goes to login, so
+  sign-up continues as a companion.
+- **Website:** header button "Become a companion" (phones: "Earn as a companion") beside "Get the app"; the menu is hidden on
+  phones, so the old menu link was invisible there.
+

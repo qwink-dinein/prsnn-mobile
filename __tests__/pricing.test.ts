@@ -57,3 +57,11 @@ describe('formatINR', () => {
     expect(formatINR(123456)).toBe('₹1,23,456');
   });
 });
+
+describe('what a companion keeps (Become a companion card)', () => {
+  it('is 80% of the default package prices, rounded down', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { companionKeepFor } = require('@/domain/pricing');
+    expect([1, 2, 4].map(companionKeepFor)).toEqual([319, 559, 1039]);
+  });
+});

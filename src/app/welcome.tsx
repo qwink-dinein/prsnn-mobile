@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -62,6 +62,24 @@ export default function Welcome() {
         <View style={{ gap: space.sm }}>
           <Button label="Get started" iconRight="arrowRight" onPress={start} backgroundColor={colors.champagne} textColor={colors.midnight} />
           <Button label="I already have an account" variant="ghost" onPress={() => router.push('/login')} textColor={colors.porcelain} backgroundColor="rgba(241,241,244,0.1)" borderColor="rgba(241,241,244,0.35)" />
+          {/* Straight into companion sign-up: the same choice as "Become a companion" on the next screen. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Want to earn as a companion? Apply"
+            onPress={() => {
+              setPrefs({ seenOnboarding: true, intendedRole: 'companion' });
+              router.push('/login');
+            }}
+            hitSlop={8}
+            style={styles.earnLink}
+          >
+            <Text variant="subhead" color="rgba(241,241,244,0.86)">
+              Want to earn as a companion?{' '}
+              <Text variant="subhead" color={colors.champagne} style={{ fontFamily: 'Urbanist-Bold' }}>
+                Apply
+              </Text>
+            </Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </View>
@@ -69,6 +87,7 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
+  earnLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
   fill: { flex: 1, backgroundColor: colors.midnight },
   film: { position: 'absolute', left: 0, right: 0, top: '22%', bottom: 0, overflow: 'hidden' },
   content: { flex: 1, justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingBottom: space.lg },

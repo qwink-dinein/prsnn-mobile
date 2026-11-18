@@ -12,6 +12,7 @@ import { Enter, PressScale } from '@/components/ui/motion';
 import { HomeCategories } from '@/components/HomeCategories';
 import { RulesCard } from '@/components/RulesCard';
 import { CommunityBanner } from '@/components/CommunityBanner';
+import { BecomeCompanionCard } from '@/components/BecomeCompanionCard';
 import { formatINR } from '@/domain/booking';
 import { priceFor } from '@/domain/pricing';
 import { Text } from '@/components/ui/Text';
@@ -99,6 +100,8 @@ function Discover() {
         <HomeCategories />
       </Enter>
       <RulesCard style={{ marginHorizontal: GUTTER, marginTop: space.lg, marginBottom: space.sm }} />
+      {/* Members only: companions (and applicants, who become companions on submit) already have their side. */}
+      {user && user.role !== 'companion' ? <BecomeCompanionCard style={{ marginHorizontal: GUTTER, marginTop: space.md, marginBottom: space.sm }} /> : null}
 
       {plans.data?.length ? (
         <>

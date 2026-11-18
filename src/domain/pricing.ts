@@ -94,6 +94,8 @@ export const hourlyFor = (hours: number) => Math.round((current.packagePrices[ho
 export const savingFor = (hours: number) => Math.max(0, current.packagePrices[1] * hours - (current.packagePrices[hours] ?? current.packagePrices[1] * hours));
 export const companionShareOf = (amount: number) => Math.floor(amount * (1 - current.platformShare));
 export const platformShareOf = (amount: number) => amount - companionShareOf(amount);
+/** What a companion keeps for an `hours` package at today's prices ("Become a companion" card). */
+export const companionKeepFor = (hours: number) => companionShareOf(priceFor(hours) ?? 0);
 
 export const hoursLabel = (h: number) => `${h} ${h === 1 ? 'hour' : 'hours'}`;
 
