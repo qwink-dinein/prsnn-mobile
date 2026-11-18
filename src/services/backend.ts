@@ -176,7 +176,7 @@ function toProfile(p: Record<string, any>): Profile {
     packages: p.packages ?? undefined,
     availability: p.availability ?? {},
     verification_status: p.verification_status,
-    is_verified: ['subadmin', 'superadmin'].includes(p.role) || p.verification_status === 'verified',
+    is_verified: !!p.staff_role || ['subadmin', 'superadmin'].includes(p.role) || p.verification_status === 'verified',
     gender: p.gender ?? undefined,
     seeGender: p.see_gender ?? undefined,
     profileVisibility: p.profile_visibility ?? undefined,

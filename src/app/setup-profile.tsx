@@ -23,7 +23,8 @@ import { stateOf } from '@/domain/places';
 import { defaultVisibility, GENDER_OPTIONS, VISIBILITY_COPY } from '@/domain/privacy';
 import type { Gender, SeeGender, Visibility } from '@/domain/types';
 import { useSession } from '@/state/session';
-import { isStaff } from '@/domain/admin';
+import { staffLevel } from '@/domain/admin';
+import { effectiveMode } from '@/domain/mode';
 import { usePhotoNudge } from '@/components/PhotoNudge';
 
 type Step = 'name' | 'contact' | 'where' | 'categories' | 'gender' | 'meet' | 'photo' | 'visibility';
@@ -49,7 +50,9 @@ export default function SetupProfile() {
   const nudge = usePhotoNudge();
   const user = useSession((s) => s.user);
   const updateUser = useSession((s) => s.updateUser);
-  const simple = isStaff(user?.role) || user?.role === 'companion';
+  const savedMode = useSession((s) => s.prefs.mode);
+  // Staff in Admin only need a name; staff who switched to Booking answer the member questions.
+  const simple = user?.role === 'companion' || (!!staffLevel(user) && effectiveMode(user, savedMode) !== 'booking');
   const needsContact = !user?.phone;
 
   const [d, setD, clearDraft, restored] = useDraft(`setup.${user?.id ?? 'new'}`, {

@@ -223,6 +223,12 @@ Non-binary, Anyone), "Add your photo" (Face clearly visible · Just you · Good 
 your photo?" (Locked: only people you've booked with · Open: everyone), "How long can you meet?",
 "When are you free?", "Almost done". No long explanations in setup or companion onboarding.
 
+## Staff modes (2026-11-18)
+
+Staff get a third segment: **Admin | Booking | Companion** (Companion only for companions). In Admin the pill is
+steel with the champagne segment; it sits above Admin's header. Staff open in Admin; Profile shows their hats
+("Superadmin · Member") in deep champagne under the name, and a "Switch to Admin" row.
+
 ## Booking and Companion modes (2026-11-16)
 One account, two modes, for anyone who is an approved companion (members never see the switch).
 - **Booking mode** (tabs: Home · Search · My bookings · Chats · Profile): the bookings I made and chats

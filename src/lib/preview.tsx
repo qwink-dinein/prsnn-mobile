@@ -7,7 +7,7 @@ import { colors, space } from '@/theme/tokens';
 import { fonts } from '@/theme/fonts';
 import { Text } from '@/components/ui/Text';
 import { useConfirm } from '@/components/ui/confirm';
-import { isStaff } from '@/domain/admin';
+import { staffLevel } from '@/domain/admin';
 import type { AdminUser, SessionUser } from '@/domain/types';
 import { DEMO } from '@/lib/config';
 import { backend } from '@/services/backend';
@@ -67,7 +67,7 @@ function go(href: string) {
 export async function startPreview(qc: QueryClient, as: PreviewAs, start: PreviewStart) {
   const st = useSession.getState();
   const real = st.preview?.real ?? st.user;
-  if (!real || !isStaff(real.role)) throw new Error('Only the prsnn team can preview the app.');
+  if (!real || !staffLevel(real)) throw new Error('Only the prsnn team can preview the app.');
   if (!DEMO) await backend.admin.logPreview(as, start);
   resetDemo();
   setSampleMode(true);
@@ -84,10 +84,10 @@ export async function startPreview(qc: QueryClient, as: PreviewAs, start: Previe
 export async function startLivePreview(qc: QueryClient, person: Pick<AdminUser, 'id' | 'fullName'>) {
   const st = useSession.getState();
   const real = st.preview?.real ?? st.user;
-  if (!real || !isStaff(real.role)) throw new Error('Only the prsnn team can preview the app.');
+  if (!real || !staffLevel(real)) throw new Error('Only the prsnn team can preview the app.');
   if (DEMO) throw new Error('Live preview needs the real server. This build uses sample data.');
   const user = await backend.admin.viewAs(person.id);
-  if (isStaff(user.role)) throw new Error('Pick a member or a companion, not a staff account.');
+  if (staffLevel(user)) throw new Error('Pick a member or a companion, not a staff account.');
   setSampleMode(false);
   routeToBackend();
   qc.clear();

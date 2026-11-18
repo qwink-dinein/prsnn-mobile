@@ -5,7 +5,8 @@ import type { AuthResult } from '@/services';
 import { useSession } from '@/state/session';
 import { svc } from '@/services';
 import { needsSetup } from '@/domain/setup';
-import { isStaff } from '@/domain/admin';
+import { effectiveMode } from '@/domain/mode';
+import { staffLevel } from '@/domain/admin';
 import { displayPhone as displayPhoneOf } from '@/domain/phone';
 import { hasLocalPin } from '@/lib/pin';
 
@@ -20,8 +21,15 @@ function resetTo(href: Parameters<typeof router.replace>[0]) {
 
 /** Where to go once someone is signed in and set up. */
 export function goHome(user: SessionUser | null = useSession.getState().user) {
-  if (isStaff(user?.role)) {
+  // Staff land where they left off: Admin by default, or Booking / Companion if that was their last mode.
+  const mode = effectiveMode(user, useSession.getState().prefs.mode);
+  if (mode === 'admin') {
     resetTo('/admin');
+    return;
+  }
+  // Staff who switched to Booking answer the member questions first (members and companions are unchanged).
+  if (staffLevel(user) && needsSetup(user, mode)) {
+    resetTo('/setup-profile');
     return;
   }
   if (user?.role === 'companion' && (user.verification_status === 'not_submitted' || !user.verification_status)) {
@@ -45,7 +53,7 @@ export async function goToLogin(fallback: '/welcome' | '/login' = '/welcome') {
 
 /** After the PIN is set (or skipped): finish setup, else home. */
 export function afterPin(user: SessionUser | null = useSession.getState().user) {
-  if (needsSetup(user)) resetTo('/setup-profile');
+  if (needsSetup(user, effectiveMode(user, useSession.getState().prefs.mode))) resetTo('/setup-profile');
   else goHome(user);
 }
 

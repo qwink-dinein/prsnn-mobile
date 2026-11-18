@@ -11,7 +11,7 @@ import { queryClient } from '@/lib/queryClient';
 import { useSession } from '@/state/session';
 import { companionStatusLine, idCheckValue } from '@/domain/verification';
 import { seeLabel } from '@/domain/privacy';
-import { isStaff, roleLabel } from '@/domain/admin';
+import { peopleLabel, roleLabel, staffLevel } from '@/domain/admin';
 import { unregisterPush } from '@/lib/push';
 import { endPreview, startPreview } from '@/lib/preview';
 import { setMode, useMode } from '@/lib/mode';
@@ -24,6 +24,7 @@ export default function ProfileTab() {
   const signOut = useSession((s) => s.signOut);
   const preview = useSession((s) => s.preview);
   const isCompanion = user?.role === 'companion';
+  const staff = staffLevel(user);
   const { mode } = useMode();
   const verified = user?.is_verified;
   const privacyValue = [user?.profileVisibility === 'locked' ? 'Photo locked' : user?.profileVisibility === 'open' ? 'Photo open' : null, user?.seeGender ? `Showing ${seeLabel(user.seeGender).toLowerCase()}` : null].filter(Boolean).join(' · ') || undefined;
@@ -59,6 +60,11 @@ export default function ProfileTab() {
           ) : (
             <Pill label={isCompanion ? companionStatusLine(user?.verification_status) : 'Not verified yet'} tone="warning" />
           )}
+          {staff && user ? (
+            <Text variant="footnote" color={colors.champagneDeep} style={{ fontFamily: 'Urbanist-SemiBold' }}>
+              {peopleLabel(user)}
+            </Text>
+          ) : null}
           {user?.phone ? (
             <Text variant="footnote" muted>
               {displayPhone(user.phone)}
@@ -67,9 +73,9 @@ export default function ProfileTab() {
         </View>
       </View>
 
-      {isStaff(user?.role) ? (
+      {staff ? (
         <View style={styles.group}>
-          <ListRow icon="shieldCheck" label="Admin" value={roleLabel(user!.role)} onPress={() => router.push('/admin')} last />
+          <ListRow icon="shieldCheck" label="Switch to Admin" value={`${roleLabel(staff)} · approvals, bookings, refunds`} onPress={() => setMode('admin')} last />
         </View>
       ) : null}
 

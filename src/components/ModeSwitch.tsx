@@ -5,26 +5,28 @@ import { fonts } from '@/theme/fonts';
 import { Text } from './ui/Text';
 import { Icon } from './ui/Icon';
 import { badgeLabel } from '@/lib/live';
-import { setMode, useMode, useModeBookings } from '@/lib/mode';
+import { setMode, useAdminWaiting, useMode, useModeBookings } from '@/lib/mode';
 import type { AppMode } from '@/domain/mode';
 
-const LABEL: Record<AppMode, string> = { booking: 'Booking', companion: 'Companion' };
+const LABEL: Record<AppMode, string> = { admin: 'Admin', booking: 'Booking', companion: 'Companion' };
 
 /**
- * Booking | Companion, at the top of every main screen for someone who is both. Booking mode: a light
- * pill with the midnight segment; Companion mode: a midnight pill with the gold segment, so it's always
- * clear which hat you're wearing. A gold count on the other side shows what's waiting there.
- * Shows nothing for people who can't switch.
+ * Admin | Booking | Companion (each only if this person can use it), at the top of every main screen
+ * and of Admin. Booking mode: a light pill with the midnight segment; Companion mode: a midnight pill with
+ * the gold segment; Admin: a steel pill with the gold segment, so it's always clear which hat you're
+ * wearing. A gold count on another mode shows what's waiting there. Hidden for people with one mode.
  */
 export function ModeSwitch({ style }: { style?: object }) {
-  const { mode, canSwitch } = useMode();
-  const { waiting } = useModeBookings();
+  const { current: mode, modes, canSwitch } = useMode();
+  const { waiting: sideWaiting } = useModeBookings();
+  const adminWaiting = useAdminWaiting();
   if (!canSwitch) return null;
-  const dark = mode === 'companion';
+  const waiting: Record<AppMode, number> = { ...sideWaiting, admin: adminWaiting };
+  const dark = mode !== 'booking';
   return (
     <View style={[styles.wrap, style]}>
-      <View style={[styles.pill, dark && styles.pillDark]} accessibilityRole="tablist" accessibilityLabel="Mode">
-        {(['booking', 'companion'] as AppMode[]).map((m) => {
+      <View style={[styles.pill, dark && styles.pillDark, mode === 'admin' && styles.pillAdmin]} accessibilityRole="tablist" accessibilityLabel="Mode">
+        {modes.map((m) => {
           const on = m === mode;
           const count = on ? 0 : waiting[m];
           return (
@@ -58,9 +60,9 @@ export function ModeSwitch({ style }: { style?: object }) {
 
 /** Home (booking mode): "2 new requests in Companion mode · Switch", only when something is waiting there. */
 export function OtherModeBanner() {
-  const { mode, canSwitch } = useMode();
+  const { current, modes } = useMode();
   const { offers, unreadChats } = useModeBookings();
-  if (!canSwitch || mode !== 'booking') return null;
+  if (!modes.includes('companion') || current !== 'booking') return null;
   const parts = [offers ? `${offers} new ${offers === 1 ? 'request' : 'requests'}` : null, unreadChats.companion ? `${unreadChats.companion} unread ${unreadChats.companion === 1 ? 'message' : 'messages'}` : null].filter(Boolean);
   if (!parts.length) return null;
   return (
@@ -83,6 +85,7 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: GUTTER },
   pill: { flexDirection: 'row', padding: 3, borderRadius: radius.pill, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   pillDark: { backgroundColor: colors.midnight, borderColor: colors.midnight },
+  pillAdmin: { backgroundColor: colors.steel, borderColor: colors.steel },
   seg: { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.sm },
   segOn: { backgroundColor: colors.midnight },
   segOnDark: { backgroundColor: colors.champagne },

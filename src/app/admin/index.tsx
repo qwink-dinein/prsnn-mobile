@@ -7,7 +7,8 @@ import { colors, radius, space } from '@/theme/tokens';
 import { Header, ListRow, Loading, ErrorState, Screen, BellButton } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { StatTile } from '@/components/admin';
-import { can, roleLabel } from '@/domain/admin';
+import { can, roleLabel, staffLevel } from '@/domain/admin';
+import { ModeSwitch } from '@/components/ModeSwitch';
 import { formatINR } from '@/domain/booking';
 import { svc, qk } from '@/services';
 import { errorMessage } from '@/lib/api';
@@ -15,7 +16,7 @@ import { useSession } from '@/state/session';
 
 /** Admin · Overview: what needs attention, then every section. */
 export default function AdminOverview() {
-  const role = useSession((s) => s.user?.role);
+  const role = useSession((s) => staffLevel(s.user));
   const q = useQuery({ queryKey: qk.admin.overview, queryFn: svc.admin.overview, refetchInterval: 60_000 });
   const counts = useQuery({ queryKey: ['admin', 'counts'], queryFn: svc.admin.approvalCounts, refetchInterval: 20_000 });
   const panics = useQuery({ queryKey: ['admin', 'panics', true], queryFn: () => svc.admin.panics(true), refetchInterval: 15_000 });
@@ -24,6 +25,7 @@ export default function AdminOverview() {
 
   return (
     <Screen padded={false} refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void Promise.all([q.refetch(), counts.refetch(), panics.refetch()])} tintColor={colors.moss} />}>
+      <ModeSwitch style={{ marginTop: space.sm }} />
       <Header title="Admin" right={<BellButton />} />
       <View style={{ paddingHorizontal: 20, gap: space.lg }}>
         <Text variant="footnote" muted>

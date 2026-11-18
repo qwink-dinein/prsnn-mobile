@@ -33,5 +33,5 @@ export const seeLabel = (s?: SeeGender | null) => SEE_OPTIONS.find((o) => o.valu
  * gender and visibility — otherwise every companion login looped back to setup.
  */
 export const hasIdentity = (u?: { role?: string; gender?: Gender; seeGender?: SeeGender; profileVisibility?: Visibility } | null) =>
-  // Staff work in the admin screens and aren't listed, so they skip these questions.
-  ['admin', 'subadmin', 'superadmin'].includes(u?.role ?? '') || !!(u?.gender && u?.profileVisibility && (u.role === 'companion' || u.seeGender));
+  // Staff working in Admin skip these questions (domain/setup needsSetup); in Booking they answer them like anyone.
+  !!(u?.gender && u?.profileVisibility && (u.role === 'companion' || u.seeGender));

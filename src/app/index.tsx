@@ -9,12 +9,15 @@ import { Logo } from '@/components/ui/layout';
 import { Text } from '@/components/ui/Text';
 import { useSession } from '@/state/session';
 import { goToLogin } from '@/lib/flow';
+import { effectiveMode } from '@/domain/mode';
 
 const PHOTOS = [require('../../assets/images/cat/community.jpg'), require('../../assets/images/cat/loved-one.jpg'), require('../../assets/images/cat/dont-go-alone.jpg'), require('../../assets/images/cat/new-in-town.jpg')];
 
 /** Screen 1 · Splash: photo collage, wordmark, then on to onboarding. */
 export default function Splash() {
   const token = useSession((s) => s.token);
+  // Staff open in their last mode (Admin unless they were booking or working as a companion).
+  const admin = useSession((s) => effectiveMode(s.user, s.prefs.mode) === 'admin');
   const { width } = useAppWidth();
 
   useEffect(() => {
@@ -23,7 +26,7 @@ export default function Splash() {
     return () => clearTimeout(t);
   }, [token]);
 
-  if (token) return <Redirect href="/home" />;
+  if (token) return <Redirect href={admin ? '/admin' : '/home'} />;
 
   const w = Math.min(width * 0.42, 190);
   return (

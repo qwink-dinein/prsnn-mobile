@@ -10,6 +10,26 @@ import type { AdminBooking, AdminPerson, Role } from './types';
 export const STAFF_ROLES: readonly Role[] = ['admin', 'subadmin', 'superadmin'];
 
 export const isStaff = (role?: Role | null) => !!role && STAFF_ROLES.includes(role);
+
+/**
+ * Staff is a permission on top of a member or companion account (18 Nov): `staffRole` holds
+ * sub-admin / superadmin and `role` stays user / companion. Older data kept the staff level in
+ * `role`, so that still counts. Use this, not `role`, for every "is this person staff?" check.
+ */
+export function staffLevel(p?: { role?: Role | null; staffRole?: Role | null } | null): Role | null {
+  if (!p) return null;
+  if (p.staffRole && isStaff(p.staffRole)) return p.staffRole;
+  return p.role && isStaff(p.role) ? p.role : null;
+}
+
+/** The member / companion side (a staff-only value from older data counts as member). */
+export const marketRole = (p?: { role?: Role | null } | null): 'user' | 'companion' => (p?.role === 'companion' ? 'companion' : 'user');
+
+/** "Superadmin · Companion", "Member", …: every hat a person wears. */
+export function peopleLabel(p: { role?: Role | null; staffRole?: Role | null }): string {
+  const staff = staffLevel(p);
+  return [staff ? roleLabel(staff) : null, roleLabel(marketRole(p))].filter(Boolean).join(' · ');
+}
 export const isSuperadmin = (role?: Role | null) => role === 'superadmin';
 
 export type AdminAction =

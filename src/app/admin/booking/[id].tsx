@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/forms';
 import { useConfirm } from '@/components/ui/confirm';
 import { InputSheet, KV, adminWhen, rupeeField, type InputField } from '@/components/admin';
-import { adminBookingState, can, personId, personName, refundableAmount, roleLabel } from '@/domain/admin';
+import { adminBookingState, can, personId, personName, refundableAmount, roleLabel, staffLevel } from '@/domain/admin';
 import { durationLabel, formatINR } from '@/domain/booking';
 import type { AdminBooking, AdminUser } from '@/domain/types';
 import { ago } from '@/domain/time';
@@ -24,7 +24,7 @@ type Sheet = null | 'reschedule' | 'cancel' | 'refund' | 'fee' | 'reply' | 'clos
 /** Admin · Booking detail: everything about one booking, and the actions this role may take. */
 export default function AdminBookingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const role = useSession((s) => s.user?.role);
+  const role = useSession((s) => staffLevel(s.user));
   const qc = useQueryClient();
   const confirm = useConfirm();
   const [sheet, setSheet] = useState<Sheet>(null);

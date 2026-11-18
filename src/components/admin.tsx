@@ -9,14 +9,14 @@ import { Button } from './ui/Button';
 import { TextField } from './ui/forms';
 import { formatDate } from './bookings';
 import { durationLabel, endTimeOf, formatINR, formatTime } from '@/domain/booking';
-import { adminBookingState, isStaff, isSuperadmin, personName, roleLabel } from '@/domain/admin';
+import { adminBookingState, isStaff, isSuperadmin, peopleLabel, personName, staffLevel } from '@/domain/admin';
 import type { AdminBooking, AdminUser } from '@/domain/types';
 import { useSession } from '@/state/session';
 import { displayPhone } from '@/domain/phone';
 
 /** Only staff (or only superadmins) see admin screens. The server checks again on every call. */
 export function AdminGate({ superOnly, children }: { superOnly?: boolean; children: ReactNode }) {
-  const role = useSession((s) => s.user?.role);
+  const role = useSession((s) => staffLevel(s.user));
   if (!isStaff(role)) return <Redirect href="/" />;
   if (superOnly && !isSuperadmin(role)) return <Redirect href="/admin" />;
   return <>{children}</>;
@@ -70,14 +70,14 @@ export function AdminBookingRow({ b, onPress }: { b: AdminBooking; onPress?: () 
 
 export function UserRow({ u, onPress }: { u: AdminUser; onPress?: () => void }) {
   return (
-    <Card onPress={onPress ?? (() => router.push(`/admin/user/${u.id}`))} accessibilityLabel={`${u.fullName || 'No name'}, ${roleLabel(u.role)}${u.suspended ? ', suspended' : ''}`} style={styles.userRow}>
+    <Card onPress={onPress ?? (() => router.push(`/admin/user/${u.id}`))} accessibilityLabel={`${u.fullName || 'No name'}, ${peopleLabel(u)}${u.suspended ? ', suspended' : ''}`} style={styles.userRow}>
       <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={44} />
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text variant="headline" numberOfLines={1}>
           {u.fullName || 'No name yet'}
         </Text>
         <Text variant="footnote" muted numberOfLines={1}>
-          {[roleLabel(u.role), u.phone ? displayPhone(u.phone) : null, u.city].filter(Boolean).join(' · ')}
+          {[peopleLabel(u), u.phone ? displayPhone(u.phone) : null, u.city].filter(Boolean).join(' · ')}
         </Text>
       </View>
       {u.suspended ? <Pill label="Suspended" tone="danger" /> : u.role === 'companion' && u.verificationStatus !== 'verified' ? <Pill label={u.verificationStatus === 'pending' ? 'To verify' : u.verificationStatus === 'id_required' ? 'Live · no ID yet' : u.verificationStatus === 'rejected' ? 'ID rejected' : u.verificationStatus} tone={u.verificationStatus === 'rejected' ? 'danger' : 'warning'} /> : null}

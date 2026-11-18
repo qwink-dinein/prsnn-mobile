@@ -511,3 +511,27 @@ Migration `20261117110000_chat_window.sql`. Test: `prsnn-backend/supabase/tests/
   tap outside or close to shrink it back. From a list it offers View profile and Book (`/companion/[id]?book=1` scrolls to
   the booking picker). Locked photos never open.
 
+## Round 21 (2026-11-18): staff is a permission; prices back to normal
+
+- **`profiles.staff_role`** (`subadmin` | `superadmin` | null) holds admin access; **`profiles.role` is only `user` or
+  `companion`** (check constraint `profiles_role_market_check`). Before, one `role` value was all a person could be, so
+  making a companion a sub-admin wiped their companion side and removing an admin made them a plain member.
+  Migrations `20261118120000_staff_is_a_permission` and `20261118121000_audit_staff_role` (applied):
+  - `is_staff()` / `is_superadmin()` / `need_staff()` read `staff_role`, so every RLS policy follows automatically;
+    `need_staff()` returns the staff level (`admin_overview.role`, refund rights).
+  - The two existing superadmins became `role = 'user'` + `staff_role = 'superadmin'`.
+  - `handle_new_user`, `sync_my_role` (superadmin phone list), `admin_add_admin`, `admin_remove_admin` set or clear only
+    `staff_role`; the member / companion side is never touched. Staff can apply as companions like anyone.
+  - `me()` and `admin_user_json` return `staffRole`; `admin_users(role_filter => 'staff')` and `admin_admins` read it;
+    staff alerts, staff phones, refund-failed notices and account-deleted notices go to `staff_role is not null`;
+    the activity log records the staff level; live preview of a staff account stays refused.
+- **App.** `domain/admin.staffLevel(person)` is the one "is this person staff?" check (reads `staffRole`, and an old staff
+  value in `role`). Modes: `domain/mode.modesFor` → Admin (staff) · Booking (everyone) · Companion (companions);
+  staff open in their last mode, Admin by default (`app/index`, `lib/flow.goHome`). The switch shows on the tabs and on
+  Admin's overview, with a gold count of what waits in Admin (approvals, refunds, disputes). Staff answer the member
+  setup questions the first time they switch to Booking (`domain/setup.needsSetup(user, mode)`).
+  Profile shows every hat ("Superadmin · Member") and "Switch to Admin".
+- **Prices** restored from the ₹10 test prices to 399 · 699 · 999 · 1,299 · 1,599 · 1,899 · 2,199 · 2,499 · 2,799 ·
+  3,099 · 3,349 · 3,599 (`settings.pricing.packagePrices`).
+- e2e: superadmin and sub-admin keep a member side and can use member calls.
+

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/forms';
 import { useConfirm } from '@/components/ui/confirm';
 import { AdminBookingRow, InputSheet, KV } from '@/components/admin';
-import { can, canActOn, roleLabel } from '@/domain/admin';
+import { can, canActOn, peopleLabel, staffLevel } from '@/domain/admin';
 import { ALL_HOURS, hoursLabel } from '@/domain/pricing';
 import { displayPhone } from '@/domain/phone';
 import type { AdminUser, DayKey, Visibility } from '@/domain/types';
@@ -82,8 +82,10 @@ export default function AdminUserDetail() {
 
   const { user: u, bookings } = q.data;
   const self = u.id === me?.id;
-  const editable = self || canActOn(me?.role, u.role);
-  const manageable = canActOn(me?.role, u.role, self);
+  const myStaff = staffLevel(me);
+  const theirStaff = staffLevel(u);
+  const editable = self || canActOn(myStaff, theirStaff ?? u.role);
+  const manageable = canActOn(myStaff, theirStaff ?? u.role, self);
   const isCompanion = u.role === 'companion';
   const set = (p: Partial<Form>) => setForm({ ...form, ...p });
 
@@ -109,7 +111,7 @@ export default function AdminUserDetail() {
           <Avatar uri={u.profilePhotoUrl} name={u.fullName} size={64} />
           <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
             <View style={styles.row}>
-              <Pill label={roleLabel(u.role)} tone={u.role === 'superadmin' || u.role === 'subadmin' ? 'success' : 'neutral'} />
+              <Pill label={peopleLabel(u)} tone={theirStaff ? 'success' : 'neutral'} />
               {u.suspended ? <Pill label="Suspended" tone="danger" /> : null}
               {isCompanion ? <Pill label={u.verificationStatus} tone={u.verificationStatus === 'verified' ? 'success' : 'warning'} /> : null}
             </View>
@@ -202,15 +204,15 @@ export default function AdminUserDetail() {
             ) : (
               <Button label="Suspend account" variant="danger" onPress={() => setSuspending(true)} />
             )}
-            {can(me?.role, 'manageAdmins') && (u.role === 'user' || u.role === 'companion') && u.phone ? (
+            {can(myStaff, 'manageAdmins') && !theirStaff && u.phone ? (
               <Button
                 label="Make sub-admin"
                 variant="secondary"
-                onPress={async () => (await confirm({ title: `Make ${u.fullName || 'this person'} a sub-admin?`, message: 'They can verify companions, edit users and bookings, and answer disputes. They can’t move money, change prices or send broadcasts.', confirmLabel: 'Make sub-admin' })) && act.mutate(() => svc.admin.addAdmin(u.phone!))}
+                onPress={async () => (await confirm({ title: `Make ${u.fullName || 'this person'} a sub-admin?`, message: 'They can verify companions, edit users and bookings, and answer disputes. They can’t move money, change prices or send broadcasts. Their member or companion account stays as it is.', confirmLabel: 'Make sub-admin' })) && act.mutate(() => svc.admin.addAdmin(u.phone!))}
               />
             ) : null}
-            {can(me?.role, 'manageAdmins') && (u.role === 'subadmin' || u.role === 'admin') ? (
-              <Button label="Remove sub-admin" variant="danger" onPress={async () => (await confirm({ title: 'Remove admin access?', message: 'They become a regular member at once.', confirmLabel: 'Remove', destructive: true })) && act.mutate(() => svc.admin.removeAdmin(u.id))} />
+            {can(myStaff, 'manageAdmins') && (theirStaff === 'subadmin' || theirStaff === 'admin') ? (
+              <Button label="Remove sub-admin" variant="danger" onPress={async () => (await confirm({ title: 'Remove admin access?', message: 'They lose Admin at once. Their member or companion account stays as it is.', confirmLabel: 'Remove', destructive: true })) && act.mutate(() => svc.admin.removeAdmin(u.id))} />
             ) : null}
             <Button
               label="Delete account"

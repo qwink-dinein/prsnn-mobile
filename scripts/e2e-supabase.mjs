@@ -35,7 +35,7 @@ ok((await rpc(anon, 'admin_overview')).error, 'logged-out: admin refused');
 ok((await rpc(anon, 'list_companions')).error, 'logged-out: cannot browse companions');
 ok((await rpc(anon, 'my_bookings')).error, 'logged-out: no bookings');
 const meSup = await rpc(sup, 'sync_my_role');
-ok(meSup.data?.role === 'superadmin', 'superadmin from phone list', meSup);
+ok(meSup.data?.staffRole === 'superadmin' && meSup.data?.role === 'user', 'superadmin from phone list (staff level on a member account)', meSup);
 ok((await rpc(mem, 'admin_overview')).error === 'Access denied', 'member: admin refused');
 const money0 = (await rpc(sup, 'admin_overview')).data?.money; // real payments only: the simulated bookings below must not change it
 { const { data } = await anon.from('settings').select('value').eq('key', 'pricing').single(); ok(data?.value?.packagePrices?.['1'] === 399, 'prices readable by everyone'); }
@@ -133,7 +133,8 @@ console.log('7. Dispute, admin, money');
 r = await rpc(mem, 'open_dispute', { bid, reason: 'Companion was 30 minutes late.' }); ok(!r.error, 'dispute opened', r);
 r = await rpc(sup, 'admin_booking_messages', { bid }); ok(r.data?.length === 1, 'admin reads dispute chat', r);
 r = await rpc(sup, 'admin_add_admin', { phone: '9000000001' }); ok(!r.error, 'sub-admin added', r);
-ok((await rpc(sub, 'sync_my_role')).data?.role === 'subadmin', 'sub-admin role');
+r0 = (await rpc(sub, 'sync_my_role')).data; ok(r0?.staffRole === 'subadmin' && ['user', 'companion'].includes(r0?.role), 'sub-admin keeps their member side', r0);
+r = await rpc(sub, 'my_bookings'); ok(!r.error, 'sub-admin can use the app as a member too', r.error);
 ok((await rpc(sub, 'admin_refund', { bid, amount: 100, reason: 'x' })).error === 'Access denied', 'sub-admin cannot refund');
 r = await rpc(sub, 'admin_reply_dispute', { bid, msg: 'Looking into it.' }); ok(!r.error, 'sub-admin replies to dispute', r);
 r = await rpc(sup, 'admin_refund', { bid, amount: 200, reason: 'Late start' }); ok(r.data?.result === 'processed', 'superadmin partial refund ₹200', r);

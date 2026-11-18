@@ -20,7 +20,10 @@ export interface SessionUser {
   id: string;
   email?: string;
   username?: string;
+  /** Member or companion. Staff access is `staffRole` (see domain/admin staffLevel). */
   role: Role;
+  /** 'subadmin' | 'superadmin' when this person can use Admin; null otherwise. */
+  staffRole?: Role | null;
   is_verified: boolean;
   verification_status: VerificationStatus;
   fullName?: string;
@@ -312,6 +315,7 @@ export interface AdminUser {
   phone?: string;
   phoneNumber?: string;
   role: Role;
+  staffRole?: Role | null;
   verificationStatus: VerificationStatus;
   suspended: boolean;
   suspendedReason?: string;
