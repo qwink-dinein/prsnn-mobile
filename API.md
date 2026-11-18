@@ -546,3 +546,12 @@ Members kept phoning to ask how to apply. No backend change.
 - **Website:** header button "Become a companion" (phones: "Earn as a companion") beside "Get the app"; the menu is hidden on
   phones, so the old menu link was invisible there.
 
+## Round 23 (2026-11-18): "ID verified" only after a real ID check
+
+Bug since 10 Nov: members are `verification_status = 'verified'` at sign-up (that's "Verified member"), and
+`submit_companion_application` kept it, so a member who became a companion showed **"ID verified"** with no documents.
+Migration `20261118140000_member_verified_is_not_id` (applied): only an existing companion keeps `pending` / `verified`;
+a member who applies starts at `id_required` (then `pending` when their ID is sent). The 4 companions affected (verified, no
+ID on file, nobody verified them) went back to `id_required`: still listed as "New on prsnn", ID asked at their first
+booking. None had an open booking. Test: `supabase/tests/round12-member-verified-is-not-id.sql`.
+
